@@ -3,7 +3,7 @@ name: Docker Image Build
 on:
   pull_request:
     branches:
-      - master
+      - main
 
     paths-ignore:
     - '.devcontainer/**'
@@ -12,7 +12,7 @@ on:
 
   push:
     branches:
-      - master
+      - main
 
     paths-ignore:
     - '.devcontainer/**'
