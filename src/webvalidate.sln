@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29806.167
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "webvalidate", "app\webvalidate.csproj", "{DDCE1400-F7C9-4586-B190-B89EEEDF0D41}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "tests", "tests\tests.csproj", "{1A24991C-12DF-4F79-9B97-B3F93CC70F7E}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{1A24991C-12DF-4F79-9B97-B3F93CC70F7E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1A24991C-12DF-4F79-9B97-B3F93CC70F7E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1A24991C-12DF-4F79-9B97-B3F93CC70F7E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1A24991C-12DF-4F79-9B97-B3F93CC70F7E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DDCE1400-F7C9-4586-B190-B89EEEDF0D41}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DDCE1400-F7C9-4586-B190-B89EEEDF0D41}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DDCE1400-F7C9-4586-B190-B89EEEDF0D41}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DDCE1400-F7C9-4586-B190-B89EEEDF0D41}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {563C183A-224A-414C-B760-3DFE0860C6EA}
+	EndGlobalSection
+EndGlobal

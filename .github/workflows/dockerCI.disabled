@@ -1,0 +1,151 @@
+name: Docker Image Build
+
+on:
+  pull_request:
+    branches:
+      - master
+
+    paths-ignore:
+    - '.devcontainer/**'
+    - 'docs/**'
+    - '**.md'
+
+  push:
+    branches:
+      - master
+
+    paths-ignore:
+    - '.devcontainer/**'
+    - 'docs/**'
+    - '**.md'
+
+    tags:
+      - v*
+
+jobs:
+
+  docker-build-push:
+
+    runs-on: ubuntu-latest
+    env:
+      # copy the config value to environment variables
+      # do not copy the actual secrets!
+
+      DOCKER_REPO: ${{ secrets.DOCKER_REPO }}
+      ACR_REPO: ${{ secrets.ACR_REPO }}
+      ACR_IMAGE: ${{ secrets.ACR_IMAGE }}
+      ACR_REG: ${{ secrets.ACR_REG }}
+
+      # These are used in if: conditions
+      AZURE_SET: false
+      DOCKER_SET: false
+      ACR_SET: false
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Set conditions
+      run: |
+        # check that all Azure secrets are set
+        if [[ "${{ secrets.SERVICE_PRINCIPAL_SECRET }}" != "" && "${{ secrets.TENANT }}" != "" && "${{ secrets.SERVICE_PRINCIPAL }}" != "" ]];
+        then
+          echo "::set-env name=AZURE_SET::true"
+        fi
+
+        # check that all Docker secrets are set
+        if [[ "${{ secrets.DOCKER_PAT }}" != "" && "${{ secrets.DOCKER_REPO }}" != "" && "${{ secrets.DOCKER_USER }}" != "" ]];
+        then
+          echo "::set-env name=DOCKER_SET::true"
+        fi
+        
+        # check that all ACR secrets are set
+        if [[ "${{ secrets.ACR_REG }}" != "" && "${{ secrets.ACR_REPO }}" != "" && "${{ secrets.ACR_IMAGE }}" != "" ]];
+        then
+          echo "::set-env name=ACR_SET::true"
+        fi
+
+    - name: Azure Login
+      if: ${{ env.AZURE_SET == 'true' }}
+      run: |
+        # login to Azure
+        az login --service-principal -u ${{ secrets.SERVICE_PRINCIPAL }} --tenant ${{ secrets.TENANT }} -p ${{ secrets.SERVICE_PRINCIPAL_SECRET }}
+
+    - name: Docker Login
+      if: ${{ env.DOCKER_SET == 'true' }}
+      run: |
+        # login to dockerhub
+        echo "${{ secrets.DOCKER_PAT }}" | docker login -u ${{ secrets.DOCKER_USER }} --password-stdin
+
+    - name: Build Container
+      run: docker build . -t image
+
+    - name: Docker Push
+      if: ${{ env.DOCKER_SET == 'true' }}
+      run: |
+        # tag the image with :beta
+        docker tag image ${DOCKER_REPO}:beta
+
+        # Tag image based on repo tag if a github label
+        if [[ "${{ github.ref }}" == "refs/tags/"* ]]
+        then
+
+          # Strip git ref prefix from version
+          VERSION=$(echo "${{ github.ref }}" | sed -e 's,.*/\(.*\),\1,')
+
+          # Strip "v" prefix from tag name
+          VERSION=$(echo $VERSION | sed -e 's/^v//')
+
+          # tag the image with :Version and :latest
+          docker tag image ${DOCKER_REPO}:$VERSION
+          docker tag image ${DOCKER_REPO}:latest
+        fi
+
+        # Push to the repo
+        docker push $DOCKER_REPO
+
+    - name: ACR Push
+      if: ${{ env.ACR_SET == 'true' && env.AZURE_SET == 'true' }}
+      run: |
+        # login to acr
+        az acr login -n ${ACR_REG}
+        
+        # tag the repo with :beta
+        docker tag image $ACR_REPO:beta
+
+        # Show the ACR repository informaion to confirm SHA
+        echo "${ACR_IMAGE}:beta info:"
+        az acr repository show -n ${ACR_REG} --image ${ACR_IMAGE}:beta -o table
+
+        # Tag image based on repo tag if a github label
+        if [[ "${{ github.ref }}" == "refs/tags/"* ]]
+        then
+
+          # Strip git ref prefix from version
+          VERSION=$(echo "${{ github.ref }}" | sed -e 's,.*/\(.*\),\1,')
+        
+          # Strip "v" prefix from tag name
+          VERSION=$(echo $VERSION | sed -e 's/^v//')
+          
+          # tag the image with :version and :stable
+          docker tag image $ACR_REPO:$VERSION
+          docker tag image $ACR_REPO:latest
+          
+          # Show the ACR repository informaion to confirm SHA
+          echo "${ACR_IMAGE}:${VERSION} info:"
+          az acr repository show -n ${ACR_REG} --image ${ACR_IMAGE}:${VERSION} -o table
+
+          echo "${ACR_IMAGE}:stable info:"
+          az acr repository show -n ${ACR_REG} --image ${ACR_IMAGE}:stable -o table
+        fi
+
+        # Push to the repo
+        docker push ${ACR_IMAGE}
+
+    - name: Pack and Publish
+      run: |
+      
+        if [[ "${{ secrets.NUGET_KEY }}" != "" && "${{ github.ref }}" == "refs/tags/"* ]];
+        then
+          dotnet pack src/webvalidate.sln
+          dotnet nuget push src/app/nupkg/ --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_KEY }}
+        fi
