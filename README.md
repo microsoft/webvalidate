@@ -73,7 +73,6 @@ popd
 # change to the app directory
 pushd src/app
 
-
 ```
 
 Run a sample validation test against `microsoft.com`
@@ -156,6 +155,22 @@ docker run -it --rm retaildevcrew/webvalidate --help
 
 ```
 
+Run the debug WebV container directly from source
+
+The debug version allows you to connect to the running container to debug any latency or network issues. The debug version has useful network tools such as `netstat`, `nslookup`, `traceroute`, `nmap` and several others pre-installed. In addition, the image also contains common utilities including `nano`, `curl`, `httpie` and `unzip`.
+
+> There are security risks in using this container since several tools require `sudo` privileges and all of the utilities are installed.
+>
+> The debug image is also larger in size (about 800 MB) so deployments will take longer.
+
+```bash
+
+docker run -it --rm --name webv-debug retaildevcrew/webvalidate:debug -s https://www.microsoft.com -f msft.json -r -l 20000
+docker exec -it webv-debug /bin/bash
+$ ...
+
+```
+
 Use your own test files
 
 ```bash
@@ -177,7 +192,7 @@ Web Validate works in two distinct modes. The default mode processes the input f
 
 We use `WebV` and [Azure Container Instances](https://azure.microsoft.com/en-us/services/container-instances/) to run geo-distributed, smoke tests against our Web APIs. These tests run 24 x 7 from multiple Azure regions and provide insight into network latency / health as well as service status.
 
-`Azure Container Instances` integrate with [Azure Monitor](https://azure.microsoft.com/en-us/services/monitor/) to provide out-of-the-box monitoring, dashboards and alerts. Setup instructions, sample queries and sample dashboards are available [here](https://github.com/retaildevcrews/helium/blob/master/docs/AppService.md#smoke-test-setup).
+`Azure Container Instances` integrate with [Azure Monitor](https://azure.microsoft.com/en-us/services/monitor/) to provide out-of-the-box monitoring, dashboards and alerts. Setup instructions, sample queries and sample dashboards are available [here](https://github.com/retaildevcrews/helium/blob/main/docs/AppService.md#smoke-test-setup).
 
 We use the `--json-log` command line option to integrate Docker container logs with `Log Analytics`. The integration is automatic using `Azure Container Instances`.
 
@@ -208,7 +223,7 @@ We use the `--json-log` command line option to integrate Docker container logs w
   - log requests to console in json format (instead of tab delimited)
 - -u --base-url
   - base URL of test files using http
-    - ex: `https://raw.githubusercontent.com/retaildevcrews/webvalidate/master/TestFiles/`
+    - ex: `https://raw.githubusercontent.com/retaildevcrews/webvalidate/main/TestFiles/`
 - -l --sleep int
   - number of milliseconds to sleep between requests
   - default 0
@@ -378,6 +393,46 @@ You can mount a local volume into the Docker container at /app/TestFiles to test
       - Quartile 3 <= 400 ms
       - Quartile 4 > 400 ms
 
+## Environment Variable Substitutions
+
+WebV can substitute environment variable values in the test file(s).
+
+- Define the environment variable substitutions in the `Variables` json array
+- Include the `${VARIABLE_NAME}` in the test file(s)
+- If one or more environment variables are not set, WebV will substitute with `empty string` which could cause validation errors
+- The comparison is `case sensitive`
+
+```bash
+
+# set the environment variables
+export ROBOTS=robots.txt
+export FAVICON=favicon.ico
+
+# run the test
+dotnet run -- -s https://www.microsoft.com -f envvars.json
+
+```
+
+> JSON sample using environment variable substitution
+
+```json
+
+{
+  "Variables": [ "ROBOTS", "FAVICON" ],
+  "Requests": [
+    {
+      "Path": "/${ROBOTS}",
+      "Validation": { "ContentType": "text/plain" }
+    },
+    {
+      "Path": "/${FAVICON}",
+      "Validation": { "ContentType": "image/x-icon" }
+    }
+  ]
+}
+
+```
+
 ## Sample `microsoft.com` validation tests
 
 The msft.json file contains sample validation tests that will will successfully run against the `microsoft.com` endpoint (assuming content hasn't changed)
@@ -423,6 +478,7 @@ The msft.json file contains sample validation tests that will will successfully 
 ### favicon
 
 ```json
+
 {
   "Url": "/favicon.ico",
   "Validation":
@@ -430,11 +486,13 @@ The msft.json file contains sample validation tests that will will successfully 
     "ContentType":"image/x-icon"
   }
 }
+
 ```
 
 ### robots.txt
 
 ```json
+
 {
   "Url": "/robots.txt",
   "Validation":
@@ -448,6 +506,7 @@ The msft.json file contains sample validation tests that will will successfully 
     ]
   }
 }
+
 ```
 
 ## Sample GitHub tests
@@ -565,17 +624,17 @@ The msft.json file contains sample validation tests that will will successfully 
 This repo uses [GitHub Actions](/.github/workflows/dockerCI.yml) for Continuous Integration.
 
 - CI supports pushing to Azure Container Registry or DockerHub
-- The action is setup to execute on a PR or commit to ```master```
-  - The action does not run on commits to branches other than ```master```
-- The action always publishes an image with the ```:beta``` tag
-- If you tag the repo with a version i.e. ```v1.1.0``` the action will also
-  - Tag the image with ```:1.1.0```
-  - Tag the image with ```:latest```
-  - Note that the ```v``` is case sensitive (lower case)
+- The action is setup to execute on a PR or commit to `main`
+  - The action does not run on commits to branches other than `main`
+- The action always publishes an image with the `:beta` tag
+- If you tag the repo with a version i.e. `v1.1.0` the action will also
+  - Tag the image with `:1.1.0`
+  - Tag the image with `:latest`
+  - Note that the `v` is case sensitive (lower case)
 
 ### Pushing to Azure Container Registry
 
-In order to push to ACR, you must create a Service Principal that has push permissions to the ACR and set the following ```secrets``` in your GitHub repo:
+In order to push to ACR, you must create a Service Principal that has push permissions to the ACR and set the following `secrets` in your GitHub repo:
 
 - Azure Login Information
   - TENANT
@@ -589,7 +648,7 @@ In order to push to ACR, you must create a Service Principal that has push permi
 
 ### Pushing to DockerHub
 
-In order to push to DockerHub, you must set the following ```secrets``` in your GitHub repo:
+In order to push to DockerHub, you must set the following `secrets` in your GitHub repo:
 
 - DOCKER_REPO
 - DOCKER_USER
