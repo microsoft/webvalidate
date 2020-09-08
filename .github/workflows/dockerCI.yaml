@@ -57,7 +57,7 @@ jobs:
         then
           echo "::set-env name=DOCKER_SET::true"
         fi
-        
+
         # check that all ACR secrets are set
         if [[ "${{ secrets.ACR_REG }}" != "" && "${{ secrets.ACR_REPO }}" != "" && "${{ secrets.ACR_IMAGE }}" != "" ]];
         then
@@ -77,13 +77,21 @@ jobs:
         echo "${{ secrets.DOCKER_PAT }}" | docker login -u ${{ secrets.DOCKER_USER }} --password-stdin
 
     - name: Build Container
-      run: docker build . -t image
+      run: |
+        # Build base container
+        docker build . -t image
+
+        # Build debug container
+        docker build . -f ./Dockerfile.debug -t debug-image
 
     - name: Docker Push
       if: ${{ env.DOCKER_SET == 'true' }}
       run: |
-        # tag the image with :beta
+        # tag the base image with :beta
         docker tag image ${DOCKER_REPO}:beta
+
+        # tag the debug image with :debug
+        docker tag debug-image ${DOCKER_REPO}:debug
 
         # Tag image based on repo tag if a github label
         if [[ "${{ github.ref }}" == "refs/tags/"* ]]
@@ -95,9 +103,10 @@ jobs:
           # Strip "v" prefix from tag name
           VERSION=$(echo $VERSION | sed -e 's/^v//')
 
-          # tag the image with :Version and :latest
+          # tag the image with :Version, :latest and debug-image with :debug
           docker tag image ${DOCKER_REPO}:$VERSION
           docker tag image ${DOCKER_REPO}:latest
+          docker tag debug-image ${DOCKER_REPO}:$VERSION-debug
         fi
 
         # Push to the repo
@@ -108,7 +117,7 @@ jobs:
       run: |
         # login to acr
         az acr login -n ${ACR_REG}
-        
+
         # tag the repo with :beta
         docker tag image $ACR_REPO:beta
 
@@ -122,14 +131,14 @@ jobs:
 
           # Strip git ref prefix from version
           VERSION=$(echo "${{ github.ref }}" | sed -e 's,.*/\(.*\),\1,')
-        
+
           # Strip "v" prefix from tag name
           VERSION=$(echo $VERSION | sed -e 's/^v//')
-          
+
           # tag the image with :version and :stable
           docker tag image $ACR_REPO:$VERSION
           docker tag image $ACR_REPO:latest
-          
+
           # Show the ACR repository informaion to confirm SHA
           echo "${ACR_IMAGE}:${VERSION} info:"
           az acr repository show -n ${ACR_REG} --image ${ACR_IMAGE}:${VERSION} -o table
@@ -143,7 +152,7 @@ jobs:
 
     - name: Pack and Publish
       run: |
-      
+
         if [[ "${{ secrets.NUGET_KEY }}" != "" && "${{ github.ref }}" == "refs/tags/"* ]];
         then
           dotnet pack src/webvalidate.sln
