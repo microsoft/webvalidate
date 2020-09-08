@@ -1,10 +1,13 @@
-[
-  {
-    "path": "/",
-    "failOnValidationError": true,
-    "validation": {
-      "contentType": "text/html",
-      "contains": [ "<title>This will Fail</title>" ]
+{
+  "Requests":
+  [
+    {
+      "path": "/",
+      "failOnValidationError": true,
+      "validation": {
+        "contentType": "text/html",
+        "contains": [ "<title>This will Fail</title>" ]
+      }
     }
-  }
-]
+  ]
+}
