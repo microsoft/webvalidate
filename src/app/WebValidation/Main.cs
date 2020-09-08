@@ -18,7 +18,7 @@ namespace CSE.WebValidate
         private static HttpClient client;
         private static Semaphore LoopController;
 
-        private Config config = null;
+        private Config config;
 
         private readonly Dictionary<string, PerfTarget> Targets = new Dictionary<string, PerfTarget>();
 
@@ -404,21 +404,21 @@ namespace CSE.WebValidate
                 // run the wait loop
                 if (dtMax == DateTime.MaxValue)
                 {
-                    Task.Delay(-1).Wait(token);
+                    Task.Delay(-1, token).Wait(token);
                 }
                 else
                 {
                     // wait one hour to keep total milliseconds from overflowing
                     while (dtMax.Subtract(DateTime.UtcNow).TotalHours > 1)
                     {
-                        Task.Delay(60 * 60 * 1000).Wait(token);
+                        Task.Delay(60 * 60 * 1000, token).Wait(token);
                     }
 
                     int delay = (int)dtMax.Subtract(DateTime.UtcNow).TotalMilliseconds;
 
                     if (delay > 0)
                     {
-                        Task.Delay(delay).Wait(token);
+                        Task.Delay(delay, token).Wait(token);
                     }
                 }
             }

@@ -4,7 +4,7 @@ namespace CSE.WebValidate.Model
 {
     public class ValidationResult
     {
-        public bool Failed { get; set; } = false;
+        public bool Failed { get; set; }
 
         public List<string> ValidationErrors { get; } = new List<string>();
 

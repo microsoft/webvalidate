@@ -4,7 +4,7 @@ namespace CSE.WebValidate
 {
     public partial class WebV : IDisposable
     {
-        private bool disposed = false;
+        private bool disposed;
 
         // iDisposable::Dispose
         public void Dispose()

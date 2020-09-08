@@ -8,12 +8,12 @@ namespace CSE.WebValidate
     /// </summary>
     class TimerRequestState
     {
-        public int Index = 0;
-        public int MaxIndex = 0;
-        public long Count = 0;
-        public double Duration = 0;
-        public int ErrorCount = 0;
-        public Random Random = null;
+        public int Index;
+        public int MaxIndex;
+        public long Count;
+        public double Duration;
+        public int ErrorCount;
+        public Random Random;
         public object Lock = new object();
         public WebV Test;
         public DateTime CurrentLogTime;
