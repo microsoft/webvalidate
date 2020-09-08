@@ -4,6 +4,12 @@ on:
   pull_request:
     branches: [main]
 
+    paths-ignore:
+    - '.devcontainer/**'
+    - 'docs/**'
+    - '**.md'
+    - '**.json'
+
 jobs:
   analyze:
     name: Analyze

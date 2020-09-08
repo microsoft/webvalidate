@@ -24,7 +24,7 @@ namespace CSE.WebValidate
         public int MaxErrors { get; set; }
         public bool DryRun { get; set; }
         public string BaseUrl { get; set; }
-        public int SummaryMinutes { get; set; } = 0;
+        public int SummaryMinutes { get; set; }
 
         public void SetDefaultValues()
         {
