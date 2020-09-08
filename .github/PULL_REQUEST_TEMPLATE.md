@@ -1,4 +1,4 @@
-## Type of PR
+# Type of PR
 
 - [ ] Documentation changes
 - [ ] Code changes
@@ -6,14 +6,14 @@
 - [ ] CI-CD changes
 - [ ] GitHub Template changes
 
-### Purpose of PR
+## Purpose of PR
 
-### Validation
+## Validation
+
 - [ ] Unit tests updated and ran successfully
 - [ ] Update documentation or issue referenced above
 
-### Issues Closed or Referenced
+## Issues Closed or Referenced
 
-- Closes #<issue number> (this will automatically close the issue when the PR closes)
-- References #<issue number> (this references the issue but does not close with PR)
-
+- Closes #issue_number (this will automatically close the issue when the PR closes)
+- References #issue_number (this references the issue but does not close with PR)

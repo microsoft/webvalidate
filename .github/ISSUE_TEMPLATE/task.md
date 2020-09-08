@@ -8,6 +8,6 @@ assignees: ''
 
 ---
 
-## Description:
--
+## Description
+
 - References #xx
