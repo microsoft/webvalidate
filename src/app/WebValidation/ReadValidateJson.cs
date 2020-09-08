@@ -139,17 +139,50 @@ namespace CSE.WebValidate
             return LoadJson(json);
         }
 
+        /// <summary>
+        /// Load the json string into a List of Requests
+        /// </summary>
+        /// <param name="json">json string</param>
+        /// <returns>List of Request or null</returns>
         private List<Request> LoadJson(string json)
         {
             try
             {
-                // deserialize json into a list (array)
-                List<Request> list = JsonConvert.DeserializeObject<List<Request>>(json);
+                List<Request> list = null;
+                InputJson data = null;
+                List<Request> l2 = new List<Request>();
+
+                try
+                {
+                    // try to parse the json
+                    data = JsonConvert.DeserializeObject<InputJson>(json);
+                }
+                catch
+                {
+                    // try to read the array of Requests style document
+                    // this is being deprecated in v1.4
+                    list = JsonConvert.DeserializeObject<List<Request>>(json);
+                }
+
+                // replace placedholders with environment variables
+                if (data != null && data.Requests.Count > 0)
+                {
+                    if (data.Variables != null && data.Variables.Count > 0)
+                    {
+                        foreach (string v in data.Variables)
+                        {
+                            json = json.Replace("${" + v + "}", System.Environment.GetEnvironmentVariable(v), StringComparison.Ordinal);
+                        }
+
+                        // reload from json
+                        data = JsonConvert.DeserializeObject<InputJson>(json);
+                    }
+
+                    list = data.Requests;
+                }
 
                 if (list != null && list.Count > 0)
                 {
-                    List<Request> l2 = new List<Request>();
-
                     foreach (Request r in list)
                     {
                         // Add the default perf targets if exists
@@ -163,6 +196,7 @@ namespace CSE.WebValidate
 
                         l2.Add(r);
                     }
+
                     // success
                     return l2;
                 }

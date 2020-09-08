@@ -14,4 +14,12 @@ namespace CSE.WebValidate.Model
         public PerfTarget PerfTarget { get; set; }
         public Validation Validation { get; set; }
     }
+
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Usage", "CA2227:Collection properties should be read only", Justification = "json serialization")]
+    public class InputJson
+    {
+        public List<string> Variables { get; set; }
+        public List<Request> Requests { get; set; }
+
+    }
 }
