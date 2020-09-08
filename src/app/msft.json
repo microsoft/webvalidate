@@ -1,0 +1,6 @@
+[
+  {"Path":"/","perfTarget":{"category":"Static"},"Validation":{"StatusCode":302}},
+  {"Path":"/en-us","perfTarget":{"category":"Static"},"Validation":{"ContentType":"text/html","Contains":["<title>Microsoft - Official Home Page</title>","<head data-info=\"{"]}},
+  {"Path":"/robots.txt","perfTarget":{"category":"Static"},"Validation":{"ContentType":"text/plain","MinLength":200,"Contains":["User-agent: *","Disallow: /en-us/windows/si/matrix.html"]}},
+  {"Path":"/favicon.ico","perfTarget":{"category":"Static"},"Validation":{"ContentType":"image/x-icon"}}
+]
