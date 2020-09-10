@@ -202,7 +202,7 @@ We use the `--json-log` command line option to integrate Docker container logs w
 
 ```bash
 # continuously send request every 15 seconds
-# log summary every five minutes to Azure Monitor
+# log summary every five minutes to Log Analytics
 # tag to distinguish between WebV instances in Azure Monitor
 
 --run-loop --sleep 15000 --summary-minutes 5 --json-log --tag my_webv_instance_name
