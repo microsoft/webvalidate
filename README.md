@@ -188,13 +188,37 @@ Web Validate uses both environment variables as well as command line options for
 
 Web Validate works in two distinct modes. The default mode processes the input file(s) in sequential order one time and exits. The "run loop" mode runs in a continuous loop until stopped or for the specified duration. Some environment variables and command flags are only valid if run loop is specified and the application will exit and display usage information. Some parameters have different default values depending on the mode of execution.
 
-## Long Running Tests
+## Integration with Application Monitoring
 
 We use `WebV` and [Azure Container Instances](https://azure.microsoft.com/en-us/services/container-instances/) to run geo-distributed, smoke tests against our Web APIs. These tests run 24 x 7 from multiple Azure regions and provide insight into network latency / health as well as service status.
+
+By doing this, not only can we ensure against a [large cloud bill](https://hackernoon.com/how-we-spent-30k-usd-in-firebase-in-less-than-72-hours-307490bd24d), but we can track how cloud usage changes over time and ensure application functionality and performance through integration and load testing.
 
 `Azure Container Instances` integrate with [Azure Monitor](https://azure.microsoft.com/en-us/services/monitor/) to provide out-of-the-box monitoring, dashboards and alerts. Setup instructions, sample queries and sample dashboards are available [here](https://github.com/retaildevcrews/helium/blob/main/docs/AppService.md#smoke-test-setup).
 
 We use the `--json-log` command line option to integrate Docker container logs with `Log Analytics`. The integration is automatic using `Azure Container Instances`.
+
+### Example Arguments for Long Running Tests
+
+```bash
+# continuously send request every 15 seconds
+# log summary every five minutes to Azure Monitor
+# tag to distinguish between WebV instances in Azure Monitor
+
+--run-loop --sleep 15000 --summary-minutes 5 --json-log --tag my_webv_instance_name
+
+```
+
+### Example Arguments for Load Testing
+
+```bash
+
+# continuously run testing for 300 seconds
+# write all results to console (tab delimited)
+
+--run-loop --duration 300 --verbose
+
+```
 
 > Example Dashboard
 
