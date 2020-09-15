@@ -4,7 +4,7 @@
     <OutputType>Exe</OutputType>
     <TargetFramework>netcoreapp3.1</TargetFramework>
     <RootNamespace>CSE.WebValidate</RootNamespace>
-    <Version>1.3.1</Version>
+    <Version>1.3.2+$([System.DateTime]::UtcNow.ToString(`MMdd-HHmm`))</Version>
     <Copyright>Copyright (c) Microsoft Corporation. All rights reserved.</Copyright>
     <RunAnalyzersDuringLiveAnalysis>true</RunAnalyzersDuringLiveAnalysis>
     <RunAnalyzersDuringBuild>true</RunAnalyzersDuringBuild>

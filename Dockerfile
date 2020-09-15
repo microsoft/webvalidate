@@ -1,14 +1,6 @@
 ### build the app
 FROM mcr.microsoft.com/dotnet/core/sdk:3.1 AS build
 
-### Optional: Set Proxy Variables
-# ENV http_proxy {value}
-# ENV https_proxy {value}
-# ENV HTTP_PROXY {value}
-# ENV HTTPS_PROXY {value}
-# ENV no_proxy {value}
-# ENV NO_PROXY {value}
-
 # Copy the source
 COPY src /src
 
