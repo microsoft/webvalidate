@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Runtime.CompilerServices;
 using System.Text.Json;
 
 namespace CSE.WebValidate.Model
@@ -8,12 +7,12 @@ namespace CSE.WebValidate.Model
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Usage", "CA2227:Collection properties should be read only", Justification = "<Pending>")]
     public class PerfLog
     {
-        public static string Type { get { return "request"; } }
+        public static string Type => "request";
         public DateTime Date { get; set; } = DateTime.UtcNow;
         public int StatusCode { get; set; }
         public bool Failed { get; set; }
         public bool Validated { get; set; } = true;
-        public int ErrorCount { get { return Errors == null ? 0 : Errors.Count; } }
+        public int ErrorCount => Errors == null ? 0 : Errors.Count;
         public double Duration { get; set; }
         public long ContentLength { get; set; }
         public string Category { get; set; }
