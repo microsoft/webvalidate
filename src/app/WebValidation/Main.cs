@@ -631,18 +631,10 @@ namespace CSE.WebValidate
 
                 log += $"{request.Path}";
 
-                // display up to 3 messages
-                if (valid.ValidationErrors.Count > 0)
+                // log error details
+                if (config.VerboseErrors && valid.ValidationErrors.Count > 0)
                 {
-                    if (valid.ValidationErrors.Count <= 3)
-                    {
-                        log += $"\t{string.Join('|', valid.ValidationErrors)}";
-                    }
-                    else
-                    {
-                        // log the count of errors
-                        log += $"\tValidationErrorsCount\t{valid.ValidationErrors.Count}";
-                    }
+                    log += "\n  " + string.Join("\n  ", valid.ValidationErrors);
                 }
 
                 Console.WriteLine(log);
