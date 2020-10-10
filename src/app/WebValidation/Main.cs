@@ -139,6 +139,11 @@ namespace CSE.WebValidate
                         }
                     }
                 }
+                catch (TaskCanceledException tce)
+                {
+                    // task was cancelled
+                    return tce.Task.IsCompleted ? 0 : 1;
+                }
                 catch (Exception ex)
                 {
                     // ignore any error and keep processing
@@ -422,10 +427,20 @@ namespace CSE.WebValidate
                     }
                 }
             }
-            catch (OperationCanceledException ex)
+            catch (TaskCanceledException tce)
+            {
+                // task was cancelled
+                return tce.Task.IsCompleted ? 0 : 1;
+            }
+            catch (OperationCanceledException)
             {
                 // safe to ignore
-                Console.WriteLine(ex.Message);
+                return 0;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Exception: {ex.Message}");
+                return -1;
             }
 
             // graceful exit

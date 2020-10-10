@@ -74,7 +74,7 @@ namespace CSE.WebValidate
             }
             catch (TaskCanceledException tce)
             {
-                // tas was cancelled
+                // task was cancelled
                 return tce.Task.IsCompleted ? 0 : 1;
             }
             catch (Exception ex)
