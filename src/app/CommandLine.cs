@@ -305,9 +305,9 @@ namespace CSE.WebValidate
             }
             Console.WriteLine($"   Run Loop        {config.RunLoop}");
             Console.WriteLine($"   Sleep           {config.Sleep}");
-            Console.WriteLine($"   Verbose Errors  {config.Duration}");
+            Console.WriteLine($"   Verbose Errors  {config.VerboseErrors}");
             Console.WriteLine($"   Duration        {config.Duration}");
-            Console.WriteLine($"   Delay Start     {config.Duration}");
+            Console.WriteLine($"   Delay Start     {config.DelayStart}");
             Console.WriteLine($"   Max Concurrent  {config.MaxConcurrent}");
             Console.WriteLine($"   Max Errors      {config.MaxErrors}");
             Console.WriteLine($"   Random          {config.Random}");
