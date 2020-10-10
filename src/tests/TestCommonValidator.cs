@@ -73,13 +73,13 @@ namespace CSE.WebValidate.Tests.Unit
             var p = new PerfLog
             {
                 Date = new System.DateTime(2020, 1, 1),
-                ValidationErrors = new List<string> { "test" }
+                Errors = new List<string> { "test" }
             };
 
             // validate getters and setters
             Assert.Equal(new System.DateTime(2020, 1, 1), p.Date);
-            Assert.Single(p.ValidationErrors);
-            Assert.Equal("test", p.ValidationErrors[0]);
+            Assert.Single(p.Errors);
+            Assert.Equal("test", p.Errors[0]);
         }
 
         [Fact]
