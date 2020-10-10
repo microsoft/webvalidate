@@ -66,16 +66,18 @@ namespace CSE.WebValidate.Tests.Unit
             System.Environment.SetEnvironmentVariable(EnvKeys.RunLoop, "false");
             System.Environment.SetEnvironmentVariable(EnvKeys.Sleep, "1000");
             System.Environment.SetEnvironmentVariable(EnvKeys.Verbose, "false");
+            System.Environment.SetEnvironmentVariable(EnvKeys.VerboseErrors, "false");
+            System.Environment.SetEnvironmentVariable(EnvKeys.DelayStart, "0");
 
             // test env vars
             parse = root.Parse(string.Empty);
             Assert.Equal(0, parse.Errors.Count);
-            Assert.Equal(14, parse.CommandResult.Children.Count);
+            Assert.Equal(15, parse.CommandResult.Children.Count);
 
             // override the files env var
             parse = root.Parse("-f file1 file2");
             Assert.Equal(0, parse.Errors.Count);
-            Assert.Equal(14, parse.CommandResult.Children.Count);
+            Assert.Equal(15, parse.CommandResult.Children.Count);
             Assert.Equal(2, parse.CommandResult.Children.First(c => c.Symbol.Name == "files").Tokens.Count);
 
             // test run-loop
@@ -98,6 +100,8 @@ namespace CSE.WebValidate.Tests.Unit
             System.Environment.SetEnvironmentVariable(EnvKeys.RunLoop, null);
             System.Environment.SetEnvironmentVariable(EnvKeys.Sleep, null);
             System.Environment.SetEnvironmentVariable(EnvKeys.Verbose, null);
+            System.Environment.SetEnvironmentVariable(EnvKeys.VerboseErrors, null);
+            System.Environment.SetEnvironmentVariable(EnvKeys.DelayStart, null);
 
             // isnullempty fails
             Assert.False(App.CheckFileExists(string.Empty));
