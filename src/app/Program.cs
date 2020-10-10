@@ -98,12 +98,8 @@ namespace CSE.WebValidate
         {
             Console.CancelKeyPress += delegate (object sender, ConsoleCancelEventArgs e)
             {
-                const string ControlCMessage = "Ctl-C Pressed - Starting shutdown ...";
-
                 e.Cancel = true;
                 TokenSource.Cancel(false);
-
-                Console.WriteLine(ControlCMessage);
             };
         }
 
