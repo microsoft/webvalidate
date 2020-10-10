@@ -55,9 +55,12 @@ namespace CSE.WebValidate
 
                 if (config.DelayStart > 0)
                 {
-                    // wait to start the test run
-                    Console.WriteLine($"Waiting {config.DelayStart} seconds to start test ...\n");
+                    if (!config.JsonLog)
+                    {
+                        Console.WriteLine($"Waiting {config.DelayStart} seconds to start test ...\n");
+                    }
 
+                    // wait to start the test run
                     await Task.Delay(config.DelayStart * 1000, TokenSource.Token).ConfigureAwait(false);
                 }
 
@@ -99,7 +102,7 @@ namespace CSE.WebValidate
             Console.CancelKeyPress += delegate (object sender, ConsoleCancelEventArgs e)
             {
                 e.Cancel = true;
-                TokenSource.Cancel(false);
+                TokenSource.Cancel();
             };
         }
 
