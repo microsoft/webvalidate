@@ -29,7 +29,7 @@ namespace CSE.WebValidate
             root.AddOption(new Option<bool>(new string[] { "-v", "--verbose" }, ParseBool, true, "Display verbose results"));
             root.AddOption(new Option<bool>(new string[] { "--json-log" }, ParseBool, true, "Use json log format (implies --verbose)"));
             root.AddOption(new Option<bool>(new string[] { "-r", "--run-loop" }, ParseBool, true, "Run test in an infinite loop"));
-            root.AddOption(new Option<bool>(new string[] { "--verbose-errors" }, ParseBool, false, "Log verbose error messages"));
+            root.AddOption(new Option<bool>(new string[] { "--verbose-errors" }, ParseBool, true, "Log verbose error messages"));
             root.AddOption(new Option<bool>(new string[] { "--random" }, ParseBool, true, "Run requests randomly (requires --run-loop)"));
             root.AddOption(new Option<int>(new string[] { "--duration" }, ParseInt, true, "Test duration (seconds)  (requires --run-loop)"));
             root.AddOption(new Option<int>(new string[] { "--summary-minutes" }, ParseInt, true, "Display summary results (minutes)  (requires --run-loop)"));
@@ -176,7 +176,7 @@ namespace CSE.WebValidate
                 return false;
             }
 
-            string errorMessage = $"--{result.Parent.Symbol.Name} must true or false";
+            string errorMessage = $"--{result.Parent.Symbol.Name} must be true or false";
             bool val;
 
             // bool options default to true if value not specified (ie -r and -r true)
@@ -204,6 +204,12 @@ namespace CSE.WebValidate
                         result.ErrorMessage = errorMessage;
                         return false;
                     }
+                }
+
+                // default to true
+                if (result.Parent.Symbol.Name == "verbose-errors")
+                {
+                    return true;
                 }
 
                 if (result.Parent.Symbol.Name == "verbose" &&
