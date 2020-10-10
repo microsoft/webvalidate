@@ -535,14 +535,13 @@ namespace CSE.WebValidate
             }
 
             // map the parameters
-            PerfLog log = new PerfLog
+            PerfLog log = new PerfLog(validationResult.ValidationErrors)
             {
                 Tag = config.Tag,
                 Path = request?.Path ?? string.Empty,
                 StatusCode = statusCode,
                 Category = request?.PerfTarget?.Category ?? string.Empty,
                 Validated = !validationResult.Failed && validationResult.ValidationErrors.Count == 0,
-                Errors = validationResult.ValidationErrors,
                 Duration = duration,
                 ContentLength = contentLength,
                 Failed = validationResult.Failed

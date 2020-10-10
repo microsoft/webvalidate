@@ -4,7 +4,6 @@ using System.Text.Json;
 
 namespace CSE.WebValidate.Model
 {
-    [System.Diagnostics.CodeAnalysis.SuppressMessage("Usage", "CA2227:Collection properties should be read only", Justification = "<Pending>")]
     public class PerfLog
     {
         public static string Type => "request";
@@ -19,7 +18,12 @@ namespace CSE.WebValidate.Model
         public int? Quartile { get; set; }
         public string Tag { get; set; }
         public string Path { get; set; }
-        public List<string> Errors { get; set; }
+        public List<string> Errors { get; }
+
+        public PerfLog (List<string> validationErrors)
+        {
+            this.Errors = validationErrors;
+        }
 
         public string ToJson(bool verboseErrors)
         {
