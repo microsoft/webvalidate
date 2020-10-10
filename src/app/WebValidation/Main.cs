@@ -1,10 +1,10 @@
 using CSE.WebValidate.Model;
 using System;
 using System.Collections.Generic;
-using System.Dynamic;
 using System.Globalization;
 using System.Net.Http;
 using System.Text;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -18,6 +18,10 @@ namespace CSE.WebValidate
         private static List<Request> requestList;
         private static HttpClient client;
         private static Semaphore LoopController;
+        private static System.Text.Json.JsonSerializerOptions Options = new System.Text.Json.JsonSerializerOptions
+        {
+            IgnoreNullValues = true
+        };
 
         private Config config;
 
@@ -538,13 +542,14 @@ namespace CSE.WebValidate
             // map the parameters
             PerfLog log = new PerfLog
             {
+                Tag = config.Tag,
+                Path = request?.Path ?? string.Empty,
                 StatusCode = statusCode,
                 Category = request?.PerfTarget?.Category ?? string.Empty,
                 Validated = !validationResult.Failed && validationResult.ValidationErrors.Count == 0,
-                ValidationResults = string.Join('\t', validationResult.ValidationErrors),
+                ValidationErrors = validationResult.ValidationErrors,
                 Duration = duration,
                 ContentLength = contentLength,
-                PerfLevel = 0,
                 Failed = validationResult.Failed
             };
 
@@ -559,14 +564,14 @@ namespace CSE.WebValidate
                     if (target != null)
                     {
                         // set to max
-                        log.PerfLevel = target.Quartiles.Count + 1;
+                        log.Quartile = target.Quartiles.Count + 1;
 
                         for (int i = 0; i < target.Quartiles.Count; i++)
                         {
                             // find the lowest Perf Target achieved
                             if (duration <= target.Quartiles[i])
                             {
-                                log.PerfLevel = i + 1;
+                                log.Quartile = i + 1;
                                 break;
                             }
                         }
@@ -601,57 +606,39 @@ namespace CSE.WebValidate
 
             if (config.JsonLog)
             {
-                // create a dynamic log object
-                dynamic log = new ExpandoObject();
-
-                log.logType = "request";
-                log.logDate = perfLog.Date;
-                log.statusCode = perfLog.StatusCode;
-                log.duration = (long)perfLog.Duration;
-                log.path = request.Path;
-                log.contentLength = perfLog.ContentLength;
-                log.category = perfLog.Category;
-                log.quartile = perfLog.PerfLevel;
-
-                if (!string.IsNullOrEmpty(config.Tag))
-                {
-                    log.tag = config.Tag;
-                }
-
-                log.errorCount = valid.ValidationErrors.Count;
-
                 // add verbose errors
-                if (config.VerboseErrors && valid.ValidationErrors.Count > 0)
+                if (!config.VerboseErrors)
                 {
-                    log.errors = valid.ValidationErrors;
+                    perfLog.ErrorCount = perfLog.ValidationErrors.Count;
+                    perfLog.ValidationErrors = null;
                 }
 
-                Console.WriteLine(System.Text.Json.JsonSerializer.Serialize(log));
+                Console.WriteLine(System.Text.Json.JsonSerializer.Serialize(perfLog, Options));
             }
 
             // only log 4XX and 5XX status codes unless verbose is true or there were validation errors
             else if (config.Verbose || perfLog.StatusCode > 399 || valid.Failed || valid.ValidationErrors.Count > 0)
             {
-                string log = $"{Now}\t{perfLog.StatusCode}\t{valid.ValidationErrors.Count}\t{perfLog.Duration}\t{perfLog.ContentLength}\t";
+                string log = $"{perfLog.Date.ToString("o", CultureInfo.InvariantCulture)}\t{perfLog.StatusCode}\t{valid.ValidationErrors.Count}\t{perfLog.Duration}\t{perfLog.ContentLength}\t";
 
                 // log tag if set
-                if (!string.IsNullOrEmpty(config.Tag))
+                if (!string.IsNullOrEmpty(perfLog.Tag))
                 {
-                    log += $"{config.Tag}\t";
+                    log += $"{perfLog.Tag}\t";
                 }
 
                 // log category and perf level if set
-                if (!string.IsNullOrEmpty(perfLog.Category) && perfLog.PerfLevel > 0 && perfLog.PerfLevel <= 4)
+                if (!string.IsNullOrEmpty(perfLog.Category) && perfLog.Quartile != null && perfLog.Quartile > 0 && perfLog.Quartile <= 4)
                 {
-                    log += $"{perfLog.PerfLevel}\t{perfLog.Category}\t";
+                    log += $"{perfLog.Quartile}\t{perfLog.Category}\t";
                 }
 
-                log += $"{request.Path}";
+                log += $"{perfLog.Path}";
 
                 // log error details
                 if (config.VerboseErrors && valid.ValidationErrors.Count > 0)
                 {
-                    log += "\n  " + string.Join("\n  ", valid.ValidationErrors);
+                    log += "\n  " + string.Join("\n  ", perfLog.ValidationErrors);
                 }
 
                 Console.WriteLine(log);
