@@ -139,7 +139,7 @@ namespace CSE.WebValidate.Response
                         {
                             if (dict[property.Field] == null)
                             {
-                                result.ValidationErrors.Add($"\tjson: Field is null: {property.Field}");
+                                result.ValidationErrors.Add($"json: Field is null: {property.Field}");
                             }
                             else
                             {
@@ -158,25 +158,25 @@ namespace CSE.WebValidate.Response
                                 double.TryParse(dict[property.Field].ToString(), out double d) &&
                                 (double)property.Value == d))
                             {
-                                result.ValidationErrors.Add($"\tjson: {property.Field}: {dict[property.Field]} : Expected: {property.Value}");
+                                result.ValidationErrors.Add($"json: {property.Field}: {dict[property.Field]} : Expected: {property.Value}");
                             }
                         }
                     }
                     else
                     {
-                        result.ValidationErrors.Add($"\tjson: Field Not Found: {property.Field}");
+                        result.ValidationErrors.Add($"json: Field Not Found: {property.Field}");
                     }
                 }
             }
 
             catch (SerializationException se)
             {
-                result.ValidationErrors.Add($"\tException: {se.Message}");
+                result.ValidationErrors.Add($"Exception: {se.Message}");
             }
 
             catch (Exception ex)
             {
-                result.ValidationErrors.Add($"\tException: {ex.Message}");
+                result.ValidationErrors.Add($"Exception: {ex.Message}");
             }
 
             return result;
@@ -210,12 +210,12 @@ namespace CSE.WebValidate.Response
             }
             catch (SerializationException se)
             {
-                result.ValidationErrors.Add($"\tException: {se.Message}");
+                result.ValidationErrors.Add($"Exception: {se.Message}");
             }
 
             catch (Exception ex)
             {
-                result.ValidationErrors.Add($"\tException: {ex.Message}");
+                result.ValidationErrors.Add($"Exception: {ex.Message}");
             }
 
             return result;
@@ -295,7 +295,7 @@ namespace CSE.WebValidate.Response
                                 double.TryParse(documentList[(int)property.Index][property.Field].ToString(), out d) &&
                                 (double)property.Value == d))
                             {
-                                result.ValidationErrors.Add($"\tjson: {property.Field}: {documentList[(int)property.Index][property.Field]} : Expected: {property.Value}");
+                                result.ValidationErrors.Add($"json: {property.Field}: {documentList[(int)property.Index][property.Field]} : Expected: {property.Value}");
                             }
                         }
                     }
@@ -304,7 +304,7 @@ namespace CSE.WebValidate.Response
                         // used for checking array of simple type
                         if (!property.Value.Equals(documentList[(int)property.Index]))
                         {
-                            result.ValidationErrors.Add($"\tjson: {property.Field}: {documentList[(int)property.Index]} : Expected: {property.Value}");
+                            result.ValidationErrors.Add($"json: {property.Field}: {documentList[(int)property.Index]} : Expected: {property.Value}");
                         }
                     }
                 }
@@ -321,19 +321,19 @@ namespace CSE.WebValidate.Response
             // validate count
             if (jArray.Count != null && jArray.Count != documentList.Count)
             {
-                result.ValidationErrors.Add($"\tJsonArrayCount: {documentList.Count} Expected: {jArray.Count}");
+                result.ValidationErrors.Add($"JsonArrayCount: {documentList.Count} Expected: {jArray.Count}");
             }
 
             // validate min count
             if (jArray.MinCount != null && jArray.MinCount > documentList.Count)
             {
-                result.ValidationErrors.Add($"\tMinJsonCount: {jArray.MinCount}  Actual: {documentList.Count}");
+                result.ValidationErrors.Add($"MinJsonCount: {jArray.MinCount}  Actual: {documentList.Count}");
             }
 
             // validate max count
             if (jArray.MaxCount != null && jArray.MaxCount < documentList.Count)
             {
-                result.ValidationErrors.Add($"\tMaxJsonCount: {jArray.MaxCount}  Actual: {documentList.Count}");
+                result.ValidationErrors.Add($"MaxJsonCount: {jArray.MaxCount}  Actual: {documentList.Count}");
             }
 
             return result;
@@ -347,7 +347,7 @@ namespace CSE.WebValidate.Response
             if (actual != expected)
             {
                 result.Failed = true;
-                result.ValidationErrors.Add($"\tStatusCode: {actual} Expected: {expected}");
+                result.ValidationErrors.Add($"StatusCode: {actual} Expected: {expected}");
             }
 
             return result;
@@ -363,7 +363,7 @@ namespace CSE.WebValidate.Response
                 if (actual != null && !actual.StartsWith(expected, StringComparison.OrdinalIgnoreCase))
                 {
                     result.Failed = true;
-                    result.ValidationErrors.Add($"\tContentType: {actual} Expected: {expected}");
+                    result.ValidationErrors.Add($"ContentType: {actual} Expected: {expected}");
                 }
             }
 
@@ -386,7 +386,7 @@ namespace CSE.WebValidate.Response
             {
                 if (actual != v.Length)
                 {
-                    result.ValidationErrors.Add($"\tLength: Actual: {actual} Expected: {v.Length}");
+                    result.ValidationErrors.Add($"Length: Actual: {actual} Expected: {v.Length}");
                 }
             }
 
@@ -395,7 +395,7 @@ namespace CSE.WebValidate.Response
             {
                 if (actual < v.MinLength)
                 {
-                    result.ValidationErrors.Add($"\tMinContentLength: Actual: {actual} Expected: {v.MinLength}");
+                    result.ValidationErrors.Add($"MinContentLength: Actual: {actual} Expected: {v.MinLength}");
                 }
             }
 
@@ -404,7 +404,7 @@ namespace CSE.WebValidate.Response
             {
                 if (actual > v.MaxLength)
                 {
-                    result.ValidationErrors.Add($"\tMaxContentLength: Actual: {actual} Expected: {v.MaxLength}");
+                    result.ValidationErrors.Add($"MaxContentLength: Actual: {actual} Expected: {v.MaxLength}");
                 }
             }
 
@@ -431,7 +431,7 @@ namespace CSE.WebValidate.Response
             // compare values
             if (body != exactMatch)
             {
-                result.ValidationErrors.Add($"\tExactMatch: Actual : {body.PadRight(40).Substring(0, 40).Trim()} : Expected: {exactMatch.PadRight(40).Substring(0, 40).Trim()}");
+                result.ValidationErrors.Add($"ExactMatch: Actual : {body.PadRight(40).Substring(0, 40).Trim()} : Expected: {exactMatch.PadRight(40).Substring(0, 40).Trim()}");
             }
 
             return result;
@@ -459,7 +459,7 @@ namespace CSE.WebValidate.Response
                 // compare values
                 if (!body.Contains(c, StringComparison.InvariantCulture))
                 {
-                    result.ValidationErrors.Add($"\tContains: {c.PadRight(40).Substring(0, 40).Trim()}");
+                    result.ValidationErrors.Add($"Contains: {c}");
                 }
             }
 
@@ -483,7 +483,7 @@ namespace CSE.WebValidate.Response
                 // compare values
                 if (body.Contains(c, StringComparison.InvariantCulture))
                 {
-                    result.ValidationErrors.Add($"\tNotContains: {c.PadRight(40).Substring(0, 40).Trim()}");
+                    result.ValidationErrors.Add($"NotContains: {c}");
                 }
             }
 
