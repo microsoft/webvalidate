@@ -18,10 +18,6 @@ namespace CSE.WebValidate
         private static List<Request> requestList;
         private static HttpClient client;
         private static Semaphore LoopController;
-        private static System.Text.Json.JsonSerializerOptions Options = new System.Text.Json.JsonSerializerOptions
-        {
-            IgnoreNullValues = true
-        };
 
         private Config config;
 
@@ -547,7 +543,7 @@ namespace CSE.WebValidate
                 StatusCode = statusCode,
                 Category = request?.PerfTarget?.Category ?? string.Empty,
                 Validated = !validationResult.Failed && validationResult.ValidationErrors.Count == 0,
-                ValidationErrors = validationResult.ValidationErrors,
+                Errors = validationResult.ValidationErrors,
                 Duration = duration,
                 ContentLength = contentLength,
                 Failed = validationResult.Failed
@@ -606,14 +602,7 @@ namespace CSE.WebValidate
 
             if (config.JsonLog)
             {
-                // add verbose errors
-                if (!config.VerboseErrors)
-                {
-                    perfLog.ErrorCount = perfLog.ValidationErrors.Count;
-                    perfLog.ValidationErrors = null;
-                }
-
-                Console.WriteLine(System.Text.Json.JsonSerializer.Serialize(perfLog, Options));
+                Console.WriteLine(perfLog.ToJson(config.VerboseErrors));
             }
 
             // only log 4XX and 5XX status codes unless verbose is true or there were validation errors
@@ -638,7 +627,7 @@ namespace CSE.WebValidate
                 // log error details
                 if (config.VerboseErrors && valid.ValidationErrors.Count > 0)
                 {
-                    log += "\n  " + string.Join("\n  ", perfLog.ValidationErrors);
+                    log += "\n  " + string.Join("\n  ", perfLog.Errors);
                 }
 
                 Console.WriteLine(log);
