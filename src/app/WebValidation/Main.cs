@@ -281,13 +281,14 @@ namespace CSE.WebValidate
                     state.Duration += p.Duration;
                 }
             }
-
-            catch (OperationCanceledException oce)
+            catch (TaskCanceledException)
             {
-                // log and ignore any error
-                Console.WriteLine($"{Now}\t500\t{Math.Round(DateTime.UtcNow.Subtract(dt).TotalMilliseconds, 0)}\t0\t{req.Path}\tTaskCancelledException\t{oce.Message}");
+                // ignore
             }
-
+            catch (OperationCanceledException)
+            {
+                // ignore
+            }
             catch (Exception ex)
             {
                 // log and ignore any error
@@ -453,7 +454,7 @@ namespace CSE.WebValidate
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Exception: {ex.Message}");
+                Console.WriteLine($"Exception: {ex}");
                 return -1;
             }
 
