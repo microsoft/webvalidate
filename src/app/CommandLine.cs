@@ -29,12 +29,14 @@ namespace CSE.WebValidate
             root.AddOption(new Option<bool>(new string[] { "-v", "--verbose" }, ParseBool, true, "Display verbose results"));
             root.AddOption(new Option<bool>(new string[] { "--json-log" }, ParseBool, true, "Use json log format (implies --verbose)"));
             root.AddOption(new Option<bool>(new string[] { "-r", "--run-loop" }, ParseBool, true, "Run test in an infinite loop"));
+            root.AddOption(new Option<bool>(new string[] { "--verbose-errors" }, ParseBool, false, "Log verbose error messages"));
             root.AddOption(new Option<bool>(new string[] { "--random" }, ParseBool, true, "Run requests randomly (requires --run-loop)"));
             root.AddOption(new Option<int>(new string[] { "--duration" }, ParseInt, true, "Test duration (seconds)  (requires --run-loop)"));
             root.AddOption(new Option<int>(new string[] { "--summary-minutes" }, ParseInt, true, "Display summary results (minutes)  (requires --run-loop)"));
             root.AddOption(new Option<int>(new string[] { "-t", "--timeout" }, ParseInt, true, "Request timeout (seconds)"));
             root.AddOption(new Option<int>(new string[] { "--max-concurrent" }, ParseInt, true, "Max concurrent requests"));
             root.AddOption(new Option<int>(new string[] { "--max-errors" }, ParseInt, true, "Max validation errors"));
+            root.AddOption(new Option<int>(new string[] { "--delay-start" }, ParseInt, true, "Delay test start (seconds)"));
             root.AddOption(new Option<bool>(new string[] { "-d", "--dry-run" }, "Validates configuration"));
 
             // these require access to --run-loop so are added at the root level
@@ -303,7 +305,9 @@ namespace CSE.WebValidate
             }
             Console.WriteLine($"   Run Loop        {config.RunLoop}");
             Console.WriteLine($"   Sleep           {config.Sleep}");
+            Console.WriteLine($"   Verbose Errors  {config.Duration}");
             Console.WriteLine($"   Duration        {config.Duration}");
+            Console.WriteLine($"   Delay Start     {config.Duration}");
             Console.WriteLine($"   Max Concurrent  {config.MaxConcurrent}");
             Console.WriteLine($"   Max Errors      {config.MaxErrors}");
             Console.WriteLine($"   Random          {config.Random}");

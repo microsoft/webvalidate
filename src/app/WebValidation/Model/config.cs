@@ -25,6 +25,8 @@ namespace CSE.WebValidate
         public bool DryRun { get; set; }
         public string BaseUrl { get; set; }
         public int SummaryMinutes { get; set; }
+        public bool VerboseErrors { get; set; }
+        public int DelayStart { get; set; }
 
         public void SetDefaultValues()
         {
