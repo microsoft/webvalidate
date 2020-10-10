@@ -429,12 +429,26 @@ namespace CSE.WebValidate
             }
             catch (TaskCanceledException tce)
             {
-                // task was cancelled
-                return tce.Task.IsCompleted ? 0 : 1;
+                // log exception
+                if (!tce.Task.IsCompleted)
+                {
+                    Console.WriteLine($"Exception: {tce}");
+                    return 1;
+                }
+
+                // task is completed
+                return 0;
             }
-            catch (OperationCanceledException)
+            catch (OperationCanceledException oce)
             {
-                // safe to ignore
+                // log exception
+                if (!token.IsCancellationRequested)
+                {
+                    Console.Write($"Exception: {oce}");
+                    return 1;
+                }
+
+                // Operation was cancelled
                 return 0;
             }
             catch (Exception ex)
