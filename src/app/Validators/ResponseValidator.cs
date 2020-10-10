@@ -262,7 +262,7 @@ namespace CSE.WebValidate.Response
                     // check index in bounds
                     if (property.Index < 0 || property.Index >= documentList.Count)
                     {
-                        result.ValidationErrors.Add($"\byIndex: Index out of bounds: {property.Index}");
+                        result.ValidationErrors.Add($"byIndex: Index out of bounds: {property.Index}");
                         break;
                     }
 
@@ -327,13 +327,13 @@ namespace CSE.WebValidate.Response
             // validate min count
             if (jArray.MinCount != null && jArray.MinCount > documentList.Count)
             {
-                result.ValidationErrors.Add($"MinJsonCount: {jArray.MinCount}  Actual: {documentList.Count}");
+                result.ValidationErrors.Add($"MinJsonCount: {documentList.Count} Expected: {jArray.MinCount}");
             }
 
             // validate max count
             if (jArray.MaxCount != null && jArray.MaxCount < documentList.Count)
             {
-                result.ValidationErrors.Add($"MaxJsonCount: {jArray.MaxCount}  Actual: {documentList.Count}");
+                result.ValidationErrors.Add($"MaxJsonCount: {documentList.Count} Expected: {jArray.MaxCount}");
             }
 
             return result;
@@ -386,7 +386,7 @@ namespace CSE.WebValidate.Response
             {
                 if (actual != v.Length)
                 {
-                    result.ValidationErrors.Add($"Length: Actual: {actual} Expected: {v.Length}");
+                    result.ValidationErrors.Add($"Length: {actual} Expected: {v.Length}");
                 }
             }
 
@@ -395,7 +395,7 @@ namespace CSE.WebValidate.Response
             {
                 if (actual < v.MinLength)
                 {
-                    result.ValidationErrors.Add($"MinContentLength: Actual: {actual} Expected: {v.MinLength}");
+                    result.ValidationErrors.Add($"MinContentLength: {actual} Expected: {v.MinLength}");
                 }
             }
 
@@ -404,7 +404,7 @@ namespace CSE.WebValidate.Response
             {
                 if (actual > v.MaxLength)
                 {
-                    result.ValidationErrors.Add($"MaxContentLength: Actual: {actual} Expected: {v.MaxLength}");
+                    result.ValidationErrors.Add($"MaxContentLength: {actual} Expected: {v.MaxLength}");
                 }
             }
 
@@ -431,7 +431,7 @@ namespace CSE.WebValidate.Response
             // compare values
             if (body != exactMatch)
             {
-                result.ValidationErrors.Add($"ExactMatch: Actual : {body.PadRight(40).Substring(0, 40).Trim()} : Expected: {exactMatch.PadRight(40).Substring(0, 40).Trim()}");
+                result.ValidationErrors.Add($"ExactMatch: {body} : Expected: {exactMatch}");
             }
 
             return result;
