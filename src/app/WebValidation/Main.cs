@@ -1,10 +1,8 @@
 using CSE.WebValidate.Model;
-using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Dynamic;
 using System.Globalization;
-using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Threading;
@@ -634,7 +632,7 @@ namespace CSE.WebValidate
                     log.errors = valid.ValidationErrors;
                 }
 
-                Console.WriteLine(JsonConvert.SerializeObject(log));
+                Console.WriteLine(System.Text.Json.JsonSerializer.Serialize(log));
             }
 
             // only log 4XX and 5XX status codes unless verbose is true or there were validation errors
