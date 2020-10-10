@@ -25,7 +25,10 @@ namespace CSE.WebValidate
             RootCommand root = BuildRootCommand();
             root.Handler = CommandHandler.Create((Config cfg) => App.Run(cfg));
 
-            if (args == null) args = Array.Empty<string>();
+            if (args == null)
+            {
+                args = Array.Empty<string>();
+            }
 
             return await root.InvokeAsync(args).ConfigureAwait(false);
         }

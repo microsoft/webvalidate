@@ -194,7 +194,7 @@ namespace CSE.WebValidate.Parameters
             }
 
             // validate field
-            foreach (var f in jsonobject)
+            foreach (JsonProperty f in jsonobject)
             {
                 if (string.IsNullOrWhiteSpace(f.Field))
                 {
@@ -224,7 +224,7 @@ namespace CSE.WebValidate.Parameters
             }
 
             // validate parameters 
-            foreach (var f in byIndexList)
+            foreach (JsonPropertyByIndex f in byIndexList)
             {
                 // validate index
                 if ((f.Index) < 0)

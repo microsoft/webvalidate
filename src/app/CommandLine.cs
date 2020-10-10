@@ -46,7 +46,7 @@ namespace CSE.WebValidate
         }
 
         // validate --duration and --random based on --run-loop
-        static string ValidateRunLoopDependencies(CommandResult result)
+        private static string ValidateRunLoopDependencies(CommandResult result)
         {
             OptionResult runLoopRes = result.Children.FirstOrDefault(c => c.Symbol.Name == "run-loop") as OptionResult;
             OptionResult durationRes = result.Children.FirstOrDefault(c => c.Symbol.Name == "duration") as OptionResult;
@@ -70,7 +70,7 @@ namespace CSE.WebValidate
         }
 
         // parse string command line arg
-        static string ParseString(ArgumentResult result)
+        private static string ParseString(ArgumentResult result)
         {
             string name = result.Parent?.Symbol.Name.ToUpperInvariant().Replace('-', '_');
             if (string.IsNullOrEmpty(name))
@@ -127,7 +127,7 @@ namespace CSE.WebValidate
         }
 
         // parse List<string> command line arg (--files)
-        static List<string> ParseStringList(ArgumentResult result)
+        private static List<string> ParseStringList(ArgumentResult result)
         {
             string name = result.Parent?.Symbol.Name.ToUpperInvariant().Replace('-', '_');
             if (string.IsNullOrEmpty(name))
@@ -167,7 +167,7 @@ namespace CSE.WebValidate
         }
 
         // parse boolean command line arg
-        static bool ParseBool(ArgumentResult result)
+        private static bool ParseBool(ArgumentResult result)
         {
             string name = result.Parent?.Symbol.Name.ToUpperInvariant().Replace('-', '_');
             if (string.IsNullOrEmpty(name))
@@ -232,7 +232,7 @@ namespace CSE.WebValidate
         }
 
         // parser for integer >= 0
-        static int ParseInt(ArgumentResult result)
+        private static int ParseInt(ArgumentResult result)
         {
             string name = result.Parent?.Symbol.Name.ToUpperInvariant().Replace('-', '_');
             if (string.IsNullOrEmpty(name))
@@ -275,7 +275,7 @@ namespace CSE.WebValidate
         }
 
         // get default values for command line args
-        static int GetCommandDefaultValues(ArgumentResult result)
+        private static int GetCommandDefaultValues(ArgumentResult result)
         {
             switch (result.Parent.Symbol.Name)
             {
@@ -299,7 +299,7 @@ namespace CSE.WebValidate
         }
 
         // handle --dry-run
-        static int DoDryRun(Config config)
+        private static int DoDryRun(Config config)
         {
             // display the config
             Console.WriteLine("dry run");

@@ -6,7 +6,7 @@ namespace CSE.WebValidate
     /// <summary>
     /// Shared state for the Timer Request Tasks
     /// </summary>
-    class TimerRequestState
+    internal class TimerRequestState
     {
         public int Index;
         public int MaxIndex;

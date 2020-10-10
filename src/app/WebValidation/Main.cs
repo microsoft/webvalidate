@@ -57,13 +57,7 @@ namespace CSE.WebValidate
         /// <summary>
         /// get UtcNow as an ISO formatted date string
         /// </summary>
-        static string Now
-        {
-            get
-            {
-                return DateTime.UtcNow.ToString("o", CultureInfo.InvariantCulture);
-            }
-        }
+        private static string Now => DateTime.UtcNow.ToString("o", CultureInfo.InvariantCulture);
 
         /// <summary>
         /// Opens and configures the shared HttpClient
@@ -71,9 +65,9 @@ namespace CSE.WebValidate
         /// Disposed in IDispose
         /// </summary>
         /// <returns>HttpClient</returns>
-        HttpClient OpenHttpClient(string host)
+        private HttpClient OpenHttpClient(string host)
         {
-            var client = new HttpClient(new HttpClientHandler { AllowAutoRedirect = false })
+            HttpClient client = new HttpClient(new HttpClientHandler { AllowAutoRedirect = false })
             {
                 Timeout = new TimeSpan(0, 0, config.Timeout),
                 BaseAddress = new Uri(host)
@@ -273,7 +267,7 @@ namespace CSE.WebValidate
             try
             {
                 // Execute the request
-                var p = state.Test.ExecuteRequest(req).Result;
+                PerfLog p = state.Test.ExecuteRequest(req).Result;
 
                 lock (state.Lock)
                 {
@@ -486,7 +480,7 @@ namespace CSE.WebValidate
                 // add the headers to the http request
                 if (request.Headers != null && request.Headers.Count > 0)
                 {
-                    foreach (var key in request.Headers.Keys)
+                    foreach (string key in request.Headers.Keys)
                     {
                         req.Headers.Add(key, request.Headers[key]);
                     }
@@ -588,7 +582,7 @@ namespace CSE.WebValidate
         /// </summary>
         /// <param name="request">Request</param>
         /// <param name="perfLog">PerfLog</param>
-        void LogToConsole(Request request, ValidationResult valid, PerfLog perfLog)
+        private void LogToConsole(Request request, ValidationResult valid, PerfLog perfLog)
         {
             if (request == null)
             {

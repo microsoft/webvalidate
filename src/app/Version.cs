@@ -9,7 +9,7 @@ namespace CSE.WebValidate
     public sealed class Version
     {
         // cache the assembly version
-        static string version = string.Empty;
+        private static string version = string.Empty;
 
         public static string AssemblyVersion
         {

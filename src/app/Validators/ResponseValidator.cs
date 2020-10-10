@@ -255,7 +255,7 @@ namespace CSE.WebValidate.Response
                 double d = 0;
                 int ndx = -1;
 
-                foreach (var property in byIndexList)
+                foreach (JsonPropertyByIndex property in byIndexList)
                 {
                     ndx++;
 
