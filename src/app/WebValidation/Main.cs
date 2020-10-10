@@ -1,7 +1,10 @@
 using CSE.WebValidate.Model;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Dynamic;
 using System.Globalization;
+using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Threading;
@@ -153,19 +156,19 @@ namespace CSE.WebValidate
             }
 
             // display validation failure count
-            if (validationFailureCount > 0)
+            if (validationFailureCount > 0 && !config.JsonLog)
             {
                 Console.WriteLine($"Validation Errors: {validationFailureCount}");
             }
 
             // display error count
-            if (errorCount > 0)
+            if (errorCount > 0 && !config.JsonLog)
             {
                 Console.WriteLine($"Failed: {errorCount} Errors");
             }
 
             // fail if MaxErrors exceeded
-            else if (validationFailureCount > config.MaxErrors)
+            else if (validationFailureCount > config.MaxErrors && !config.JsonLog)
             {
                 Console.Write($"Failed: Validation Errors({validationFailureCount}) exceeded MaxErrors ({config.MaxErrors})");
                 errorCount += validationFailureCount;
@@ -604,18 +607,40 @@ namespace CSE.WebValidate
                 throw new ArgumentNullException(nameof(perfLog));
             }
 
-            string log;
-
             if (config.JsonLog)
             {
-                log = "{ \"logType\": \"request\", " + $"\"logDate\": \"{Now}\", \"statusCode\": {perfLog.StatusCode}, \"duration\": {(long)perfLog.Duration}, \"contentLength\": {perfLog.ContentLength}, \"tag\": \"{config.Tag}\", \"category\": \"{perfLog.Category}\", \"quartile\": {perfLog.PerfLevel}, \"path\": \"{request.Path}\", \"errorCount\": {valid.ValidationErrors.Count}" + " }";
-                Console.WriteLine(log);
+                // create a dynamic log object
+                dynamic log = new ExpandoObject();
+
+                log.logType = "request";
+                log.logDate = perfLog.Date;
+                log.statusCode = perfLog.StatusCode;
+                log.duration = (long)perfLog.Duration;
+                log.path = request.Path;
+                log.contentLength = perfLog.ContentLength;
+                log.category = perfLog.Category;
+                log.quartile = perfLog.PerfLevel;
+
+                if (!string.IsNullOrEmpty(config.Tag))
+                {
+                    log.tag = config.Tag;
+                }
+
+                log.errorCount = valid.ValidationErrors.Count;
+
+                // add verbose errors
+                if (config.VerboseErrors && valid.ValidationErrors.Count > 0)
+                {
+                    log.errors = valid.ValidationErrors;
+                }
+
+                Console.WriteLine(JsonConvert.SerializeObject(log));
             }
 
             // only log 4XX and 5XX status codes unless verbose is true or there were validation errors
             else if (config.Verbose || perfLog.StatusCode > 399 || valid.Failed || valid.ValidationErrors.Count > 0)
             {
-                log = $"{Now}\t{perfLog.StatusCode}\t{valid.ValidationErrors.Count}\t{perfLog.Duration}\t{perfLog.ContentLength}\t";
+                string log = $"{Now}\t{perfLog.StatusCode}\t{valid.ValidationErrors.Count}\t{perfLog.Duration}\t{perfLog.ContentLength}\t";
 
                 // log tag if set
                 if (!string.IsNullOrEmpty(config.Tag))
