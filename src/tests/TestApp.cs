@@ -72,12 +72,12 @@ namespace CSE.WebValidate.Tests.Unit
             // test env vars
             parse = root.Parse(string.Empty);
             Assert.Equal(0, parse.Errors.Count);
-            Assert.Equal(15, parse.CommandResult.Children.Count);
+            Assert.Equal(16, parse.CommandResult.Children.Count);
 
             // override the files env var
             parse = root.Parse("-f file1 file2");
             Assert.Equal(0, parse.Errors.Count);
-            Assert.Equal(15, parse.CommandResult.Children.Count);
+            Assert.Equal(16, parse.CommandResult.Children.Count);
             Assert.Equal(2, parse.CommandResult.Children.First(c => c.Symbol.Name == "files").Tokens.Count);
 
             // test run-loop
