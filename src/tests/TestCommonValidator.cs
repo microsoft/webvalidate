@@ -70,10 +70,9 @@ namespace CSE.WebValidate.Tests.Unit
         [Fact]
         public void PerfLogTest()
         {
-            var p = new PerfLog
+            var p = new PerfLog(new List<string> { "test" })
             {
-                Date = new System.DateTime(2020, 1, 1),
-                Errors = new List<string> { "test" }
+                Date = new System.DateTime(2020, 1, 1)
             };
 
             // validate getters and setters
