@@ -53,6 +53,14 @@ namespace CSE.WebValidate
             {
                 using WebV webv = new CSE.WebValidate.WebV(config);
 
+                if (config.DelayStart > 0)
+                {
+                    // wait to start the test run
+                    Console.WriteLine($"Waiting {config.DelayStart} seconds to start test ...\n");
+
+                    await Task.Delay(config.DelayStart * 1000, TokenSource.Token).ConfigureAwait(false);
+                }
+
                 if (config.RunLoop)
                 {
                     // run in a loop
@@ -63,6 +71,11 @@ namespace CSE.WebValidate
                     // run one iteration
                     return await webv.RunOnce(config, TokenSource.Token).ConfigureAwait(false);
                 }
+            }
+            catch (TaskCanceledException tce)
+            {
+                // tas was cancelled
+                return tce.Task.IsCompleted ? 0 : 1;
             }
             catch (Exception ex)
             {
@@ -81,7 +94,7 @@ namespace CSE.WebValidate
                 const string ControlCMessage = "Ctl-C Pressed - Starting shutdown ...";
 
                 e.Cancel = true;
-                TokenSource.Cancel();
+                TokenSource.Cancel(false);
 
                 Console.WriteLine(ControlCMessage);
             };
