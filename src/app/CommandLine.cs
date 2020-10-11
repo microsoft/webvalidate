@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License. See LICENSE in the project root for license information.
+
+using System;
 using System.Collections.Generic;
 using System.CommandLine;
 using System.CommandLine.Parsing;
@@ -6,6 +9,9 @@ using System.Linq;
 
 namespace CSE.WebValidate
 {
+    /// <summary>
+    /// Main application class
+    /// </summary>
     public sealed partial class App
     {
         /// <summary>
@@ -18,7 +24,7 @@ namespace CSE.WebValidate
             {
                 Name = "WebValidate",
                 Description = "Validate API responses",
-                TreatUnmatchedTokensAsErrors = true
+                TreatUnmatchedTokensAsErrors = true,
             };
 
             root.AddOption(new Option<string>(new string[] { "-s", "--server" }, ParseString, true, "Server to test"));
@@ -180,7 +186,6 @@ namespace CSE.WebValidate
             bool val;
 
             // bool options default to true if value not specified (ie -r and -r true)
-
             if (result.Parent.Parent.Children.FirstOrDefault(c => c.Symbol.Name == result.Parent.Symbol.Name) is OptionResult res &&
                 !res.IsImplicit &&
                 result.Tokens.Count == 0)
@@ -309,6 +314,7 @@ namespace CSE.WebValidate
             {
                 Console.WriteLine($"   Tag             {config.Tag}");
             }
+
             Console.WriteLine($"   Run Loop        {config.RunLoop}");
             Console.WriteLine($"   Sleep           {config.Sleep}");
             Console.WriteLine($"   Verbose Errors  {config.VerboseErrors}");
