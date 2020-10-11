@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License. See LICENSE in the project root for license information.
+
+using System;
 using System.Reflection;
 
 namespace CSE.WebValidate
@@ -11,6 +14,9 @@ namespace CSE.WebValidate
         // cache the assembly version
         private static string version = string.Empty;
 
+        /// <summary>
+        /// Gets assembly version
+        /// </summary>
         public static string AssemblyVersion
         {
             get
