@@ -41,7 +41,7 @@ namespace CSE.WebValidate.Tests.Unit
             cfg.Files.Add("msft.json");
 
             // load and validate all of our test files
-            using var wv = new WebV(cfg);
+            using WebV wv = new WebV(cfg);
 
             // file not found test
             Assert.Null(wv.ReadJson("test"));
@@ -129,7 +129,7 @@ namespace CSE.WebValidate.Tests.Unit
 
             Assert.Equal(0, parse.Errors.Count);
 
-            var result = parse.CommandResult.Children.FirstOrDefault(c => c.Symbol.Name == "run-loop");
+            SymbolResult result = parse.CommandResult.Children.FirstOrDefault(c => c.Symbol.Name == "run-loop");
             Assert.NotNull(result);
             Assert.Equal(0, result.Tokens.Count);
 
@@ -150,7 +150,7 @@ namespace CSE.WebValidate.Tests.Unit
             Assert.Equal(1, parse.Errors.Count);
         }
 
-        Config BuildConfig(string server)
+        private Config BuildConfig(string server)
         {
             return new Config
             {
@@ -168,7 +168,7 @@ namespace CSE.WebValidate.Tests.Unit
             cfg.Files.Add("msft.json");
 
             // load and validate all of our test files
-            using var wv = new WebV(cfg);
+            using WebV wv = new WebV(cfg);
             Assert.Equal(0, await wv.RunOnce(cfg, new System.Threading.CancellationToken()).ConfigureAwait(false));
         }
 
@@ -179,7 +179,7 @@ namespace CSE.WebValidate.Tests.Unit
             cfg.Files.Add("github.json");
 
             // load and validate all of our test files
-            using var wv = new WebV(cfg);
+            using WebV wv = new WebV(cfg);
             Assert.Equal(0, await wv.RunOnce(cfg, new System.Threading.CancellationToken()).ConfigureAwait(false));
         }
     }

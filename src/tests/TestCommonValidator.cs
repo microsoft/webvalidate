@@ -1,6 +1,6 @@
-﻿using CSE.WebValidate.Model;
+﻿using System.Collections.Generic;
+using CSE.WebValidate.Model;
 using CSE.WebValidate.Validators;
-using System.Collections.Generic;
 using Xunit;
 
 namespace CSE.WebValidate.Tests.Unit
@@ -70,7 +70,7 @@ namespace CSE.WebValidate.Tests.Unit
         [Fact]
         public void PerfLogTest()
         {
-            var p = new PerfLog(new List<string> { "test" })
+            PerfLog p = new PerfLog(new List<string> { "test" })
             {
                 Date = new System.DateTime(2020, 1, 1)
             };

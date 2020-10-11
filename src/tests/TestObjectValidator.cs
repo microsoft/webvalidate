@@ -1,6 +1,6 @@
+using System.Collections.Generic;
 using CSE.WebValidate.Model;
 using CSE.WebValidate.Validators;
-using System.Collections.Generic;
 using Xunit;
 
 namespace CSE.WebValidate.Tests.Unit
