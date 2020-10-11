@@ -1,16 +1,28 @@
-﻿using CSE.WebValidate.Model;
-using Newtonsoft.Json;
+﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License. See LICENSE in the project root for license information.
+
 using System;
 using System.Collections.Generic;
 using System.Dynamic;
 using System.Net.Http;
 using System.Runtime.Serialization;
+using CSE.WebValidate.Model;
+using Newtonsoft.Json;
 
-namespace CSE.WebValidate.Response
+namespace CSE.WebValidate.Validators
 {
-    public static class Validator
+    /// <summary>
+    /// Response Validator Class
+    /// </summary>
+    public static class ResponseValidator
     {
-        // validate Request
+        /// <summary>
+        /// Validate a request
+        /// </summary>
+        /// <param name="r">Request</param>
+        /// <param name="response">HttpResponseMessage</param>
+        /// <param name="body">response body</param>
+        /// <returns>ValidationResult</returns>
         public static ValidationResult Validate(Request r, HttpResponseMessage response, string body)
         {
             ValidationResult result = new ValidationResult();
@@ -79,7 +91,12 @@ namespace CSE.WebValidate.Response
             return result;
         }
 
-        // validate Validation
+        /// <summary>
+        /// Validate a Validation object
+        /// </summary>
+        /// <param name="v">Validation object</param>
+        /// <param name="body">string</param>
+        /// <returns>ValidationResult</returns>
         public static ValidationResult Validate(Validation v, string body)
         {
             ValidationResult result = new ValidationResult();
@@ -103,7 +120,12 @@ namespace CSE.WebValidate.Response
             return result;
         }
 
-        // validate JsonObject
+        /// <summary>
+        /// Validate json properties
+        /// </summary>
+        /// <param name="properties">List of JsonProperty</param>
+        /// <param name="body">string</param>
+        /// <returns>ValidationResult</returns>
         public static ValidationResult Validate(List<JsonProperty> properties, string body)
         {
             ValidationResult result = new ValidationResult();
@@ -168,12 +190,10 @@ namespace CSE.WebValidate.Response
                     }
                 }
             }
-
             catch (SerializationException se)
             {
                 result.ValidationErrors.Add($"Exception: {se.Message}");
             }
-
             catch (Exception ex)
             {
                 result.ValidationErrors.Add($"Exception: {ex.Message}");
@@ -182,7 +202,12 @@ namespace CSE.WebValidate.Response
             return result;
         }
 
-        // validate JsonArray
+        /// <summary>
+        /// Validate a json array
+        /// </summary>
+        /// <param name="jArray">JsonArray</param>
+        /// <param name="body">string</param>
+        /// <returns>ValidationResult</returns>
         public static ValidationResult Validate(JsonArray jArray, string body)
         {
             ValidationResult result = new ValidationResult();
@@ -212,7 +237,6 @@ namespace CSE.WebValidate.Response
             {
                 result.ValidationErrors.Add($"Exception: {se.Message}");
             }
-
             catch (Exception ex)
             {
                 result.ValidationErrors.Add($"Exception: {ex.Message}");
@@ -221,7 +245,193 @@ namespace CSE.WebValidate.Response
             return result;
         }
 
-        // validate ForEach
+        /// <summary>
+        /// Validate Status Code
+        /// </summary>
+        /// <param name="actual">actual value</param>
+        /// <param name="expected">expected value</param>
+        /// <returns>ValidationResult</returns>
+        public static ValidationResult ValidateStatusCode(int actual, int expected)
+        {
+            ValidationResult result = new ValidationResult();
+
+            if (actual != expected)
+            {
+                result.Failed = true;
+                result.ValidationErrors.Add($"StatusCode: {actual} Expected: {expected}");
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Validate Content Type
+        /// </summary>
+        /// <param name="actual">actual value</param>
+        /// <param name="expected">expected value</param>
+        /// <returns>ValidationResult</returns>
+        public static ValidationResult ValidateContentType(string actual, string expected)
+        {
+            ValidationResult result = new ValidationResult();
+
+            if (!string.IsNullOrEmpty(expected))
+            {
+                if (actual != null && !actual.StartsWith(expected, StringComparison.OrdinalIgnoreCase))
+                {
+                    result.Failed = true;
+                    result.ValidationErrors.Add($"ContentType: {actual} Expected: {expected}");
+                }
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Validate Length
+        /// </summary>
+        /// <param name="actual">actual value</param>
+        /// <param name="v">Validation object</param>
+        /// <returns>ValidationResult</returns>
+        public static ValidationResult ValidateLength(long actual, Validation v)
+        {
+            ValidationResult result = new ValidationResult();
+
+            // nothing to validate
+            if (v == null || (v.Length == null && v.MinLength == null && v.MaxLength == null))
+            {
+                return result;
+            }
+
+            // validate length
+            if (v.Length != null)
+            {
+                if (actual != v.Length)
+                {
+                    result.ValidationErrors.Add($"Length: {actual} Expected: {v.Length}");
+                }
+            }
+
+            // validate minLength
+            if (v.MinLength != null)
+            {
+                if (actual < v.MinLength)
+                {
+                    result.ValidationErrors.Add($"MinContentLength: {actual} Expected: {v.MinLength}");
+                }
+            }
+
+            // validate maxLength
+            if (v.MaxLength != null)
+            {
+                if (actual > v.MaxLength)
+                {
+                    result.ValidationErrors.Add($"MaxContentLength: {actual} Expected: {v.MaxLength}");
+                }
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Validate Exact Match
+        /// </summary>
+        /// <param name="exactMatch">value to match</param>
+        /// <param name="body">response body</param>
+        /// <returns>ValidationResult</returns>
+        public static ValidationResult ValidateExactMatch(string exactMatch, string body)
+        {
+            ValidationResult result = new ValidationResult();
+
+            // nothing to validate
+            if (exactMatch == null)
+            {
+                return result;
+            }
+
+            // make sure the validators don't throw an exception but still fail
+            if (body == null)
+            {
+                body = string.Empty;
+            }
+
+            // compare values
+            if (body != exactMatch)
+            {
+                result.ValidationErrors.Add($"ExactMatch: {body} : Expected: {exactMatch}");
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Validate Contains
+        /// </summary>
+        /// <param name="containsList">list of strings to validate</param>
+        /// <param name="body">response body</param>
+        /// <returns>ValidationResult</returns>
+        public static ValidationResult ValidateContains(List<string> containsList, string body)
+        {
+            ValidationResult result = new ValidationResult();
+
+            if (containsList == null || containsList.Count == 0)
+            {
+                return result;
+            }
+
+            // make sure the validators don't throw an exception but still fail
+            if (body == null)
+            {
+                body = string.Empty;
+            }
+
+            // validate each rule
+            foreach (string c in containsList)
+            {
+                // compare values
+                if (!body.Contains(c, StringComparison.InvariantCulture))
+                {
+                    result.ValidationErrors.Add($"Contains: {c}");
+                }
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Validate Not Contains
+        /// </summary>
+        /// <param name="notContainsList">list of excluded strings</param>
+        /// <param name="body">response body</param>
+        /// <returns>ValidationResult</returns>
+        public static ValidationResult ValidateNotContains(List<string> notContainsList, string body)
+        {
+            ValidationResult result = new ValidationResult();
+
+            // nothing to validate
+            if (notContainsList == null || notContainsList.Count == 0 || string.IsNullOrEmpty(body))
+            {
+                return result;
+            }
+
+            // validate each rule
+            foreach (string c in notContainsList)
+            {
+                // compare values
+                if (body.Contains(c, StringComparison.InvariantCulture))
+                {
+                    result.ValidationErrors.Add($"NotContains: {c}");
+                }
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Validate For Each
+        /// </summary>
+        /// <param name="validationList">list of Validation objects</param>
+        /// <param name="documentList">dynamic list of documents to validate</param>
+        /// <returns>ValidationResult</returns>
         private static ValidationResult ValidateForEach(List<Validation> validationList, List<dynamic> documentList)
         {
             ValidationResult result = new ValidationResult();
@@ -243,7 +453,12 @@ namespace CSE.WebValidate.Response
             return result;
         }
 
-        // validate ByIndex
+        /// <summary>
+        /// Validate By Index
+        /// </summary>
+        /// <param name="byIndexList">list of json properties by index</param>
+        /// <param name="documentList">dynamic list of documents to validate</param>
+        /// <returns>ValidationResult</returns>
         private static ValidationResult ValidateByIndex(List<JsonPropertyByIndex> byIndexList, List<dynamic> documentList)
         {
             ValidationResult result = new ValidationResult();
@@ -313,7 +528,12 @@ namespace CSE.WebValidate.Response
             return result;
         }
 
-        // validate JsonArray Length, MinLength and MaxLength
+        /// <summary>
+        /// Validate json array length
+        /// </summary>
+        /// <param name="jArray">json array</param>
+        /// <param name="documentList">dynamic list of documents to validate</param>
+        /// <returns>ValidationResult</returns>
         private static ValidationResult ValidateJsonArrayLength(JsonArray jArray, List<dynamic> documentList)
         {
             ValidationResult result = new ValidationResult();
@@ -334,157 +554,6 @@ namespace CSE.WebValidate.Response
             if (jArray.MaxCount != null && jArray.MaxCount < documentList.Count)
             {
                 result.ValidationErrors.Add($"MaxJsonCount: {documentList.Count} Expected: {jArray.MaxCount}");
-            }
-
-            return result;
-        }
-
-        // validate StatusCode
-        public static ValidationResult ValidateStatusCode(int actual, int expected)
-        {
-            ValidationResult result = new ValidationResult();
-
-            if (actual != expected)
-            {
-                result.Failed = true;
-                result.ValidationErrors.Add($"StatusCode: {actual} Expected: {expected}");
-            }
-
-            return result;
-        }
-
-        // validate ContentType
-        public static ValidationResult ValidateContentType(string actual, string expected)
-        {
-            ValidationResult result = new ValidationResult();
-
-            if (!string.IsNullOrEmpty(expected))
-            {
-                if (actual != null && !actual.StartsWith(expected, StringComparison.OrdinalIgnoreCase))
-                {
-                    result.Failed = true;
-                    result.ValidationErrors.Add($"ContentType: {actual} Expected: {expected}");
-                }
-            }
-
-            return result;
-        }
-
-        // validate Length, MinLength and MaxLength
-        public static ValidationResult ValidateLength(long actual, Validation v)
-        {
-            ValidationResult result = new ValidationResult();
-
-            // nothing to validate
-            if (v == null || (v.Length == null && v.MinLength == null && v.MaxLength == null))
-            {
-                return result;
-            }
-
-            // validate length
-            if (v.Length != null)
-            {
-                if (actual != v.Length)
-                {
-                    result.ValidationErrors.Add($"Length: {actual} Expected: {v.Length}");
-                }
-            }
-
-            // validate minLength
-            if (v.MinLength != null)
-            {
-                if (actual < v.MinLength)
-                {
-                    result.ValidationErrors.Add($"MinContentLength: {actual} Expected: {v.MinLength}");
-                }
-            }
-
-            // validate maxLength
-            if (v.MaxLength != null)
-            {
-                if (actual > v.MaxLength)
-                {
-                    result.ValidationErrors.Add($"MaxContentLength: {actual} Expected: {v.MaxLength}");
-                }
-            }
-
-            return result;
-        }
-
-        // validate ExactMatch
-        public static ValidationResult ValidateExactMatch(string exactMatch, string body)
-        {
-            ValidationResult result = new ValidationResult();
-
-            // nothing to validate
-            if (exactMatch == null)
-            {
-                return result;
-            }
-
-            // make sure the validators don't throw an exception but still fail
-            if (body == null)
-            {
-                body = string.Empty;
-            }
-
-            // compare values
-            if (body != exactMatch)
-            {
-                result.ValidationErrors.Add($"ExactMatch: {body} : Expected: {exactMatch}");
-            }
-
-            return result;
-        }
-
-        // validate Contains
-        public static ValidationResult ValidateContains(List<string> containsList, string body)
-        {
-            ValidationResult result = new ValidationResult();
-
-            if (containsList == null || containsList.Count == 0)
-            {
-                return result;
-            }
-
-            // make sure the validators don't throw an exception but still fail
-            if (body == null)
-            {
-                body = string.Empty;
-            }
-
-            // validate each rule
-            foreach (string c in containsList)
-            {
-                // compare values
-                if (!body.Contains(c, StringComparison.InvariantCulture))
-                {
-                    result.ValidationErrors.Add($"Contains: {c}");
-                }
-            }
-
-            return result;
-        }
-
-        //validate NotContains
-        public static ValidationResult ValidateNotContains(List<string> notContainsList, string body)
-        {
-            ValidationResult result = new ValidationResult();
-
-            // nothing to validate
-            if (notContainsList == null || notContainsList.Count == 0 || string.IsNullOrEmpty(body))
-            {
-                return result;
-            }
-
-            // validate each rule
-            foreach (string c in notContainsList)
-            {
-                // compare values
-                if (body.Contains(c, StringComparison.InvariantCulture))
-                {
-                    result.ValidationErrors.Add($"NotContains: {c}");
-                }
             }
 
             return result;

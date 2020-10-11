@@ -1,12 +1,17 @@
-﻿using CSE.WebValidate.Model;
+﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License. See LICENSE in the project root for license information.
+
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using CSE.WebValidate.Model;
 
-
-namespace CSE.WebValidate.Parameters
+namespace CSE.WebValidate.Validators
 {
-    public static class Validator
+    /// <summary>
+    /// Validate parameters
+    /// </summary>
+    public static class ParameterValidator
     {
         /// <summary>
         /// validate Request
@@ -72,7 +77,7 @@ namespace CSE.WebValidate.Parameters
                 res.ValidationErrors.Add("exactMatch: exactMatch cannot be empty string");
             }
 
-            //validate lengths
+            // validate lengths
             res.Add(ValidateLength(v));
 
             // validate MaxMilliSeconds
@@ -97,10 +102,10 @@ namespace CSE.WebValidate.Parameters
             return res;
         }
 
-        ///<summary>
+        /// <summary>
         /// validate PerfTarget
-        ///</summary>
-        ///<param name="target">PerfTarget</param>
+        /// </summary>
+        /// <param name="target">PerfTarget</param>
         /// <returns>ValidationResult</returns>
         public static ValidationResult Validate(PerfTarget target)
         {
@@ -119,7 +124,7 @@ namespace CSE.WebValidate.Parameters
                 res.ValidationErrors.Add("category: category cannot be empty");
             }
 
-            //validate Targets
+            // validate Targets
             if (target.Quartiles == null || target.Quartiles.Count != 3)
             {
                 res.Failed = true;
@@ -178,10 +183,10 @@ namespace CSE.WebValidate.Parameters
             return res;
         }
 
-        ///<summary>
+        /// <summary>
         /// validate JsonObject
-        ///</summary>
-        ///<param name="jsonobject">list of JsonProperty</param>
+        /// </summary>
+        /// <param name="jsonobject">list of JsonProperty</param>
         /// <returns>ValidationResult</returns>
         public static ValidationResult Validate(List<JsonProperty> jsonobject)
         {
@@ -208,10 +213,10 @@ namespace CSE.WebValidate.Parameters
             return res;
         }
 
-        ///<summary>
+        /// <summary>
         /// validate JsonArray.ByIndex
-        ///</summary>
-        ///<param name="byIndexList">list of JsonPropertyByIndex</param>
+        /// </summary>
+        /// <param name="byIndexList">list of JsonPropertyByIndex</param>
         /// <returns>ValidationResult</returns>
         public static ValidationResult Validate(List<JsonPropertyByIndex> byIndexList)
         {
@@ -223,11 +228,11 @@ namespace CSE.WebValidate.Parameters
                 return res;
             }
 
-            // validate parameters 
+            // validate parameters
             foreach (JsonPropertyByIndex f in byIndexList)
             {
                 // validate index
-                if ((f.Index) < 0)
+                if (f.Index < 0)
                 {
                     res.Failed = true;
                     res.ValidationErrors.Add("index: index cannot be less than 0");
@@ -270,10 +275,10 @@ namespace CSE.WebValidate.Parameters
             return res;
         }
 
-        ///<summary>
+        /// <summary>
         /// validate Length, MinLength and MaxLength
-        ///</summary>
-        ///<param name="v">Validation</param>
+        /// </summary>
+        /// <param name="v">Validation</param>
         /// <returns>ValidationResult</returns>
         public static ValidationResult ValidateLength(Validation v)
         {
@@ -329,7 +334,7 @@ namespace CSE.WebValidate.Parameters
             }
 
             // verb must be in this list
-            if (!(new List<string> { "GET", "HEAD", "POST", "PUT", "DELETE", "TRACE", "OPTIONS", "CONNECT", "PATCH" }).Contains(verb))
+            if (!new List<string> { "GET", "HEAD", "POST", "PUT", "DELETE", "TRACE", "OPTIONS", "CONNECT", "PATCH" }.Contains(verb))
             {
                 res.ValidationErrors.Add("verb: invalid verb: " + verb);
             }
@@ -379,6 +384,7 @@ namespace CSE.WebValidate.Parameters
                 res.Failed = true;
                 res.ValidationErrors.Add("path: path is required");
             }
+
             // path must begin with /
             else if (!path.StartsWith("/", StringComparison.OrdinalIgnoreCase))
             {
