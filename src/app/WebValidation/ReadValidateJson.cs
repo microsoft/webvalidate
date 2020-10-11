@@ -7,7 +7,9 @@ using System.IO;
 using System.Net.Http;
 using CSE.WebValidate.Model;
 using CSE.WebValidate.Validators;
-using Newtonsoft.Json;namespace CSE.WebValidate
+using Newtonsoft.Json;
+
+namespace CSE.WebValidate
 {
     /// <summary>
     /// WebV class (partial)
