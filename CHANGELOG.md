@@ -2,6 +2,7 @@
 
 ## v1.4.0 - October 2020
 
+- added for any json array testing
 - added --delay-start
 - added --verbose-errors
 - bug fixes
