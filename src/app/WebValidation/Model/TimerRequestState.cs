@@ -11,24 +11,54 @@ namespace CSE.WebValidate
     /// </summary>
     internal class TimerRequestState
     {
-        /// <summary>        /// gets or sets the request index        /// </summary>
+        /// <summary>
+        /// gets or sets the request index
+        /// </summary>
         public int Index { get; set; }
-        /// <summary>        /// gets or sets the max request index        /// </summary>
+
+        /// <summary>
+        /// gets or sets the max request index
+        /// </summary>
         public int MaxIndex { get; set; }
-        /// <summary>        /// gets or sets the count        /// </summary>
+
+        /// <summary>
+        /// gets or sets the count
+        /// </summary>
         public long Count { get; set; }
-        /// <summary>        /// gets or sets the duration in ms        /// </summary>
+
+        /// <summary>
+        /// gets or sets the duration in ms
+        /// </summary>
         public double Duration { get; set; }
-        /// <summary>        /// gets or sets the number of errors        /// </summary>
+
+        /// <summary>
+        /// gets or sets the number of errors
+        /// </summary>
         public int ErrorCount { get; set; }
-        /// <summary>        /// gets or sets the random number generator        /// </summary>
+
+        /// <summary>
+        /// gets or sets the random number generator
+        /// </summary>
         public Random Random { get; set; }
-        /// <summary>        /// gets the lock object        /// </summary>
+
+        /// <summary>
+        /// gets the lock object
+        /// </summary>
         public object Lock { get; } = new object();
-        /// <summary>        /// gets or sets the WebV object        /// </summary>
+
+        /// <summary>
+        /// gets or sets the WebV object
+        /// </summary>
         public WebV Test { get; set; }
-        /// <summary>        /// gets or sets the current date time        /// </summary>
-        public DateTime CurrentLogTime { get; set; }        /// <summary>        /// gets or sets the cancellation token        /// </summary>
+
+        /// <summary>
+        /// gets or sets the current date time
+        /// </summary>
+        public DateTime CurrentLogTime { get; set; }
+
+        /// <summary>
+        /// gets or sets the cancellation token
+        /// </summary>
         public CancellationToken Token { get; set; }
     }
 }

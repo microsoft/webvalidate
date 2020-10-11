@@ -4,10 +4,20 @@
 using System.Collections.Generic;
 
 namespace CSE.WebValidate.Model
-{    /// <summary>    /// InputJson object    /// </summary>
+{
+    /// <summary>
+    /// InputJson object
+    /// </summary>
     public class InputJson
-    {        /// <summary>        /// Gets or sets list of variables        /// </summary>
-        public List<string> Variables { get; set; }        /// <summary>        /// Gets or sets list of Requests        /// </summary>
+    {
+        /// <summary>
+        /// Gets or sets list of variables
+        /// </summary>
+        public List<string> Variables { get; set; }
+
+        /// <summary>
+        /// Gets or sets list of Requests
+        /// </summary>
         public List<Request> Requests { get; set; }
     }
 }
