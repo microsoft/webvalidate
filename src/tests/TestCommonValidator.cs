@@ -1,6 +1,6 @@
-﻿using CSE.WebValidate.Model;
-using CSE.WebValidate.Parameters;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using CSE.WebValidate.Model;
+using CSE.WebValidate.Validators;
 using Xunit;
 
 namespace CSE.WebValidate.Tests.Unit
@@ -13,11 +13,11 @@ namespace CSE.WebValidate.Tests.Unit
             ValidationResult res;
 
             // empty path
-            res = Validator.ValidatePath(string.Empty);
+            res = ParameterValidator.ValidatePath(string.Empty);
             Assert.True(res.Failed);
 
             // path must start with /
-            res = Validator.ValidatePath("testpath");
+            res = ParameterValidator.ValidatePath("testpath");
             Assert.True(res.Failed);
         }
 
@@ -34,13 +34,13 @@ namespace CSE.WebValidate.Tests.Unit
                 Path = "badpath",
                 Validation = null
             };
-            res = Validator.Validate(r);
+            res = ParameterValidator.Validate(r);
             Assert.True(res.Failed);
 
             Validation v = new Validation();
 
             // null is valid
-            res = Validator.ValidateLength(null);
+            res = ParameterValidator.ValidateLength(null);
             Assert.False(res.Failed);
 
             // edge values
@@ -63,22 +63,22 @@ namespace CSE.WebValidate.Tests.Unit
             v.Contains = new List<string> { string.Empty };
             v.NotContains = new List<string> { string.Empty };
 
-            res = Validator.Validate(v);
+            res = ParameterValidator.Validate(v);
             Assert.True(res.Failed);
         }
 
         [Fact]
         public void PerfLogTest()
         {
-            var p = new PerfLog
+            PerfLog p = new PerfLog(new List<string> { "test" })
             {
-                Date = new System.DateTime(2020, 1, 1),
-                ValidationResults = "test"
+                Date = new System.DateTime(2020, 1, 1)
             };
 
             // validate getters and setters
             Assert.Equal(new System.DateTime(2020, 1, 1), p.Date);
-            Assert.Equal("test", p.ValidationResults);
+            Assert.Single(p.Errors);
+            Assert.Equal("test", p.Errors[0]);
         }
 
         [Fact]
@@ -88,17 +88,17 @@ namespace CSE.WebValidate.Tests.Unit
 
             // category can't be blank
             PerfTarget t = new PerfTarget();
-            res = Validator.Validate(t);
+            res = ParameterValidator.Validate(t);
             Assert.True(res.Failed);
 
             // quartiles can't be null
             t.Category = "Tests";
-            res = Validator.Validate(t);
+            res = ParameterValidator.Validate(t);
             Assert.True(res.Failed);
 
             // valid
             t.Quartiles = new List<double> { 100, 200, 400 };
-            res = Validator.Validate(t);
+            res = ParameterValidator.Validate(t);
             Assert.False(res.Failed);
 
         }
@@ -108,16 +108,16 @@ namespace CSE.WebValidate.Tests.Unit
         {
             Request r = new Request();
 
-            Assert.False(CSE.WebValidate.Response.Validator.Validate(r, null, string.Empty).Failed);
+            Assert.False(ResponseValidator.Validate(r, null, string.Empty).Failed);
 
             r.Validation = new Validation();
 
-            Assert.True(CSE.WebValidate.Response.Validator.Validate(r, null, "this is a test").Failed);
+            Assert.True(ResponseValidator.Validate(r, null, "this is a test").Failed);
 
             using System.Net.Http.HttpResponseMessage resp = new System.Net.Http.HttpResponseMessage(System.Net.HttpStatusCode.NotFound);
-            Assert.True(CSE.WebValidate.Response.Validator.Validate(r, resp, "this is a test").Failed);
+            Assert.True(ResponseValidator.Validate(r, resp, "this is a test").Failed);
 
-            Assert.True(CSE.WebValidate.Response.Validator.ValidateStatusCode(400, 200).Failed);
+            Assert.True(ResponseValidator.ValidateStatusCode(400, 200).Failed);
         }
     }
 }

@@ -118,6 +118,6 @@ jobs:
 
         if [[ "${{ secrets.NUGET_KEY }}" != "" && "${{ github.ref }}" == "refs/tags/"* ]];
         then
-          dotnet pack src/webvalidate.sln
+          dotnet pack src/webvalidate.sln --version-suffix ''
           dotnet nuget push src/app/nupkg/ --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_KEY }}
         fi

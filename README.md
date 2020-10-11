@@ -260,6 +260,12 @@ We use the `--json-log` command line option to integrate Docker container logs w
 - --verbose
   - log 200 and 300 results as well as errors
   - default true
+- --verbose-errors
+  - display validation error messages
+  - default true
+- --delay-start int
+  - delay starting the validation test for int seconds
+  - default 0
 
 ### RunLoop Mode Parameters
 
@@ -296,6 +302,8 @@ We use the `--json-log` command line option to integrate Docker container logs w
 - VERBOSE=bool
 - MAX_ERRORS=int
 - BASE_URL=string
+- VERBOSE_ERRORS=bool
+- DELAY_START=int
 
 ### Additional run Loop environment variables
 

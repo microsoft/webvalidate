@@ -1,65 +1,21 @@
-﻿using CSE.WebValidate.Model;
-using Newtonsoft.Json;
+﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License. See LICENSE in the project root for license information.
+
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Net.Http;
+using CSE.WebValidate.Model;
+using CSE.WebValidate.Validators;
+using Newtonsoft.Json;
 
 namespace CSE.WebValidate
 {
+    /// <summary>
+    /// WebV class (partial)
+    /// </summary>
     public partial class WebV : IDisposable
     {
-        /// <summary>
-        /// Load the requests from json files
-        /// </summary>
-        /// <param name="fileList">list of files to load</param>
-        /// <returns>sorted List or Requests</returns>
-        private List<Request> LoadValidateRequests(List<string> fileList)
-        {
-            List<Request> list;
-            List<Request> fullList = new List<Request>();
-
-            // read each json file
-            foreach (string inputFile in fileList)
-            {
-                list = ReadJson(inputFile);
-
-                // add contents to full list
-                if (list != null && list.Count > 0)
-                {
-                    fullList.AddRange(list);
-                }
-            }
-
-            // return null if can't read and validate the json files
-            if (fullList == null || fullList.Count == 0 || !ValidateJson(fullList))
-            {
-                return null;
-            }
-
-            // return sorted list
-            return fullList;
-        }
-
-        /// <summary>
-        /// Load performance targets from json
-        /// </summary>
-        /// <returns>Dictionary of PerfTarget</returns>
-        private Dictionary<string, PerfTarget> LoadPerfTargets()
-        {
-            const string perfFileName = "perfTargets.txt";
-
-            string content = ReadTestFile(perfFileName);
-
-            if (!string.IsNullOrWhiteSpace(content))
-            {
-                return JsonConvert.DeserializeObject<Dictionary<string, PerfTarget>>(content);
-            }
-
-            // return empty dictionary - perf targets are not required
-            return new Dictionary<string, PerfTarget>();
-        }
-
         /// <summary>
         /// Reads a file from local or --base-url
         /// </summary>
@@ -73,7 +29,6 @@ namespace CSE.WebValidate
             {
                 throw new ArgumentNullException(nameof(file));
             }
-
 
             if (string.IsNullOrEmpty(config.BaseUrl))
             {
@@ -140,6 +95,79 @@ namespace CSE.WebValidate
         }
 
         /// <summary>
+        /// Validate all of the requests
+        /// </summary>
+        /// <param name="requests">list of Request</param>
+        /// <returns>boolean</returns>
+        private static bool ValidateJson(List<Request> requests)
+        {
+            // validate each request
+            foreach (Request r in requests)
+            {
+                ValidationResult result = ParameterValidator.Validate(r);
+                if (result.Failed)
+                {
+                    Console.WriteLine($"Error: Invalid json\n\t{JsonConvert.SerializeObject(r, Formatting.None, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore })}\n\t{string.Join("\n", result.ValidationErrors)}");
+                    return false;
+                }
+            }
+
+            // validated
+            return true;
+        }
+
+        /// <summary>
+        /// Load the requests from json files
+        /// </summary>
+        /// <param name="fileList">list of files to load</param>
+        /// <returns>sorted List or Requests</returns>
+        private List<Request> LoadValidateRequests(List<string> fileList)
+        {
+            List<Request> list;
+            List<Request> fullList = new List<Request>();
+
+            // read each json file
+            foreach (string inputFile in fileList)
+            {
+                list = ReadJson(inputFile);
+
+                // add contents to full list
+                if (list != null && list.Count > 0)
+                {
+                    fullList.AddRange(list);
+                }
+            }
+
+            // return null if can't read and validate the json files
+            if (fullList == null || fullList.Count == 0 || !ValidateJson(fullList))
+            {
+                return null;
+            }
+
+            // return sorted list
+            return fullList;
+        }
+
+        /// <summary>
+        /// Load performance targets from json
+        /// </summary>
+        /// <returns>Dictionary of PerfTarget</returns>
+        private Dictionary<string, PerfTarget> LoadPerfTargets()
+        {
+            const string perfFileName = "perfTargets.txt";
+
+            string content = ReadTestFile(perfFileName);
+
+            if (!string.IsNullOrWhiteSpace(content))
+            {
+                return JsonConvert.DeserializeObject<Dictionary<string, PerfTarget>>(content);
+            }
+
+            // return empty dictionary - perf targets are not required
+            return new Dictionary<string, PerfTarget>();
+        }
+
+        /// <summary>
         /// Load the json string into a List of Requests
         /// </summary>
         /// <param name="json">json string</param>
@@ -188,9 +216,9 @@ namespace CSE.WebValidate
                         // Add the default perf targets if exists
                         if (r.PerfTarget != null && r.PerfTarget.Quartiles == null)
                         {
-                            if (Targets.ContainsKey(r.PerfTarget.Category))
+                            if (targets.ContainsKey(r.PerfTarget.Category))
                             {
-                                r.PerfTarget.Quartiles = Targets[r.PerfTarget.Category].Quartiles;
+                                r.PerfTarget.Quartiles = targets[r.PerfTarget.Category].Quartiles;
                             }
                         }
 
@@ -203,7 +231,6 @@ namespace CSE.WebValidate
 
                 Console.WriteLine("Invalid JSON file");
             }
-
             catch (Exception ex)
             {
                 Console.WriteLine(ex.Message);
@@ -211,28 +238,6 @@ namespace CSE.WebValidate
 
             // couldn't read the list
             return null;
-        }
-
-        /// <summary>
-        /// Validate all of the requests
-        /// </summary>
-        /// <param name="requests">list of Request</param>
-        /// <returns></returns>
-        private static bool ValidateJson(List<Request> requests)
-        {
-            // validate each request
-            foreach (Request r in requests)
-            {
-                ValidationResult result = Parameters.Validator.Validate(r);
-                if (result.Failed)
-                {
-                    Console.WriteLine($"Error: Invalid json\n\t{JsonConvert.SerializeObject(r, Formatting.None, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore })}\n\t{string.Join("\n", result.ValidationErrors)}");
-                    return false;
-                }
-            }
-
-            // validated
-            return true;
         }
     }
 }

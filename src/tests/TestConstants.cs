@@ -17,6 +17,8 @@ namespace CSE.WebValidate.Tests
         public const string Server = "SERVER";
         public const string Duration = "DURATION";
         public const string RequestTimeout = "TIMEOUT";
+        public const string VerboseErrors = "VERBOSE_ERRORS";
+        public const string DelayStart = "DELAY_START";
 
         public static Dictionary<string, string> EnvVarToCommandLineDictionary()
         {
@@ -30,7 +32,9 @@ namespace CSE.WebValidate.Tests
                 { Duration, "--duration" },
                 { RequestTimeout, "--timeout -t" },
                 { MaxConcurrent, "--max-concurrent" },
-                { MaxErrors, "--max-errors" }
+                { MaxErrors, "--max-errors" },
+                { VerboseErrors, "--verbose-errors" },
+                { DelayStart, "--delay-start" }
             };
         }
     }
@@ -51,6 +55,8 @@ namespace CSE.WebValidate.Tests
         public const string RequestTimeout = "--timeout";
         public const string JsonLog = "--json-log";
         public const string SummaryMinutes = "--summary-minutes";
+        public const string VerboseErrors = "--verbose-errors";
+        public const string DelayStart = "--delay-start";
         public const string Help = "--help";
         public const string HelpShort = "-h";
     }

@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License. See LICENSE in the project root for license information.
+
+using System;
 using System.Collections.Generic;
 using System.CommandLine;
 using System.CommandLine.Parsing;
@@ -6,6 +9,9 @@ using System.Linq;
 
 namespace CSE.WebValidate
 {
+    /// <summary>
+    /// Main application class
+    /// </summary>
     public sealed partial class App
     {
         /// <summary>
@@ -18,7 +24,7 @@ namespace CSE.WebValidate
             {
                 Name = "WebValidate",
                 Description = "Validate API responses",
-                TreatUnmatchedTokensAsErrors = true
+                TreatUnmatchedTokensAsErrors = true,
             };
 
             root.AddOption(new Option<string>(new string[] { "-s", "--server" }, ParseString, true, "Server to test"));
@@ -29,12 +35,14 @@ namespace CSE.WebValidate
             root.AddOption(new Option<bool>(new string[] { "-v", "--verbose" }, ParseBool, true, "Display verbose results"));
             root.AddOption(new Option<bool>(new string[] { "--json-log" }, ParseBool, true, "Use json log format (implies --verbose)"));
             root.AddOption(new Option<bool>(new string[] { "-r", "--run-loop" }, ParseBool, true, "Run test in an infinite loop"));
+            root.AddOption(new Option<bool>(new string[] { "--verbose-errors" }, ParseBool, true, "Log verbose error messages"));
             root.AddOption(new Option<bool>(new string[] { "--random" }, ParseBool, true, "Run requests randomly (requires --run-loop)"));
             root.AddOption(new Option<int>(new string[] { "--duration" }, ParseInt, true, "Test duration (seconds)  (requires --run-loop)"));
             root.AddOption(new Option<int>(new string[] { "--summary-minutes" }, ParseInt, true, "Display summary results (minutes)  (requires --run-loop)"));
             root.AddOption(new Option<int>(new string[] { "-t", "--timeout" }, ParseInt, true, "Request timeout (seconds)"));
             root.AddOption(new Option<int>(new string[] { "--max-concurrent" }, ParseInt, true, "Max concurrent requests"));
             root.AddOption(new Option<int>(new string[] { "--max-errors" }, ParseInt, true, "Max validation errors"));
+            root.AddOption(new Option<int>(new string[] { "--delay-start" }, ParseInt, true, "Delay test start (seconds)"));
             root.AddOption(new Option<bool>(new string[] { "-d", "--dry-run" }, "Validates configuration"));
 
             // these require access to --run-loop so are added at the root level
@@ -44,7 +52,7 @@ namespace CSE.WebValidate
         }
 
         // validate --duration and --random based on --run-loop
-        static string ValidateRunLoopDependencies(CommandResult result)
+        private static string ValidateRunLoopDependencies(CommandResult result)
         {
             OptionResult runLoopRes = result.Children.FirstOrDefault(c => c.Symbol.Name == "run-loop") as OptionResult;
             OptionResult durationRes = result.Children.FirstOrDefault(c => c.Symbol.Name == "duration") as OptionResult;
@@ -68,7 +76,7 @@ namespace CSE.WebValidate
         }
 
         // parse string command line arg
-        static string ParseString(ArgumentResult result)
+        private static string ParseString(ArgumentResult result)
         {
             string name = result.Parent?.Symbol.Name.ToUpperInvariant().Replace('-', '_');
             if (string.IsNullOrEmpty(name))
@@ -125,7 +133,7 @@ namespace CSE.WebValidate
         }
 
         // parse List<string> command line arg (--files)
-        static List<string> ParseStringList(ArgumentResult result)
+        private static List<string> ParseStringList(ArgumentResult result)
         {
             string name = result.Parent?.Symbol.Name.ToUpperInvariant().Replace('-', '_');
             if (string.IsNullOrEmpty(name))
@@ -165,7 +173,7 @@ namespace CSE.WebValidate
         }
 
         // parse boolean command line arg
-        static bool ParseBool(ArgumentResult result)
+        private static bool ParseBool(ArgumentResult result)
         {
             string name = result.Parent?.Symbol.Name.ToUpperInvariant().Replace('-', '_');
             if (string.IsNullOrEmpty(name))
@@ -174,11 +182,10 @@ namespace CSE.WebValidate
                 return false;
             }
 
-            string errorMessage = $"--{result.Parent.Symbol.Name} must true or false";
+            string errorMessage = $"--{result.Parent.Symbol.Name} must be true or false";
             bool val;
 
             // bool options default to true if value not specified (ie -r and -r true)
-
             if (result.Parent.Parent.Children.FirstOrDefault(c => c.Symbol.Name == result.Parent.Symbol.Name) is OptionResult res &&
                 !res.IsImplicit &&
                 result.Tokens.Count == 0)
@@ -204,6 +211,12 @@ namespace CSE.WebValidate
                     }
                 }
 
+                // default to true
+                if (result.Parent.Symbol.Name == "verbose-errors")
+                {
+                    return true;
+                }
+
                 if (result.Parent.Symbol.Name == "verbose" &&
                     result.Parent.Parent.Children.FirstOrDefault(c => c.Symbol.Name == "run-loop") is OptionResult resRunLoop &&
                     !resRunLoop.GetValueOrDefault<bool>())
@@ -224,7 +237,7 @@ namespace CSE.WebValidate
         }
 
         // parser for integer >= 0
-        static int ParseInt(ArgumentResult result)
+        private static int ParseInt(ArgumentResult result)
         {
             string name = result.Parent?.Symbol.Name.ToUpperInvariant().Replace('-', '_');
             if (string.IsNullOrEmpty(name))
@@ -267,7 +280,7 @@ namespace CSE.WebValidate
         }
 
         // get default values for command line args
-        static int GetCommandDefaultValues(ArgumentResult result)
+        private static int GetCommandDefaultValues(ArgumentResult result)
         {
             switch (result.Parent.Symbol.Name)
             {
@@ -291,7 +304,7 @@ namespace CSE.WebValidate
         }
 
         // handle --dry-run
-        static int DoDryRun(Config config)
+        private static int DoDryRun(Config config)
         {
             // display the config
             Console.WriteLine("dry run");
@@ -301,9 +314,12 @@ namespace CSE.WebValidate
             {
                 Console.WriteLine($"   Tag             {config.Tag}");
             }
+
             Console.WriteLine($"   Run Loop        {config.RunLoop}");
             Console.WriteLine($"   Sleep           {config.Sleep}");
+            Console.WriteLine($"   Verbose Errors  {config.VerboseErrors}");
             Console.WriteLine($"   Duration        {config.Duration}");
+            Console.WriteLine($"   Delay Start     {config.DelayStart}");
             Console.WriteLine($"   Max Concurrent  {config.MaxConcurrent}");
             Console.WriteLine($"   Max Errors      {config.MaxErrors}");
             Console.WriteLine($"   Random          {config.Random}");

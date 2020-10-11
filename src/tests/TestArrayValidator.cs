@@ -1,6 +1,6 @@
-using CSE.WebValidate.Model;
-using CSE.WebValidate.Parameters;
 using System.Collections.Generic;
+using CSE.WebValidate.Model;
+using CSE.WebValidate.Validators;
 using Xunit;
 
 namespace CSE.WebValidate.Tests.Unit
@@ -15,7 +15,7 @@ namespace CSE.WebValidate.Tests.Unit
 
             // validate empty array
             a = new JsonArray();
-            res = Validator.Validate(a);
+            res = ParameterValidator.Validate(a);
             Assert.False(res.Failed);
 
             // validate bad count
@@ -23,7 +23,7 @@ namespace CSE.WebValidate.Tests.Unit
             {
                 Count = -1
             };
-            res = Validator.Validate(a);
+            res = ParameterValidator.Validate(a);
             Assert.True(res.Failed);
 
             // validate bad count
@@ -32,7 +32,7 @@ namespace CSE.WebValidate.Tests.Unit
                 Count = 1,
                 MinCount = 1
             };
-            res = Validator.Validate(a);
+            res = ParameterValidator.Validate(a);
             Assert.True(res.Failed);
 
             // validate bad count
@@ -41,7 +41,7 @@ namespace CSE.WebValidate.Tests.Unit
                 MaxCount = 1,
                 MinCount = 1
             };
-            res = Validator.Validate(a);
+            res = ParameterValidator.Validate(a);
             Assert.True(res.Failed);
         }
 
@@ -52,7 +52,7 @@ namespace CSE.WebValidate.Tests.Unit
             JsonPropertyByIndex f;
 
             // empty list is valid
-            Assert.False(Validator.Validate(list).Failed);
+            Assert.False(ParameterValidator.Validate(list).Failed);
 
             // validate index < 0 fails
             f = new JsonPropertyByIndex
@@ -62,7 +62,7 @@ namespace CSE.WebValidate.Tests.Unit
                 Validation = null
             };
             list.Add(f);
-            Assert.True(Validator.Validate(list).Failed);
+            Assert.True(ParameterValidator.Validate(list).Failed);
 
             // validate field, value, validation
             f = new JsonPropertyByIndex
@@ -74,7 +74,7 @@ namespace CSE.WebValidate.Tests.Unit
             };
             list.Clear();
             list.Add(f);
-            Assert.True(Validator.Validate(list).Failed);
+            Assert.True(ParameterValidator.Validate(list).Failed);
         }
     }
 }

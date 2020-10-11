@@ -41,7 +41,7 @@ namespace CSE.WebValidate.Tests.Unit
             cfg.Files.Add("msft.json");
 
             // load and validate all of our test files
-            using var wv = new WebV(cfg);
+            using WebV wv = new WebV(cfg);
 
             // file not found test
             Assert.Null(wv.ReadJson("test"));
@@ -66,16 +66,18 @@ namespace CSE.WebValidate.Tests.Unit
             System.Environment.SetEnvironmentVariable(EnvKeys.RunLoop, "false");
             System.Environment.SetEnvironmentVariable(EnvKeys.Sleep, "1000");
             System.Environment.SetEnvironmentVariable(EnvKeys.Verbose, "false");
+            System.Environment.SetEnvironmentVariable(EnvKeys.VerboseErrors, "false");
+            System.Environment.SetEnvironmentVariable(EnvKeys.DelayStart, "0");
 
             // test env vars
             parse = root.Parse(string.Empty);
             Assert.Equal(0, parse.Errors.Count);
-            Assert.Equal(14, parse.CommandResult.Children.Count);
+            Assert.Equal(16, parse.CommandResult.Children.Count);
 
             // override the files env var
             parse = root.Parse("-f file1 file2");
             Assert.Equal(0, parse.Errors.Count);
-            Assert.Equal(14, parse.CommandResult.Children.Count);
+            Assert.Equal(16, parse.CommandResult.Children.Count);
             Assert.Equal(2, parse.CommandResult.Children.First(c => c.Symbol.Name == "files").Tokens.Count);
 
             // test run-loop
@@ -98,6 +100,8 @@ namespace CSE.WebValidate.Tests.Unit
             System.Environment.SetEnvironmentVariable(EnvKeys.RunLoop, null);
             System.Environment.SetEnvironmentVariable(EnvKeys.Sleep, null);
             System.Environment.SetEnvironmentVariable(EnvKeys.Verbose, null);
+            System.Environment.SetEnvironmentVariable(EnvKeys.VerboseErrors, null);
+            System.Environment.SetEnvironmentVariable(EnvKeys.DelayStart, null);
 
             // isnullempty fails
             Assert.False(App.CheckFileExists(string.Empty));
@@ -125,7 +129,7 @@ namespace CSE.WebValidate.Tests.Unit
 
             Assert.Equal(0, parse.Errors.Count);
 
-            var result = parse.CommandResult.Children.FirstOrDefault(c => c.Symbol.Name == "run-loop");
+            SymbolResult result = parse.CommandResult.Children.FirstOrDefault(c => c.Symbol.Name == "run-loop");
             Assert.NotNull(result);
             Assert.Equal(0, result.Tokens.Count);
 
@@ -146,7 +150,7 @@ namespace CSE.WebValidate.Tests.Unit
             Assert.Equal(1, parse.Errors.Count);
         }
 
-        Config BuildConfig(string server)
+        private Config BuildConfig(string server)
         {
             return new Config
             {
@@ -164,7 +168,7 @@ namespace CSE.WebValidate.Tests.Unit
             cfg.Files.Add("msft.json");
 
             // load and validate all of our test files
-            using var wv = new WebV(cfg);
+            using WebV wv = new WebV(cfg);
             Assert.Equal(0, await wv.RunOnce(cfg, new System.Threading.CancellationToken()).ConfigureAwait(false));
         }
 
@@ -175,7 +179,7 @@ namespace CSE.WebValidate.Tests.Unit
             cfg.Files.Add("github.json");
 
             // load and validate all of our test files
-            using var wv = new WebV(cfg);
+            using WebV wv = new WebV(cfg);
             Assert.Equal(0, await wv.RunOnce(cfg, new System.Threading.CancellationToken()).ConfigureAwait(false));
         }
     }

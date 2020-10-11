@@ -1,6 +1,6 @@
-using CSE.WebValidate.Model;
-using CSE.WebValidate.Parameters;
 using System.Collections.Generic;
+using CSE.WebValidate.Model;
+using CSE.WebValidate.Validators;
 using Xunit;
 
 namespace CSE.WebValidate.Tests.Unit
@@ -13,25 +13,25 @@ namespace CSE.WebValidate.Tests.Unit
             List<JsonProperty> properties = null;
 
             // validate json object is null
-            Assert.False(Validator.Validate(properties).Failed);
+            Assert.False(ParameterValidator.Validate(properties).Failed);
 
             // Field can't be empty
             properties = new List<JsonProperty> { new JsonProperty { Field = string.Empty } };
-            Assert.True(Validator.Validate(properties).Failed);
+            Assert.True(ParameterValidator.Validate(properties).Failed);
 
             // valid
             properties.Clear();
             properties.Add(new JsonProperty { Field = "type" });
-            Assert.False(Validator.Validate(properties).Failed);
+            Assert.False(ParameterValidator.Validate(properties).Failed);
 
             // validate empty list
             properties = new List<JsonProperty>();
             Assert.Empty(properties);
-            Assert.False(Validator.Validate(properties).Failed);
+            Assert.False(ParameterValidator.Validate(properties).Failed);
 
             // validate adding a property
             properties.Add(new JsonProperty());
-            Assert.True(Validator.Validate(properties).Failed);
+            Assert.True(ParameterValidator.Validate(properties).Failed);
         }
     }
 }

@@ -6,19 +6,18 @@ using System.Collections.Generic;
 namespace CSE.WebValidate.Model
 {
     /// <summary>
-    /// Performance target class
+    /// InputJson object
     /// </summary>
-    public class PerfTarget
+    public class InputJson
     {
         /// <summary>
-        /// gets or sets the category name
+        /// Gets or sets list of variables
         /// </summary>
-        public string Category { get; set; }
+        public List<string> Variables { get; set; }
 
         /// <summary>
-        /// gets or sets a list of ms to determine quartile
-        /// list should contain exactly 3 values
+        /// Gets or sets list of Requests
         /// </summary>
-        public List<double> Quartiles { get; set; }
+        public List<Request> Requests { get; set; }
     }
 }
