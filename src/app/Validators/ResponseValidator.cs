@@ -230,6 +230,7 @@ namespace CSE.WebValidate.Validators
 
                 result.Add(ValidateJsonArrayLength(jArray, resList));
                 result.Add(ValidateForEach(jArray.ForEach, resList));
+                result.Add(ValidateForAny(jArray.ForAny, resList));
 
                 result.Add(ValidateByIndex(jArray.ByIndex, resList));
             }
@@ -446,6 +447,49 @@ namespace CSE.WebValidate.Validators
                     {
                         // call validate recursively
                         result.Add(Validate(fe, JsonConvert.SerializeObject(doc)));
+                    }
+                }
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Validate For Any
+        /// </summary>
+        /// <param name="validationList">list of Validation objects</param>
+        /// <param name="documentList">dynamic list of documents to validate</param>
+        /// <returns>ValidationResult</returns>
+        private static ValidationResult ValidateForAny(List<Validation> validationList, List<dynamic> documentList)
+        {
+            bool isValid;
+            ValidationResult result = new ValidationResult();
+            ValidationResult vr = new ValidationResult();
+
+            // validate foreAny items recursively
+            if (validationList != null && validationList.Count > 0)
+            {
+                foreach (Validation fe in validationList)
+                {
+                    isValid = false;
+
+                    // run each validation on each doc until validated
+                    foreach (dynamic doc in documentList)
+                    {
+                        // call validate recursively
+                        vr = Validate(fe, JsonConvert.SerializeObject(doc));
+
+                        // value was found
+                        if (!vr.Failed && vr.ValidationErrors.Count == 0)
+                        {
+                            isValid = true;
+                            break;
+                        }
+                    }
+
+                    if (!isValid)
+                    {
+                        result.Add(vr);
                     }
                 }
             }

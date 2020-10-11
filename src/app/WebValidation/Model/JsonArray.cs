@@ -35,6 +35,12 @@ namespace CSE.WebValidate.Model
         public List<Validation> ForEach { get; set; }
 
         /// <summary>
+        /// gets or sets the list of validations for any array object
+        /// default: null (ignore)
+        /// </summary>
+        public List<Validation> ForAny { get; set; }
+
+        /// <summary>
         /// gets or sets the validation for a specific array object by array index
         /// default: null (ignore)
         /// </summary>
