@@ -489,7 +489,27 @@ namespace CSE.WebValidate.Validators
 
                     if (!isValid)
                     {
-                        result.Add(vr);
+                        string s;
+                        string[] val;
+
+                        // convert the error messages
+                        foreach (string err in vr.ValidationErrors)
+                        {
+                            val = err.Split(':');
+
+                            if (val.Length > 4)
+                            {
+                                s = $"forAny: {val[1].Trim()}: {val[4].Trim()}";
+                            }
+                            else
+                            {
+                                s = err.Replace("json:", "forAny:", StringComparison.OrdinalIgnoreCase);
+                            }
+
+                            ValidationResult res = new ValidationResult();
+                            res.ValidationErrors.Add(s);
+                            result.Add(res);
+                        }
                     }
                 }
             }
