@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License. See LICENSE in the project root for license information.
+
+using System;
 using System.CommandLine;
 using System.CommandLine.Invocation;
 using System.CommandLine.Parsing;
@@ -7,15 +10,21 @@ using System.Threading.Tasks;
 
 namespace CSE.WebValidate
 {
+    /// <summary>
+    /// Main application class
+    /// </summary>
     public sealed partial class App
     {
-        // public properties
+        /// <summary>
+        /// Gets or sets cancellation token
+        /// </summary>
         public static CancellationTokenSource TokenSource { get; set; } = new CancellationTokenSource();
 
         /// <summary>
         /// Main entry point
         /// </summary>
         /// <param name="args">Command Line Parameters</param>
+        /// <returns>0 on success</returns>
         public static async Task<int> Main(string[] args)
         {
             // add ctl-c handler
@@ -33,7 +42,11 @@ namespace CSE.WebValidate
             return await root.InvokeAsync(args).ConfigureAwait(false);
         }
 
-        // System.CommandLine.CommandHandler implementation
+        /// <summary>
+        /// System.CommandLine.CommandHandler implementation
+        /// </summary>
+        /// <param name="config">configuration</param>
+        /// <returns>non-zero on failure</returns>
         public static async Task<int> Run(Config config)
         {
             if (config == null)
@@ -98,18 +111,6 @@ namespace CSE.WebValidate
         }
 
         /// <summary>
-        /// Add a ctl-c handler
-        /// </summary>
-        private static void AddControlCHandler()
-        {
-            Console.CancelKeyPress += delegate (object sender, ConsoleCancelEventArgs e)
-            {
-                e.Cancel = true;
-                TokenSource.Cancel();
-            };
-        }
-
-        /// <summary>
         /// Check to see if the file exists in the current directory
         /// </summary>
         /// <param name="name">file name</param>
@@ -117,6 +118,18 @@ namespace CSE.WebValidate
         public static bool CheckFileExists(string name)
         {
             return !string.IsNullOrWhiteSpace(name) && System.IO.File.Exists(name.Trim());
+        }
+
+        /// <summary>
+        /// Add a ctl-c handler
+        /// </summary>
+        private static void AddControlCHandler()
+        {
+            Console.CancelKeyPress += (sender, e) =>
+            {
+                e.Cancel = true;
+                TokenSource.Cancel();
+            };
         }
     }
 }
