@@ -1,4 +1,6 @@
-using CSE.WebValidate.Model;
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License. See LICENSE in the project root for license information.
+
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -6,6 +8,8 @@ using System.Net.Http;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using CSE.WebValidate.Model;
+using CSE.WebValidate.Validators;
 
 namespace CSE.WebValidate
 {
@@ -16,14 +20,14 @@ namespace CSE.WebValidate
     {
         private static List<Request> requestList;
         private static HttpClient client;
-        private static Semaphore LoopController;
+        private static Semaphore loopController;
+
+        private readonly Dictionary<string, PerfTarget> targets = new Dictionary<string, PerfTarget>();
 
         private Config config;
 
-        private readonly Dictionary<string, PerfTarget> Targets = new Dictionary<string, PerfTarget>();
-
         /// <summary>
-        /// CTOR
+        /// Initializes a new instance of the <see cref="WebV"/> class
         /// </summary>
         /// <param name="config">Config</param>
         public WebV(Config config)
@@ -39,10 +43,10 @@ namespace CSE.WebValidate
             client = OpenHttpClient(config.Server);
 
             // setup the semaphore
-            LoopController = new Semaphore(this.config.MaxConcurrent, this.config.MaxConcurrent);
+            loopController = new Semaphore(this.config.MaxConcurrent, this.config.MaxConcurrent);
 
             // load the performance targets
-            Targets = LoadPerfTargets();
+            targets = LoadPerfTargets();
 
             // load the requests from json files
             requestList = LoadValidateRequests(config.Files);
@@ -54,31 +58,15 @@ namespace CSE.WebValidate
         }
 
         /// <summary>
-        /// get UtcNow as an ISO formatted date string
+        /// Gets UtcNow as an ISO formatted date string
         /// </summary>
         private static string Now => DateTime.UtcNow.ToString("o", CultureInfo.InvariantCulture);
 
         /// <summary>
-        /// Opens and configures the shared HttpClient
-        /// 
-        /// Disposed in IDispose
-        /// </summary>
-        /// <returns>HttpClient</returns>
-        private HttpClient OpenHttpClient(string host)
-        {
-            HttpClient client = new HttpClient(new HttpClientHandler { AllowAutoRedirect = false })
-            {
-                Timeout = new TimeSpan(0, 0, config.Timeout),
-                BaseAddress = new Uri(host)
-            };
-            client.DefaultRequestHeaders.Add("User-Agent", "webValidate");
-
-            return client;
-        }
-
-        /// <summary>
         /// Run the validation test one time
         /// </summary>
+        /// <param name="config">configuration</param>
+        /// <param name="token">cancellation token</param>
         /// <returns>bool</returns>
         public async Task<int> RunOnce(Config config, CancellationToken token)
         {
@@ -170,176 +158,11 @@ namespace CSE.WebValidate
         }
 
         /// <summary>
-        /// Summarize the requests for the hour
-        /// </summary>
-        /// <param name="timerState">TimerState</param>
-        private void SummaryLogTask(object timerState)
-        {
-            if (config.SummaryMinutes < 1)
-            {
-                return;
-            }
-
-            if (timerState is TimerRequestState state)
-            {
-                // exit if cancelled
-                if (state.Token.IsCancellationRequested)
-                {
-                    return;
-                }
-
-                // build the log entry
-                string log = "{ \"logType\": \"summary\", " + $"\"logDate\": \"{state.CurrentLogTime.ToString("o", CultureInfo.InvariantCulture)}Z\", \"tag\": \"{config.Tag}\", ";
-
-                // get the summary values
-                lock (state.Lock)
-                {
-                    log += $"\"requestCount\": {state.Count}, ";
-                    log += $"\"averageDuration\": {(state.Count > 0 ? Math.Round(state.Duration / state.Count, 2) : 0)}, ";
-                    log += $"\"errorCount\": {state.ErrorCount} " + "}";
-
-                    // reset counters
-                    state.Count = 0;
-                    state.Duration = 0;
-                    state.ErrorCount = 0;
-
-                    // set next log time
-                    state.CurrentLogTime = state.CurrentLogTime.AddMinutes(config.SummaryMinutes);
-                }
-
-                // log the summary
-                Console.WriteLine(log);
-            }
-        }
-
-        /// <summary>
-        /// Submit a request from the timer event
-        /// </summary>
-        /// <param name="timerState">TimerState</param>
-        private static void SubmitRequestTask(object timerState)
-        {
-            int index = 0;
-
-            // cast to TimerState
-            if (!(timerState is TimerRequestState state))
-            {
-                Console.WriteLine($"{Now}\tError\tTimerState is null");
-                return;
-            }
-
-            // exit if cancelled
-            if (state.Token.IsCancellationRequested)
-            {
-                return;
-            }
-
-            // get a semaphore slot - rate limit the requests
-            if (!LoopController.WaitOne(10))
-            {
-                return;
-            }
-
-            // lock the state for updates
-            lock (state.Lock)
-            {
-                index = state.Index;
-
-                // increment
-                state.Index++;
-
-                // keep the index in range
-                if (state.Index >= state.MaxIndex)
-                {
-                    state.Index = 0;
-                }
-            }
-
-            // randomize request index
-            if (state.Random != null)
-            {
-                index = state.Random.Next(0, state.MaxIndex);
-            }
-
-            Request req = requestList[index];
-            DateTime dt = DateTime.UtcNow;
-
-            try
-            {
-                // Execute the request
-                PerfLog p = state.Test.ExecuteRequest(req).Result;
-
-                lock (state.Lock)
-                {
-                    // increment
-                    state.Count++;
-                    state.Duration += p.Duration;
-                }
-            }
-            catch (TaskCanceledException)
-            {
-                // ignore
-            }
-            catch (OperationCanceledException)
-            {
-                // ignore
-            }
-            catch (Exception ex)
-            {
-                // log and ignore any error
-                Console.WriteLine($"{Now}\t500\t{Math.Round(DateTime.UtcNow.Subtract(dt).TotalMilliseconds, 0)}\t0\t{req.Path}\tWebvException\t{ex.Message}");
-            }
-
-            // make sure to release the semaphore
-            LoopController.Release();
-        }
-
-        /// <summary>
-        /// Display the startup message for RunLoop
-        /// </summary>
-        private static void DisplayStartupMessage(Config config)
-        {
-            // don't display if json logging is on
-            if (config.JsonLog || config.SummaryMinutes > 0)
-            {
-                return;
-            }
-
-            string msg = $"{Now}\tStarting Web Validation Test";
-            msg += $"\n\t\tVersion: {CSE.WebValidate.Version.AssemblyVersion}";
-            msg += $"\n\t\tHost: {config.Server}";
-
-            if (!string.IsNullOrEmpty(config.Tag))
-            {
-                msg += $"\n\t\tTag: {config.Tag}";
-            }
-
-            if (!string.IsNullOrEmpty(config.BaseUrl))
-            {
-                msg += $"\n\t\tBaseUrl: {config.BaseUrl}";
-            }
-
-            msg += $"\n\t\tFiles: {string.Join(' ', config.Files)}";
-            msg += $"\n\t\tSleep: {config.Sleep}";
-            msg += $"\n\t\tMaxConcurrent: {config.MaxConcurrent}";
-
-            if (config.Duration > 0)
-            {
-                msg += $"\n\t\tDuration: {config.Duration}";
-            }
-
-            msg += config.Random ? "\n\t\tRandom" : string.Empty;
-            msg += config.Verbose ? "\n\t\tVerbose" : string.Empty;
-
-            Console.WriteLine(msg + "\n");
-        }
-
-        /// <summary>
         /// Run the validation tests in a loop
         /// </summary>
-        /// <param name="id">thread id</param>
         /// <param name="config">Config</param>
         /// <param name="token">CancellationToken</param>
-        /// <returns></returns>
+        /// <returns>0 on success</returns>
         public int RunLoop(Config config, CancellationToken token)
         {
             this.config = config ?? throw new ArgumentNullException(nameof(config));
@@ -366,7 +189,7 @@ namespace CSE.WebValidate
                 // current hour
                 CurrentLogTime = new DateTime(DateTime.UtcNow.Year, DateTime.UtcNow.Month, DateTime.UtcNow.Day, DateTime.UtcNow.Hour, 0, 0),
 
-                Token = token
+                Token = token,
             };
 
             if (config.Random)
@@ -505,7 +328,7 @@ namespace CSE.WebValidate
                 double duration = Math.Round(DateTime.UtcNow.Subtract(dt).TotalMilliseconds, 0);
 
                 // validate the response
-                valid = Response.Validator.Validate(request, resp, body);
+                valid = ResponseValidator.Validate(request, resp, body);
 
                 // check the performance
                 perfLog = CreatePerfLog(request, valid, duration, (long)resp.Content.Headers.ContentLength, (int)resp.StatusCode);
@@ -523,10 +346,9 @@ namespace CSE.WebValidate
         /// <param name="request">Request</param>
         /// <param name="validationResult">validation errors</param>
         /// <param name="duration">duration</param>
-        /// <param name="body">content body</param>
         /// <param name="contentLength">content length</param>
         /// <param name="statusCode">status code</param>
-        /// <returns></returns>
+        /// <returns>PerfLog</returns>
         public PerfLog CreatePerfLog(Request request, ValidationResult validationResult, double duration, long contentLength, int statusCode)
         {
             if (validationResult == null)
@@ -544,16 +366,16 @@ namespace CSE.WebValidate
                 Validated = !validationResult.Failed && validationResult.ValidationErrors.Count == 0,
                 Duration = duration,
                 ContentLength = contentLength,
-                Failed = validationResult.Failed
+                Failed = validationResult.Failed,
             };
 
             // determine the Performance Level based on category
             if (!string.IsNullOrEmpty(log.Category))
             {
-                if (Targets.ContainsKey(log.Category))
+                if (targets.ContainsKey(log.Category))
                 {
                     // lookup the target
-                    PerfTarget target = Targets[log.Category];
+                    PerfTarget target = targets[log.Category];
 
                     if (target != null)
                     {
@@ -574,6 +396,188 @@ namespace CSE.WebValidate
             }
 
             return log;
+        }
+
+        /// <summary>
+        /// Submit a request from the timer event
+        /// </summary>
+        /// <param name="timerState">TimerState</param>
+        private static void SubmitRequestTask(object timerState)
+        {
+            int index = 0;
+
+            // cast to TimerState
+            if (!(timerState is TimerRequestState state))
+            {
+                Console.WriteLine($"{Now}\tError\tTimerState is null");
+                return;
+            }
+
+            // exit if cancelled
+            if (state.Token.IsCancellationRequested)
+            {
+                return;
+            }
+
+            // get a semaphore slot - rate limit the requests
+            if (!loopController.WaitOne(10))
+            {
+                return;
+            }
+
+            // lock the state for updates
+            lock (state.Lock)
+            {
+                index = state.Index;
+
+                // increment
+                state.Index++;
+
+                // keep the index in range
+                if (state.Index >= state.MaxIndex)
+                {
+                    state.Index = 0;
+                }
+            }
+
+            // randomize request index
+            if (state.Random != null)
+            {
+                index = state.Random.Next(0, state.MaxIndex);
+            }
+
+            Request req = requestList[index];
+            DateTime dt = DateTime.UtcNow;
+
+            try
+            {
+                // Execute the request
+                PerfLog p = state.Test.ExecuteRequest(req).Result;
+
+                lock (state.Lock)
+                {
+                    // increment
+                    state.Count++;
+                    state.Duration += p.Duration;
+                }
+            }
+            catch (TaskCanceledException)
+            {
+                // ignore
+            }
+            catch (OperationCanceledException)
+            {
+                // ignore
+            }
+            catch (Exception ex)
+            {
+                // log and ignore any error
+                Console.WriteLine($"{Now}\t500\t{Math.Round(DateTime.UtcNow.Subtract(dt).TotalMilliseconds, 0)}\t0\t{req.Path}\tWebvException\t{ex.Message}");
+            }
+
+            // make sure to release the semaphore
+            loopController.Release();
+        }
+
+        /// <summary>
+        /// Display the startup message for RunLoop
+        /// </summary>
+        private static void DisplayStartupMessage(Config config)
+        {
+            // don't display if json logging is on
+            if (config.JsonLog || config.SummaryMinutes > 0)
+            {
+                return;
+            }
+
+            string msg = $"{Now}\tStarting Web Validation Test";
+            msg += $"\n\t\tVersion: {CSE.WebValidate.Version.AssemblyVersion}";
+            msg += $"\n\t\tHost: {config.Server}";
+
+            if (!string.IsNullOrEmpty(config.Tag))
+            {
+                msg += $"\n\t\tTag: {config.Tag}";
+            }
+
+            if (!string.IsNullOrEmpty(config.BaseUrl))
+            {
+                msg += $"\n\t\tBaseUrl: {config.BaseUrl}";
+            }
+
+            msg += $"\n\t\tFiles: {string.Join(' ', config.Files)}";
+            msg += $"\n\t\tSleep: {config.Sleep}";
+            msg += $"\n\t\tMaxConcurrent: {config.MaxConcurrent}";
+
+            if (config.Duration > 0)
+            {
+                msg += $"\n\t\tDuration: {config.Duration}";
+            }
+
+            msg += config.Random ? "\n\t\tRandom" : string.Empty;
+            msg += config.Verbose ? "\n\t\tVerbose" : string.Empty;
+
+            Console.WriteLine(msg + "\n");
+        }
+
+        /// <summary>
+        /// Opens and configures the shared HttpClient
+        ///
+        /// Disposed in IDispose
+        /// </summary>
+        /// <returns>HttpClient</returns>
+        private HttpClient OpenHttpClient(string host)
+        {
+            HttpClient client = new HttpClient(new HttpClientHandler { AllowAutoRedirect = false })
+            {
+                Timeout = new TimeSpan(0, 0, config.Timeout),
+                BaseAddress = new Uri(host),
+            };
+            client.DefaultRequestHeaders.Add("User-Agent", "webValidate");
+
+            return client;
+        }
+
+        /// <summary>
+        /// Summarize the requests for the hour
+        /// </summary>
+        /// <param name="timerState">TimerState</param>
+        private void SummaryLogTask(object timerState)
+        {
+            if (config.SummaryMinutes < 1)
+            {
+                return;
+            }
+
+            if (timerState is TimerRequestState state)
+            {
+                // exit if cancelled
+                if (state.Token.IsCancellationRequested)
+                {
+                    return;
+                }
+
+                // build the log entry
+                string log = "{ \"logType\": \"summary\", " + $"\"logDate\": \"{state.CurrentLogTime.ToString("o", CultureInfo.InvariantCulture)}Z\", \"tag\": \"{config.Tag}\", ";
+
+                // get the summary values
+                lock (state.Lock)
+                {
+                    log += $"\"requestCount\": {state.Count}, ";
+                    log += $"\"averageDuration\": {(state.Count > 0 ? Math.Round(state.Duration / state.Count, 2) : 0)}, ";
+                    log += $"\"errorCount\": {state.ErrorCount} " + "}";
+
+                    // reset counters
+                    state.Count = 0;
+                    state.Duration = 0;
+                    state.ErrorCount = 0;
+
+                    // set next log time
+                    state.CurrentLogTime = state.CurrentLogTime.AddMinutes(config.SummaryMinutes);
+                }
+
+                // log the summary
+                Console.WriteLine(log);
+            }
         }
 
         /// <summary>
