@@ -392,13 +392,25 @@ You can mount a local volume into the Docker container at /app/TestFiles to test
       - maximum number of items
       - valid: > MinCount
         - can be combined with MinCount
-    - ForEach[JsonObject]
-      - checks each json object in the array
+    - ByIndex[JsonObject]
+      - checks a json object in the array by index
       - JsonObject[]
         - validates object[index]
         - Index
           - Index of object to check
           - valid: >= 0
+        - JsonObject
+          - JsonObject definition to check
+          - valid: JsonObject rules
+    - ForAny[JsonObject]
+      - checks each json object in the array until it finds a valid item
+      - JsonObject[]
+        - JsonObject
+          - JsonObject definition to check
+          - valid: JsonObject rules
+    - ForEach[JsonObject]
+      - checks each json object in the array
+      - JsonObject[]
         - JsonObject
           - JsonObject definition to check
           - valid: JsonObject rules
