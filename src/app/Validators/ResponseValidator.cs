@@ -466,10 +466,10 @@ namespace CSE.WebValidate.Validators
             ValidationResult result = new ValidationResult();
             ValidationResult vr = new ValidationResult();
 
-            // validate foreAny items recursively
+            // validate forAny items recursively
             if (validationList != null && validationList.Count > 0)
             {
-                foreach (Validation fe in validationList)
+                foreach (Validation fa in validationList)
                 {
                     isValid = false;
 
@@ -477,7 +477,7 @@ namespace CSE.WebValidate.Validators
                     foreach (dynamic doc in documentList)
                     {
                         // call validate recursively
-                        vr = Validate(fe, JsonConvert.SerializeObject(doc));
+                        vr = Validate(fa, JsonConvert.SerializeObject(doc));
 
                         // value was found
                         if (!vr.Failed && vr.ValidationErrors.Count == 0)
