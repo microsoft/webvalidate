@@ -499,7 +499,7 @@ namespace CSE.WebValidate.Validators
 
                             if (val.Length > 4)
                             {
-                                s = $"forAny: {val[1].Trim()}: {val[4].Trim()}";
+                                s = $"forAny: {val[1].Trim()}: Expected: {val[4].Trim()}";
                             }
                             else
                             {
