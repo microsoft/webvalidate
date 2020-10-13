@@ -15,7 +15,7 @@
     <PackAsTool>true</PackAsTool>
     <ToolCommandName>webv</ToolCommandName>
     <PackageOutputPath>./nupkg</PackageOutputPath>   
-    <RepositoryUrl>https://github.com/retaildevcrews/webvalidate/</RepositoryUrl> 
+    <RepositoryUrl>https://github.com/microsoft/webvalidate/</RepositoryUrl> 
     <Description>Web Validate (WebV) is a web request validation tool to run integration tests and long-running smoke tests.</Description>
     <PackageDescription>Web Validate (WebV) is a web request validation tool to run integration tests and long-running smoke tests. </PackageDescription>
     <Title>Web Validate</Title>
