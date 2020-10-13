@@ -92,7 +92,7 @@ namespace CSE.WebValidate
                     }
 
                     // stop after MaxErrors errors
-                    if ((errorCount + validationFailureCount) > config.MaxErrors)
+                    if ((errorCount + validationFailureCount) >= config.MaxErrors)
                     {
                         break;
                     }
@@ -105,7 +105,7 @@ namespace CSE.WebValidate
                         errorCount++;
                     }
 
-                    if (!pl.Validated)
+                    if (!pl.Failed && !pl.Validated)
                     {
                         validationFailureCount++;
                     }
@@ -121,14 +121,15 @@ namespace CSE.WebValidate
                         }
                     }
                 }
-                catch (TaskCanceledException tce)
-                {
-                    // task was cancelled
-                    return tce.Task.IsCompleted ? 0 : 1;
-                }
                 catch (Exception ex)
                 {
-                    // ignore any error and keep processing
+                    // ignore any exception caused by ctl-c or stop signal
+                    if (token.IsCancellationRequested)
+                    {
+                        break;
+                    }
+
+                    // log error and keep processing
                     Console.WriteLine($"{Now}\tException: {ex.Message}");
                     errorCount++;
                 }
@@ -321,17 +322,27 @@ namespace CSE.WebValidate
                     }
                 }
 
-                // process the response
-                using HttpResponseMessage resp = await client.SendAsync(req).ConfigureAwait(false);
-                string body = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
+                try
+                {
+                    // process the response
+                    using HttpResponseMessage resp = await client.SendAsync(req).ConfigureAwait(false);
+                    string body = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
 
-                double duration = Math.Round(DateTime.UtcNow.Subtract(dt).TotalMilliseconds, 0);
+                    double duration = Math.Round(DateTime.UtcNow.Subtract(dt).TotalMilliseconds, 0);
 
-                // validate the response
-                valid = ResponseValidator.Validate(request, resp, body);
+                    // validate the response
+                    valid = ResponseValidator.Validate(request, resp, body);
 
-                // check the performance
-                perfLog = CreatePerfLog(request, valid, duration, (long)resp.Content.Headers.ContentLength, (int)resp.StatusCode);
+                    // check the performance
+                    perfLog = CreatePerfLog(request, valid, duration, (long)resp.Content.Headers.ContentLength, (int)resp.StatusCode);
+                }
+                catch (Exception ex)
+                {
+                    double duration = Math.Round(DateTime.UtcNow.Subtract(dt).TotalMilliseconds, 0);
+                    valid = new ValidationResult { Failed = true };
+                    valid.ValidationErrors.Add($"Exception: {ex.Message}");
+                    perfLog = CreatePerfLog(request, valid, duration, 0, 500);
+                }
             }
 
             // log the test
@@ -461,18 +472,10 @@ namespace CSE.WebValidate
                     state.Duration += p.Duration;
                 }
             }
-            catch (TaskCanceledException)
-            {
-                // ignore
-            }
-            catch (OperationCanceledException)
-            {
-                // ignore
-            }
             catch (Exception ex)
             {
                 // log and ignore any error
-                Console.WriteLine($"{Now}\t500\t{Math.Round(DateTime.UtcNow.Subtract(dt).TotalMilliseconds, 0)}\t0\t{req.Path}\tWebvException\t{ex.Message}");
+                Console.WriteLine($"{Now}\tWebvException\t{ex.Message}");
             }
 
             // make sure to release the semaphore
