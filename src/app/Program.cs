@@ -16,7 +16,10 @@ namespace CSE.WebValidate
     /// </summary>
     public sealed partial class App
     {
-        public static JsonSerializerOptions JsonSerializerOptions { get; set; }
+        public static JsonSerializerOptions JsonSerializerOptions { get; set; } = new JsonSerializerOptions
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        };
 
         /// <summary>
         /// Gets or sets cancellation token
