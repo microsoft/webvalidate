@@ -16,7 +16,7 @@ namespace CSE.WebValidate
     /// </summary>
     public sealed partial class App
     {
-        public static JsonSerializerOptions JsonOptions { get; set; }
+        public static JsonSerializerOptions JsonSerializerOptions { get; set; }
 
         /// <summary>
         /// Gets or sets cancellation token
@@ -68,7 +68,7 @@ namespace CSE.WebValidate
             }
 
             // set json options based on --strict-json
-            App.JsonOptions = new JsonSerializerOptions
+            App.JsonSerializerOptions = new JsonSerializerOptions
             {
                 PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
                 PropertyNameCaseInsensitive = !config.StrictJson,
