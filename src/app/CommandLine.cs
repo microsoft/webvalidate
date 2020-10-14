@@ -241,49 +241,17 @@ namespace CSE.WebValidate
         // parser for integer >= 0
         private static int ParseIntGEZero(ArgumentResult result)
         {
-            string name = result.Parent?.Symbol.Name.ToUpperInvariant().Replace('-', '_');
-
-            if (string.IsNullOrEmpty(name))
-            {
-                result.ErrorMessage = "result.Parent is null";
-                return -1;
-            }
-
-            int val;
-            string errorMessage = $"--{result.Parent.Symbol.Name} must be an integer >= 0";
-
-            // nothing to validate
-            if (result.Tokens.Count == 0)
-            {
-                string env = Environment.GetEnvironmentVariable(name);
-
-                if (string.IsNullOrWhiteSpace(env))
-                {
-                    return GetCommandDefaultValues(result);
-                }
-                else
-                {
-                    if (!int.TryParse(env, out val) || val < 0)
-                    {
-                        result.ErrorMessage = errorMessage;
-                        return -1;
-                    }
-
-                    return val;
-                }
-            }
-
-            if (!int.TryParse(result.Tokens[0].Value, out val) || val < 0)
-            {
-                result.ErrorMessage = errorMessage;
-                return -1;
-            }
-
-            return val;
+            return ParseInt(result, 0);
         }
 
-        // parser for integer >= 0
+        // parser for integer > 0
         private static int ParseIntGTZero(ArgumentResult result)
+        {
+            return ParseInt(result, 1);
+        }
+
+        // parser for integer
+        private static int ParseInt(ArgumentResult result, int minValue)
         {
             string name = result.Parent?.Symbol.Name.ToUpperInvariant().Replace('-', '_');
 
@@ -293,7 +261,7 @@ namespace CSE.WebValidate
                 return -1;
             }
 
-            string errorMessage = $"--{result.Parent.Symbol.Name} must be an integer >= 1";
+            string errorMessage = $"--{result.Parent.Symbol.Name} must be an integer >= {minValue}";
             int val;
 
             // nothing to validate
@@ -307,7 +275,7 @@ namespace CSE.WebValidate
                 }
                 else
                 {
-                    if (!int.TryParse(env, out val) || val < 1)
+                    if (!int.TryParse(env, out val) || val < minValue)
                     {
                         result.ErrorMessage = errorMessage;
                         return -1;
@@ -317,7 +285,7 @@ namespace CSE.WebValidate
                 }
             }
 
-            if (!int.TryParse(result.Tokens[0].Value, out val) || val < 1)
+            if (!int.TryParse(result.Tokens[0].Value, out val) || val < minValue)
             {
                 result.ErrorMessage = errorMessage;
                 return -1;
