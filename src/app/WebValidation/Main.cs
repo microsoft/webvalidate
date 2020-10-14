@@ -157,7 +157,7 @@ namespace CSE.WebValidate
             }
 
             // return non-zero exit code on failure
-            return errorCount + validationFailureCount;
+            return errorCount > 0 || validationFailureCount >= config.MaxErrors ? errorCount + validationFailureCount : 0;
         }
 
         /// <summary>
