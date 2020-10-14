@@ -98,6 +98,11 @@ namespace CSE.WebValidate
         public int DelayStart { get; set; }
 
         /// <summary>
+        /// gets or sets a value indicating whether we should use strict json parsing
+        /// </summary>
+        public bool StrictJson { get; set; }
+
+        /// <summary>
         /// Set the default config values
         /// </summary>
         public void SetDefaultValues()
