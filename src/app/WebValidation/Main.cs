@@ -135,27 +135,29 @@ namespace CSE.WebValidate
                 }
             }
 
-            // display validation failure count
-            if (validationFailureCount > 0 && !config.JsonLog)
+            if (!config.JsonLog)
             {
-                Console.WriteLine($"Validation Errors: {validationFailureCount}");
-            }
+                // log validation failure count
+                if (validationFailureCount > 0)
+                {
+                    Console.WriteLine($"Validation Errors: {validationFailureCount}");
+                }
 
-            // display error count
-            if (errorCount > 0 && !config.JsonLog)
-            {
-                Console.WriteLine($"Failed: {errorCount} Errors");
-            }
+                // log error count
+                if (errorCount > 0)
+                {
+                    Console.WriteLine($"Failed: {errorCount} Errors");
+                }
 
-            // fail if MaxErrors exceeded
-            else if (validationFailureCount > config.MaxErrors && !config.JsonLog)
-            {
-                Console.Write($"Failed: Validation Errors({validationFailureCount}) exceeded MaxErrors ({config.MaxErrors})");
-                errorCount += validationFailureCount;
+                // log MaxErrors exceeded
+                if (errorCount + validationFailureCount >= config.MaxErrors)
+                {
+                    Console.Write($"Failed: Errors: {errorCount + validationFailureCount} >= MaxErrors: {config.MaxErrors}");
+                }
             }
 
             // return non-zero exit code on failure
-            return errorCount;
+            return errorCount + validationFailureCount;
         }
 
         /// <summary>
