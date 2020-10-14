@@ -30,7 +30,7 @@ namespace CSE.WebValidate
             root.AddOption(new Option<string>(new string[] { "-s", "--server" }, ParseString, true, "Server to test"));
             root.AddOption(new Option<List<string>>(new string[] { "-f", "--files" }, ParseStringList, true, "List of files to test"));
             root.AddOption(new Option<string>(new string[] { "--tag" }, ParseString, true, "Tag for log and App Insights"));
-            root.AddOption(new Option<int>(new string[] { "-l", "--sleep" }, ParseIntGEZero, true, "Sleep (ms) between each request"));
+            root.AddOption(new Option<int>(new string[] { "-l", "--sleep" }, ParseIntGTZero, true, "Sleep (ms) between each request"));
             root.AddOption(new Option<bool>(new string[] { "-j", "--strict-json" }, ParseBool, true, "Use strict json when parsing"));
             root.AddOption(new Option<string>(new string[] { "-u", "--base-url" }, ParseString, true, "Base url for files"));
             root.AddOption(new Option<bool>(new string[] { "-v", "--verbose" }, ParseBool, true, "Display verbose results"));
@@ -40,10 +40,10 @@ namespace CSE.WebValidate
             root.AddOption(new Option<bool>(new string[] { "--random" }, ParseBool, true, "Run requests randomly (requires --run-loop)"));
             root.AddOption(new Option<int>(new string[] { "--duration" }, ParseIntGTZero, true, "Test duration (seconds)  (requires --run-loop)"));
             root.AddOption(new Option<int>(new string[] { "--summary-minutes" }, ParseIntGTZero, true, "Display summary results (minutes)  (requires --run-loop)"));
-            root.AddOption(new Option<int>(new string[] { "-t", "--timeout" }, ParseIntGEZero, true, "Request timeout (seconds)"));
+            root.AddOption(new Option<int>(new string[] { "-t", "--timeout" }, ParseIntGTZero, true, "Request timeout (seconds)"));
             root.AddOption(new Option<int>(new string[] { "--max-concurrent" }, ParseIntGTZero, true, "Max concurrent requests"));
             root.AddOption(new Option<int>(new string[] { "--max-errors" }, ParseIntGTZero, true, "Max validation errors"));
-            root.AddOption(new Option<int>(new string[] { "--delay-start" }, ParseIntGEZero, true, "Delay test start (seconds)"));
+            root.AddOption(new Option<int>(new string[] { "--delay-start" }, ParseIntGTZero, true, "Delay test start (seconds)"));
             root.AddOption(new Option<bool>(new string[] { "-d", "--dry-run" }, "Validates configuration"));
 
             // these require access to --run-loop so are added at the root level
