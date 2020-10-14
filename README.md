@@ -322,7 +322,7 @@ WebV will return a non-zero exit code (fail) under the following conditions
 - StatusCode validation fails
 - ContentType validation fails
 - --max-errors is exceeded
-  - To cause the test to fail on any validation error, set --max-errors 0 (default is 10)
+  - To cause the test to fail on any validation error, set --max-errors 1 (default is 10)
 - Any validation error on a test that has FailOnValidationError set to true
 
 ## Validation Files
