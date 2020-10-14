@@ -6,8 +6,8 @@ using System.Collections.Generic;
 using System.Dynamic;
 using System.Net.Http;
 using System.Runtime.Serialization;
+using System.Text.Json;
 using CSE.WebValidate.Model;
-using Newtonsoft.Json;
 
 namespace CSE.WebValidate.Validators
 {
@@ -126,7 +126,7 @@ namespace CSE.WebValidate.Validators
         /// <param name="properties">List of JsonProperty</param>
         /// <param name="body">string</param>
         /// <returns>ValidationResult</returns>
-        public static ValidationResult Validate(List<JsonProperty> properties, string body)
+        public static ValidationResult Validate(List<CSE.WebValidate.Model.JsonProperty> properties, string body)
         {
             ValidationResult result = new ValidationResult();
 
@@ -145,7 +145,7 @@ namespace CSE.WebValidate.Validators
             try
             {
                 // deserialize the json into an IDictionary
-                IDictionary<string, object> dict = JsonConvert.DeserializeObject<ExpandoObject>(body);
+                IDictionary<string, object> dict = JsonSerializer.Deserialize<ExpandoObject>(body, App.JsonOptions);
 
                 // set to new so validation fails
                 if (dict == null)
@@ -153,7 +153,7 @@ namespace CSE.WebValidate.Validators
                     dict = new Dictionary<string, object>();
                 }
 
-                foreach (JsonProperty property in properties)
+                foreach (CSE.WebValidate.Model.JsonProperty property in properties)
                 {
                     if (!string.IsNullOrEmpty(property.Field) && dict.ContainsKey(property.Field))
                     {
@@ -165,13 +165,13 @@ namespace CSE.WebValidate.Validators
                             }
                             else
                             {
-                                result.Add(Validate(property.Validation, JsonConvert.SerializeObject(dict[property.Field])));
+                                result.Add(Validate(property.Validation, JsonSerializer.Serialize(dict[property.Field])));
                             }
                         }
 
                         // null values check for the existance of the field in the payload
                         // used when values are not known
-                        if (property.Value != null && !dict[property.Field].Equals(property.Value))
+                        if (property.Value != null && !dict[property.Field].ToString().Equals(property.Value.ToString(), StringComparison.Ordinal))
                         {
                             // whole numbers map to int
                             if (!((property.Value.GetType() == typeof(double) ||
@@ -226,7 +226,7 @@ namespace CSE.WebValidate.Validators
             try
             {
                 // deserialize the json
-                List<dynamic> resList = JsonConvert.DeserializeObject<List<dynamic>>(body);
+                List<dynamic> resList = JsonSerializer.Deserialize<List<dynamic>>(body, App.JsonOptions);
 
                 result.Add(ValidateJsonArrayLength(jArray, resList));
                 result.Add(ValidateForEach(jArray.ForEach, resList));
@@ -446,7 +446,7 @@ namespace CSE.WebValidate.Validators
                     foreach (Validation fe in validationList)
                     {
                         // call validate recursively
-                        result.Add(Validate(fe, JsonConvert.SerializeObject(doc)));
+                        result.Add(Validate(fe, JsonSerializer.Serialize(doc, App.JsonOptions)));
                     }
                 }
             }
@@ -477,7 +477,7 @@ namespace CSE.WebValidate.Validators
                     foreach (dynamic doc in documentList)
                     {
                         // call validate recursively
-                        vr = Validate(fa, JsonConvert.SerializeObject(doc));
+                        vr = Validate(fa, JsonSerializer.Serialize(doc, App.JsonOptions));
 
                         // value was found
                         if (!vr.Failed && vr.ValidationErrors.Count == 0)
@@ -551,11 +551,11 @@ namespace CSE.WebValidate.Validators
                         // set the body to entire doc or field
                         if (property.Field == null)
                         {
-                            fieldBody = JsonConvert.SerializeObject(documentList[(int)property.Index]);
+                            fieldBody = JsonSerializer.Serialize(documentList[(int)property.Index], App.JsonOptions);
                         }
                         else
                         {
-                            fieldBody = JsonConvert.SerializeObject(documentList[(int)property.Index][property.Field]);
+                            fieldBody = JsonSerializer.Serialize(documentList[(int)property.Index][property.Field], App.JsonOptions);
                         }
 
                         // validate recursively
