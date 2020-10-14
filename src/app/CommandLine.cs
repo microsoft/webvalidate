@@ -31,6 +31,7 @@ namespace CSE.WebValidate
             root.AddOption(new Option<List<string>>(new string[] { "-f", "--files" }, ParseStringList, true, "List of files to test"));
             root.AddOption(new Option<string>(new string[] { "--tag" }, ParseString, true, "Tag for log and App Insights"));
             root.AddOption(new Option<int>(new string[] { "-l", "--sleep" }, ParseIntGEZero, true, "Sleep (ms) between each request"));
+            root.AddOption(new Option<bool>(new string[] { "-j", "--strict-json" }, ParseBool, true, "Use strict json when parsing"));
             root.AddOption(new Option<string>(new string[] { "-u", "--base-url" }, ParseString, true, "Base url for files"));
             root.AddOption(new Option<bool>(new string[] { "-v", "--verbose" }, ParseBool, true, "Display verbose results"));
             root.AddOption(new Option<bool>(new string[] { "--json-log" }, ParseBool, true, "Use json log format (implies --verbose)"));
@@ -364,6 +365,7 @@ namespace CSE.WebValidate
             Console.WriteLine($"   Run Loop        {config.RunLoop}");
             Console.WriteLine($"   Sleep           {config.Sleep}");
             Console.WriteLine($"   Verbose Errors  {config.VerboseErrors}");
+            Console.WriteLine($"   Strict Json     {config.StrictJson}");
             Console.WriteLine($"   Duration        {config.Duration}");
             Console.WriteLine($"   Delay Start     {config.DelayStart}");
             Console.WriteLine($"   Max Concurrent  {config.MaxConcurrent}");
