@@ -234,7 +234,7 @@ namespace CSE.WebValidate
             catch (Exception ex)
             {
                 Console.WriteLine(ex.Message);
-             }
+            }
 
             // couldn't read the list
             return null;
