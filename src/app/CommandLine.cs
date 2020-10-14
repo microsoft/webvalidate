@@ -30,19 +30,19 @@ namespace CSE.WebValidate
             root.AddOption(new Option<string>(new string[] { "-s", "--server" }, ParseString, true, "Server to test"));
             root.AddOption(new Option<List<string>>(new string[] { "-f", "--files" }, ParseStringList, true, "List of files to test"));
             root.AddOption(new Option<string>(new string[] { "--tag" }, ParseString, true, "Tag for log and App Insights"));
-            root.AddOption(new Option<int>(new string[] { "-l", "--sleep" }, ParseInt, true, "Sleep (ms) between each request"));
+            root.AddOption(new Option<int>(new string[] { "-l", "--sleep" }, ParseIntGEZero, true, "Sleep (ms) between each request"));
             root.AddOption(new Option<string>(new string[] { "-u", "--base-url" }, ParseString, true, "Base url for files"));
             root.AddOption(new Option<bool>(new string[] { "-v", "--verbose" }, ParseBool, true, "Display verbose results"));
             root.AddOption(new Option<bool>(new string[] { "--json-log" }, ParseBool, true, "Use json log format (implies --verbose)"));
             root.AddOption(new Option<bool>(new string[] { "-r", "--run-loop" }, ParseBool, true, "Run test in an infinite loop"));
             root.AddOption(new Option<bool>(new string[] { "--verbose-errors" }, ParseBool, true, "Log verbose error messages"));
             root.AddOption(new Option<bool>(new string[] { "--random" }, ParseBool, true, "Run requests randomly (requires --run-loop)"));
-            root.AddOption(new Option<int>(new string[] { "--duration" }, ParseInt, true, "Test duration (seconds)  (requires --run-loop)"));
-            root.AddOption(new Option<int>(new string[] { "--summary-minutes" }, ParseInt, true, "Display summary results (minutes)  (requires --run-loop)"));
-            root.AddOption(new Option<int>(new string[] { "-t", "--timeout" }, ParseInt, true, "Request timeout (seconds)"));
-            root.AddOption(new Option<int>(new string[] { "--max-concurrent" }, ParseInt, true, "Max concurrent requests"));
-            root.AddOption(new Option<int>(new string[] { "--max-errors" }, ParseInt, true, "Max validation errors"));
-            root.AddOption(new Option<int>(new string[] { "--delay-start" }, ParseInt, true, "Delay test start (seconds)"));
+            root.AddOption(new Option<int>(new string[] { "--duration" }, ParseIntGTZero, true, "Test duration (seconds)  (requires --run-loop)"));
+            root.AddOption(new Option<int>(new string[] { "--summary-minutes" }, ParseIntGTZero, true, "Display summary results (minutes)  (requires --run-loop)"));
+            root.AddOption(new Option<int>(new string[] { "-t", "--timeout" }, ParseIntGEZero, true, "Request timeout (seconds)"));
+            root.AddOption(new Option<int>(new string[] { "--max-concurrent" }, ParseIntGTZero, true, "Max concurrent requests"));
+            root.AddOption(new Option<int>(new string[] { "--max-errors" }, ParseIntGTZero, true, "Max validation errors"));
+            root.AddOption(new Option<int>(new string[] { "--delay-start" }, ParseIntGEZero, true, "Delay test start (seconds)"));
             root.AddOption(new Option<bool>(new string[] { "-d", "--dry-run" }, "Validates configuration"));
 
             // these require access to --run-loop so are added at the root level
@@ -176,6 +176,7 @@ namespace CSE.WebValidate
         private static bool ParseBool(ArgumentResult result)
         {
             string name = result.Parent?.Symbol.Name.ToUpperInvariant().Replace('-', '_');
+
             if (string.IsNullOrEmpty(name))
             {
                 result.ErrorMessage = "result.Parent is null";
@@ -237,17 +238,18 @@ namespace CSE.WebValidate
         }
 
         // parser for integer >= 0
-        private static int ParseInt(ArgumentResult result)
+        private static int ParseIntGEZero(ArgumentResult result)
         {
             string name = result.Parent?.Symbol.Name.ToUpperInvariant().Replace('-', '_');
+
             if (string.IsNullOrEmpty(name))
             {
                 result.ErrorMessage = "result.Parent is null";
                 return -1;
             }
 
-            string errorMessage = name + " must be an integer >= 0";
             int val;
+            string errorMessage = $"--{result.Parent.Symbol.Name} must be an integer >= 0";
 
             // nothing to validate
             if (result.Tokens.Count == 0)
@@ -271,6 +273,50 @@ namespace CSE.WebValidate
             }
 
             if (!int.TryParse(result.Tokens[0].Value, out val) || val < 0)
+            {
+                result.ErrorMessage = errorMessage;
+                return -1;
+            }
+
+            return val;
+        }
+
+        // parser for integer >= 0
+        private static int ParseIntGTZero(ArgumentResult result)
+        {
+            string name = result.Parent?.Symbol.Name.ToUpperInvariant().Replace('-', '_');
+
+            if (string.IsNullOrEmpty(name))
+            {
+                result.ErrorMessage = "result.Parent is null";
+                return -1;
+            }
+
+            string errorMessage = $"--{result.Parent.Symbol.Name} must be an integer >= 1";
+            int val;
+
+            // nothing to validate
+            if (result.Tokens.Count == 0)
+            {
+                string env = Environment.GetEnvironmentVariable(name);
+
+                if (string.IsNullOrWhiteSpace(env))
+                {
+                    return GetCommandDefaultValues(result);
+                }
+                else
+                {
+                    if (!int.TryParse(env, out val) || val < 1)
+                    {
+                        result.ErrorMessage = errorMessage;
+                        return -1;
+                    }
+
+                    return val;
+                }
+            }
+
+            if (!int.TryParse(result.Tokens[0].Value, out val) || val < 1)
             {
                 result.ErrorMessage = errorMessage;
                 return -1;
