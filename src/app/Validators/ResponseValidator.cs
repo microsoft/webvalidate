@@ -169,18 +169,17 @@ namespace CSE.WebValidate.Validators
                             }
                         }
 
-                        // null values check for the existance of the field in the payload
-                        // used when values are not known
-                        if (property.Value != null && !dict[property.Field].ToString().Equals(property.Value.ToString(), StringComparison.Ordinal))
+                        object element = dict[property.Field];
+
+                        // compare the values as strings
+                        if (property.Value != null && element.ToString() != property.Value.ToString())
                         {
-                            // whole numbers map to int
-                            if (!((property.Value.GetType() == typeof(double) ||
-                                property.Value.GetType() == typeof(float) ||
-                                property.Value.GetType() == typeof(decimal)) &&
-                                double.TryParse(dict[property.Field].ToString(), out double d) &&
-                                (double)property.Value == d))
+                            // try to parse as double to catch 10 == 10.0
+                            if (!(double.TryParse(element.ToString(), out double d1) &&
+                                double.TryParse(property.Value.ToString(), out double d2)
+                                && d1 == d2))
                             {
-                                result.ValidationErrors.Add($"json: {property.Field}: {dict[property.Field]} : Expected: {property.Value}");
+                                result.ValidationErrors.Add($"json: {property.Field}: {element} : Expected: {property.Value}");
                             }
                         }
                     }
@@ -531,7 +530,6 @@ namespace CSE.WebValidate.Validators
             if (byIndexList != null && byIndexList.Count > 0)
             {
                 string fieldBody;
-                double d = 0;
                 int ndx = -1;
 
                 foreach (JsonPropertyByIndex property in byIndexList)
@@ -545,17 +543,20 @@ namespace CSE.WebValidate.Validators
                         break;
                     }
 
+                    JsonElement element = documentList[property.Index];
+
                     // validate recursively
                     if (property.Validation != null)
                     {
-                        // set the body to entire doc or field
                         if (property.Field == null)
                         {
-                            fieldBody = JsonSerializer.Serialize(documentList[(int)property.Index], App.JsonOptions);
+                            // set the body to entire doc
+                            fieldBody = JsonSerializer.Serialize(element, App.JsonOptions);
                         }
                         else
                         {
-                            fieldBody = JsonSerializer.Serialize(documentList[(int)property.Index][property.Field], App.JsonOptions);
+                            // set the body to the field
+                            fieldBody = JsonSerializer.Serialize(element.GetProperty(property.Field), App.JsonOptions);
                         }
 
                         // validate recursively
@@ -565,25 +566,25 @@ namespace CSE.WebValidate.Validators
                     {
                         // null values check for the existance of the field in the payload
                         // used when values are not known
-                        if (documentList[(int)property.Index][property.Field] != property.Value)
+
+                        // compare the values as strings
+                        if (element.GetProperty(property.Field).ToString() != property.Value.ToString())
                         {
-                            // whole numbers map to int
-                            if (!((property.Value.GetType() == typeof(double) ||
-                                property.Value.GetType() == typeof(float) ||
-                                property.Value.GetType() == typeof(decimal)) &&
-                                double.TryParse(documentList[(int)property.Index][property.Field].ToString(), out d) &&
-                                (double)property.Value == d))
+                            // try to parse as double to catch 10 == 10.0
+                            if (!(double.TryParse(element.GetProperty(property.Field).ToString(), out double d1) &&
+                                double.TryParse(property.Value.ToString(), out double d2)
+                                && d1 == d2))
                             {
-                                result.ValidationErrors.Add($"json: {property.Field}: {documentList[(int)property.Index][property.Field]} : Expected: {property.Value}");
+                                result.ValidationErrors.Add($"json: {property.Field}: {element.GetProperty(property.Field)} : Expected: {property.Value}");
                             }
                         }
                     }
                     else if (property.Value != null)
                     {
                         // used for checking array of simple type
-                        if (!property.Value.Equals(documentList[(int)property.Index]))
+                        if (property.Value.ToString() != element.ToString())
                         {
-                            result.ValidationErrors.Add($"json: {property.Field}: {documentList[(int)property.Index]} : Expected: {property.Value}");
+                            result.ValidationErrors.Add($"json: {property.Field}: {element} : Expected: {property.Value}");
                         }
                     }
                 }
