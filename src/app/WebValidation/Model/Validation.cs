@@ -71,7 +71,7 @@ namespace CSE.WebValidate.Model
         /// <summary>
         /// gets or sets the json object properties
         /// </summary>
-        public List<JsonProperty> JsonObject { get; set; }
+        public List<JsonItem> JsonObject { get; set; }
 
         /// <summary>
         /// gets or sets the performance target

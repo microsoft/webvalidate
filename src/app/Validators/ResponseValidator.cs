@@ -126,7 +126,7 @@ namespace CSE.WebValidate.Validators
         /// <param name="properties">List of JsonProperty</param>
         /// <param name="body">string</param>
         /// <returns>ValidationResult</returns>
-        public static ValidationResult Validate(List<CSE.WebValidate.Model.JsonProperty> properties, string body)
+        public static ValidationResult Validate(List<JsonItem> properties, string body)
         {
             ValidationResult result = new ValidationResult();
 
@@ -153,7 +153,7 @@ namespace CSE.WebValidate.Validators
                     dict = new Dictionary<string, object>();
                 }
 
-                foreach (CSE.WebValidate.Model.JsonProperty property in properties)
+                foreach (JsonItem property in properties)
                 {
                     if (!string.IsNullOrEmpty(property.Field) && dict.ContainsKey(property.Field))
                     {
