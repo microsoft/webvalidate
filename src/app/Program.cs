@@ -67,19 +67,14 @@ namespace CSE.WebValidate
                 return DoDryRun(config);
             }
 
-            // set json options
+            // set json options based on --strict-json
             App.JsonOptions = new JsonSerializerOptions
             {
                 PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
                 PropertyNameCaseInsensitive = !config.StrictJson,
                 AllowTrailingCommas = !config.StrictJson,
-                ReadCommentHandling = JsonCommentHandling.Disallow,
+                ReadCommentHandling = config.StrictJson ? JsonCommentHandling.Disallow : JsonCommentHandling.Skip,
             };
-
-            if (!config.StrictJson)
-            {
-                App.JsonOptions.ReadCommentHandling = JsonCommentHandling.Skip;
-            }
 
             // create the test
             try
