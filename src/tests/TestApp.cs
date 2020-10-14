@@ -152,23 +152,20 @@ namespace CSE.WebValidate.Tests.Unit
 
         private Config BuildConfig(string server)
         {
-            if (App.JsonSerializerOptions == null)
+            App.JsonSerializerOptions = new JsonSerializerOptions
             {
-                App.JsonSerializerOptions = new JsonSerializerOptions
-                {
-                    PropertyNameCaseInsensitive = true,
-                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-                    AllowTrailingCommas = true,
-                    ReadCommentHandling = JsonCommentHandling.Skip,
-                };
-            }
+                PropertyNameCaseInsensitive = true,
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                AllowTrailingCommas = true,
+                ReadCommentHandling = JsonCommentHandling.Skip,
+            };
 
             return new Config
             {
                 Server = server,
                 Timeout = 10,
                 MaxConcurrent = 100,
-                MaxErrors = 10
+                MaxErrors = 10,
             };
         }
 
