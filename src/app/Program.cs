@@ -16,13 +16,7 @@ namespace CSE.WebValidate
     /// </summary>
     public sealed partial class App
     {
-        public static readonly JsonSerializerOptions JsonOptions = new JsonSerializerOptions
-        {
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-            PropertyNameCaseInsensitive = true,
-            AllowTrailingCommas = true,
-            ReadCommentHandling = JsonCommentHandling.Skip,
-        };
+        public static JsonSerializerOptions JsonOptions { get; set; }
 
         /// <summary>
         /// Gets or sets cancellation token
@@ -71,6 +65,20 @@ namespace CSE.WebValidate
             if (config.DryRun)
             {
                 return DoDryRun(config);
+            }
+
+            // set json options
+            App.JsonOptions = new JsonSerializerOptions
+            {
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                PropertyNameCaseInsensitive = !config.StrictJson,
+                AllowTrailingCommas = !config.StrictJson,
+                ReadCommentHandling = JsonCommentHandling.Disallow,
+            };
+
+            if (!config.StrictJson)
+            {
+                App.JsonOptions.ReadCommentHandling = JsonCommentHandling.Skip;
             }
 
             // create the test
