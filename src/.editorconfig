@@ -230,6 +230,9 @@ dotnet_diagnostic.SA1208.severity = none
 # SA1401: Fields should be private
 dotnet_diagnostic.SA1401.severity = suggestion
 
+# SA1512: single line comments should not be followed by blank lines
+dotnet_diagnostic.SA1512.severity = suggestion
+
 # SA1600: Elements should be documented
 dotnet_diagnostic.SA1600.severity = suggestion
 
