@@ -58,7 +58,6 @@ namespace CSE.WebValidate.Tests.Unit
             ParseResult parse;
 
             // set all env vars
-            // System.Environment.SetEnvironmentVariable(EnvKeys.Duration, "1");
             System.Environment.SetEnvironmentVariable(EnvKeys.Files, "msft.json");
             System.Environment.SetEnvironmentVariable(EnvKeys.Server, "test");
             System.Environment.SetEnvironmentVariable(EnvKeys.MaxConcurrent, "100");
