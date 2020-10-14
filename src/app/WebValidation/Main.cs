@@ -390,7 +390,10 @@ namespace CSE.WebValidate
                     // lookup the target
                     PerfTarget target = targets[log.Category];
 
-                    if (target != null && !string.IsNullOrEmpty(target.Category) && target.Quartiles != null && target.Quartiles.Count == 3)
+                    if (target != null &&
+                        !string.IsNullOrEmpty(target.Category) &&
+                        target.Quartiles != null &&
+                        target.Quartiles.Count == 3)
                     {
                         // set to max
                         log.Quartile = target.Quartiles.Count + 1;
