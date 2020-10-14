@@ -1,5 +1,12 @@
 # Change Log
 
+## v1.5.0 - October 2020
+
+- added strict json parsing
+- converted to system.text.json
+- added deprecation warnings
+- bug fixes
+
 ## v1.4.0 - October 2020
 
 - added for any json array testing
