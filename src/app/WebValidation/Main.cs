@@ -463,7 +463,6 @@ namespace CSE.WebValidate
             }
 
             Request req = requestList[index];
-            DateTime dt = DateTime.UtcNow;
 
             try
             {
