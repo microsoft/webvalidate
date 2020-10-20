@@ -68,8 +68,13 @@ namespace CSE.WebValidate
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine(ex.Message);
-                    return null;
+                    // display helper message on request exception
+                    if (ex.InnerException is HttpRequestException hre)
+                    {
+                        Console.WriteLine("Verify you have permission to read the URL as well as the correctness of the URL");
+                    }
+
+                    throw;
                 }
             }
 
