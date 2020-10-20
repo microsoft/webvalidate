@@ -200,20 +200,8 @@ dotnet_naming_style.begins_with_i.capitalization = pascal_case
 # SA0001: XML comment analysis
 dotnet_diagnostic.SA0001.severity = none
 
-# SA1642: Constructor summary documentation should begin with standard text
-dotnet_diagnostic.SA1642.severity = suggestion
-
-# SA1633: File should have header
-dotnet_diagnostic.SA1633.severity = warning
-
-# SA1629: Documentation text should end with a period
-dotnet_diagnostic.SA1629.severity = none
-
-# SA1516: Elements should be separated by blank line
-dotnet_diagnostic.SA1516.severity = suggestion
-
-# SA1502: Element should not be on a single line
-dotnet_diagnostic.SA1502.severity = suggestion
+# SA1005: Single line comments should begin with a space
+dotnet_diagnostic.SA1005.severity = suggestion
 
 # SA1101: Prefix local calls with this
 dotnet_diagnostic.SA1101.severity = none
@@ -233,11 +221,29 @@ dotnet_diagnostic.SA1401.severity = suggestion
 # SA1413: Use trailing commas in multi-line initializers
 dotnet_diagnostic.SA1413.severity = suggestion
 
+# SA1502: Element should not be on a single line
+dotnet_diagnostic.SA1502.severity = suggestion
+
 # SA1512: single line comments should not be followed by blank lines
 dotnet_diagnostic.SA1512.severity = suggestion
+
+# SA1515: Single-line comment should be proceeded by blank line
+dotnet_diagnostic.SA1515.severity = suggestion
+
+# SA1516: Elements should be separated by blank line
+dotnet_diagnostic.SA1516.severity = suggestion
 
 # SA1600: Elements should be documented
 dotnet_diagnostic.SA1600.severity = suggestion
 
 # SA1601: Partial elements should be documented
 dotnet_diagnostic.SA1601.severity = suggestion
+
+# SA1629: Documentation text should end with a period
+dotnet_diagnostic.SA1629.severity = none
+
+# SA1633: File should have header
+dotnet_diagnostic.SA1633.severity = warning
+
+# SA1642: Constructor summary documentation should begin with standard text
+dotnet_diagnostic.SA1642.severity = suggestion
