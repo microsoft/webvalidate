@@ -16,6 +16,9 @@ namespace CSE.WebValidate
     /// </summary>
     public sealed partial class App
     {
+        /// <summary>
+        /// Gets or sets json serialization options
+        /// </summary>
         public static JsonSerializerOptions JsonSerializerOptions { get; set; } = new JsonSerializerOptions
         {
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
@@ -120,7 +123,7 @@ namespace CSE.WebValidate
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"\n{ex}\n\nWebV:Exception:{ex.Message}");
+                Console.WriteLine($"\nException:{ex.Message}");
                 return 1;
             }
         }
