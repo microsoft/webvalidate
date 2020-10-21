@@ -188,7 +188,7 @@ namespace CSE.WebValidate.Validators
         /// </summary>
         /// <param name="jsonobject">list of JsonProperty</param>
         /// <returns>ValidationResult</returns>
-        public static ValidationResult Validate(List<JsonProperty> jsonobject)
+        public static ValidationResult Validate(List<JsonItem> jsonobject)
         {
             ValidationResult res = new ValidationResult();
 
@@ -199,7 +199,7 @@ namespace CSE.WebValidate.Validators
             }
 
             // validate field
-            foreach (JsonProperty f in jsonobject)
+            foreach (JsonItem f in jsonobject)
             {
                 if (string.IsNullOrWhiteSpace(f.Field))
                 {

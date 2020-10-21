@@ -5,6 +5,7 @@ using System;
 using System.CommandLine;
 using System.CommandLine.Invocation;
 using System.CommandLine.Parsing;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -15,6 +16,14 @@ namespace CSE.WebValidate
     /// </summary>
     public sealed partial class App
     {
+        /// <summary>
+        /// Gets or sets json serialization options
+        /// </summary>
+        public static JsonSerializerOptions JsonSerializerOptions { get; set; } = new JsonSerializerOptions
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        };
+
         /// <summary>
         /// Gets or sets cancellation token
         /// </summary>
@@ -64,6 +73,15 @@ namespace CSE.WebValidate
                 return DoDryRun(config);
             }
 
+            // set json options based on --strict-json
+            App.JsonSerializerOptions = new JsonSerializerOptions
+            {
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                PropertyNameCaseInsensitive = !config.StrictJson,
+                AllowTrailingCommas = !config.StrictJson,
+                ReadCommentHandling = config.StrictJson ? JsonCommentHandling.Disallow : JsonCommentHandling.Skip,
+            };
+
             // create the test
             try
             {
@@ -105,7 +123,7 @@ namespace CSE.WebValidate
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"\n{ex}\n\nWebV:Exception:{ex.Message}");
+                Console.WriteLine($"\nException:{ex.Message}");
                 return 1;
             }
         }

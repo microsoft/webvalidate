@@ -1,13 +1,13 @@
 {
-  "Variables": [ "ROBOTS", "FAVICON" ],
-  "Requests": [
+  "variables": [ "ROBOTS", "FAVICON" ],
+  "requests": [
     {
-      "Path": "/${ROBOTS}",
-      "Validation": { "ContentType": "text/plain" }
+      "path": "/${ROBOTS}",
+      "validation": { "contentType": "text/plain" }
     },
     {
-      "Path": "/${FAVICON}",
-      "Validation": { "ContentType": "image/x-icon" }
+      "path": "/${FAVICON}",
+      "validation": { "contentType": "image/x-icon" }
     }
   ]
 }

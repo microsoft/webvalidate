@@ -5,6 +5,28 @@
 
 Web Validate (WebV) is a web request validation tool that we use to run end-to-end tests and long-running smoke tests.
 
+## Deprecation Warnings
+
+- Test files must migrate to the new json format
+- This is a breaking change in the next release
+
+```json
+
+{
+  "requests":
+  [
+    {"path": ...}
+    {"path": ...}
+  ]
+}
+
+```
+
+- Strict json parsing will become the default in the next release
+  - specify --strict-json false to keep current behavior
+  - this is potentially a breaking change
+  - see Command Line Parameters below for more details
+
 ## WebV Quick Start
 
 WebV is published as a dotnet package and can be installed as a dotnet global tool. WebV can also be run as a docker container from docker hub. If you have dotnet core sdk installed, running as a dotnet global tool is the simplest and fastest way to run WebV.
@@ -240,6 +262,16 @@ We use the `--json-log` command line option to integrate Docker container logs w
 - -f --files file1 [file2 file3 ...]
   - one or more json test files
   - default location current directory
+- -j --strict-json
+  - use strict RFC rules when parsing the json
+  - json property names are case sensitive
+  - exceptions will occur for
+    - trailing commas in json arrays
+    - comments in json
+  - default false
+    - `deprecation warning`
+      - the default is currently false as it is a breaking change
+      - the default will change to true in the next release
 - --tag
   - user defined tag to include in logs and App Insights
     - can be used to identify location, instance, etc.
@@ -254,6 +286,7 @@ We use the `--json-log` command line option to integrate Docker container logs w
 - --max-errors int
   - end test after max-errors
   - if --max-errors is exceeded, WebV will exit with non-zero exit code
+  - default 10
 - -t --timeout int
   - HTTP request timeout in seconds
   - default 30 sec
@@ -304,6 +337,7 @@ We use the `--json-log` command line option to integrate Docker container logs w
 - BASE_URL=string
 - VERBOSE_ERRORS=bool
 - DELAY_START=int
+- STRICT_JSON=bool
 
 ### Additional run Loop environment variables
 
@@ -322,7 +356,7 @@ WebV will return a non-zero exit code (fail) under the following conditions
 - StatusCode validation fails
 - ContentType validation fails
 - --max-errors is exceeded
-  - To cause the test to fail on any validation error, set --max-errors 0 (default is 10)
+  - To cause the test to fail on any validation error, set --max-errors 1 (default is 10)
 - Any validation error on a test that has FailOnValidationError set to true
 
 ## Validation Files
@@ -462,15 +496,15 @@ dotnet run -- -s https://www.microsoft.com -f envvars.json
 ```json
 
 {
-  "Variables": [ "ROBOTS", "FAVICON" ],
-  "Requests": [
+  "variables": [ "ROBOTS", "FAVICON" ],
+  "requests": [
     {
-      "Path": "/${ROBOTS}",
-      "Validation": { "ContentType": "text/plain" }
+      "path": "/${ROBOTS}",
+      "validation": { "contentType": "text/plain" }
     },
     {
-      "Path": "/${FAVICON}",
-      "Validation": { "ContentType": "image/x-icon" }
+      "path": "/${FAVICON}",
+      "validation": { "contentType": "image/x-icon" }
     }
   ]
 }
@@ -491,11 +525,8 @@ The msft.json file contains sample validation tests that will will successfully 
 ```json
 
 {
-  "Url":"/",
-  "Validation":
-  {
-    "Code":302
-  }
+  "path":"/",
+  "validation": { "statusCode":302 }
 }
 
 ```
@@ -505,14 +536,14 @@ The msft.json file contains sample validation tests that will will successfully 
 ```json
 
 {
-  "Url":"/en-us",
-  "Validation":
+  "path":"/en-us",
+  "validation":
   {"
-    ContentType":"text/html",
-    "Contains":
+    contentType":"text/html",
+    "contains":
     [
-      { "Value":"<title>Microsoft - Official Home Page</title>" },
-      { "Value":"<head data-info=\"{" }
+      { "value":"<title>Microsoft - Official Home Page</title>" },
+      { "value":"<head data-info=\"{" }
     ]
   }
 }
@@ -524,10 +555,10 @@ The msft.json file contains sample validation tests that will will successfully 
 ```json
 
 {
-  "Url": "/favicon.ico",
-  "Validation":
+  "path": "/favicon.ico",
+  "validation":
   {
-    "ContentType":"image/x-icon"
+    "contentType":"image/x-icon"
   }
 }
 
@@ -538,15 +569,15 @@ The msft.json file contains sample validation tests that will will successfully 
 ```json
 
 {
-  "Url": "/robots.txt",
-  "Validation":
+  "path": "/robots.txt",
+  "validation":
   {
-    "ContentType": "text/plain",
-    "MinLength": 200,
-    "Contains":
+    "contentType": "text/plain",
+    "minLength": 200,
+    "contains":
     [
-      { "Value": "User-agent: *" },
-      { "Value": "Disallow: /en-us/windows/si/matrix.html"}
+      { "value": "User-agent: *" },
+      { "value": "Disallow: /en-us/windows/si/matrix.html"}
     ]
   }
 }
@@ -555,12 +586,11 @@ The msft.json file contains sample validation tests that will will successfully 
 
 ## Sample GitHub tests
 
-### Array of Repos
+### Array of Repositories
 
 ```json
 
 {
-  "verb": "GET",
   "path": "/orgs/octokit/repos",
   "validation": {
     "contentType": "application/json",
@@ -613,7 +643,6 @@ The msft.json file contains sample validation tests that will will successfully 
 ```json
 
 {
-  "verb": "GET",
   "path": "/repos/octokit/octokit.net",
   "validation": {
     "contentType": "application/json",

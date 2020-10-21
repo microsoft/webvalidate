@@ -10,27 +10,27 @@ namespace CSE.WebValidate.Tests.Unit
         [Fact]
         public void JsonObjectTest()
         {
-            List<JsonProperty> properties = null;
+            List<JsonItem> properties = null;
 
             // validate json object is null
             Assert.False(ParameterValidator.Validate(properties).Failed);
 
             // Field can't be empty
-            properties = new List<JsonProperty> { new JsonProperty { Field = string.Empty } };
+            properties = new List<JsonItem> { new JsonItem { Field = string.Empty } };
             Assert.True(ParameterValidator.Validate(properties).Failed);
 
             // valid
             properties.Clear();
-            properties.Add(new JsonProperty { Field = "type" });
+            properties.Add(new JsonItem { Field = "type" });
             Assert.False(ParameterValidator.Validate(properties).Failed);
 
             // validate empty list
-            properties = new List<JsonProperty>();
+            properties = new List<JsonItem>();
             Assert.Empty(properties);
             Assert.False(ParameterValidator.Validate(properties).Failed);
 
             // validate adding a property
-            properties.Add(new JsonProperty());
+            properties.Add(new JsonItem());
             Assert.True(ParameterValidator.Validate(properties).Failed);
         }
     }

@@ -4,9 +4,9 @@
 namespace CSE.WebValidate.Model
 {
     /// <summary>
-    /// Represents a json property
+    /// Represents a json item
     /// </summary>
-    public class JsonProperty
+    public class JsonItem
     {
         /// <summary>
         /// Gets or sets the name of the field

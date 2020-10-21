@@ -135,27 +135,29 @@ namespace CSE.WebValidate
                 }
             }
 
-            // display validation failure count
-            if (validationFailureCount > 0 && !config.JsonLog)
+            if (!config.JsonLog)
             {
-                Console.WriteLine($"Validation Errors: {validationFailureCount}");
-            }
+                // log validation failure count
+                if (validationFailureCount > 0)
+                {
+                    Console.WriteLine($"Validation Errors: {validationFailureCount}");
+                }
 
-            // display error count
-            if (errorCount > 0 && !config.JsonLog)
-            {
-                Console.WriteLine($"Failed: {errorCount} Errors");
-            }
+                // log error count
+                if (errorCount > 0)
+                {
+                    Console.WriteLine($"Failed: {errorCount} Errors");
+                }
 
-            // fail if MaxErrors exceeded
-            else if (validationFailureCount > config.MaxErrors && !config.JsonLog)
-            {
-                Console.Write($"Failed: Validation Errors({validationFailureCount}) exceeded MaxErrors ({config.MaxErrors})");
-                errorCount += validationFailureCount;
+                // log MaxErrors exceeded
+                if (errorCount + validationFailureCount >= config.MaxErrors)
+                {
+                    Console.Write($"Failed: Errors: {errorCount + validationFailureCount} >= MaxErrors: {config.MaxErrors}");
+                }
             }
 
             // return non-zero exit code on failure
-            return errorCount;
+            return errorCount > 0 || validationFailureCount >= config.MaxErrors ? errorCount + validationFailureCount : 0;
         }
 
         /// <summary>
@@ -388,7 +390,10 @@ namespace CSE.WebValidate
                     // lookup the target
                     PerfTarget target = targets[log.Category];
 
-                    if (target != null)
+                    if (target != null &&
+                        !string.IsNullOrEmpty(target.Category) &&
+                        target.Quartiles != null &&
+                        target.Quartiles.Count == 3)
                     {
                         // set to max
                         log.Quartile = target.Quartiles.Count + 1;
@@ -458,7 +463,6 @@ namespace CSE.WebValidate
             }
 
             Request req = requestList[index];
-            DateTime dt = DateTime.UtcNow;
 
             try
             {

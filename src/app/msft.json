@@ -1,6 +1,9 @@
-[
-  {"Path":"/","perfTarget":{"category":"Static"},"Validation":{"StatusCode":302}},
-  {"Path":"/en-us","perfTarget":{"category":"Static"},"Validation":{"ContentType":"text/html","Contains":["<title>Microsoft - Official Home Page</title>","<head data-info=\"{"]}},
-  {"Path":"/robots.txt","perfTarget":{"category":"Static"},"Validation":{"ContentType":"text/plain","MinLength":200,"Contains":["User-agent: *","Disallow: /en-us/windows/si/matrix.html"]}},
-  {"Path":"/favicon.ico","perfTarget":{"category":"Static"},"Validation":{"ContentType":"image/x-icon"}}
-]
+{
+  "requests":
+  [
+    {"path":"/","perfTarget":{"category":"Static"},"validation":{"statusCode":302}},
+    {"path":"/en-us","perfTarget":{"category":"Static"},"validation":{"contentType":"text/html","contains":["<title>Microsoft - Official Home Page</title>","<head data-info=\"{"]}},
+    {"path":"/robots.txt","perfTarget":{"category":"Static"},"validation":{"contentType":"text/plain","minLength":200,"contains":["User-agent: *","Disallow: /en-us/windows/si/matrix.html"]}},
+    {"path":"/favicon.ico","perfTarget":{"category":"Static"},"validation":{"contentType":"image/x-icon"}}
+  ]
+}

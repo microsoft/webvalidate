@@ -5,9 +5,9 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Net.Http;
+using System.Text.Json;
 using CSE.WebValidate.Model;
 using CSE.WebValidate.Validators;
-using Newtonsoft.Json;
 
 namespace CSE.WebValidate
 {
@@ -68,8 +68,13 @@ namespace CSE.WebValidate
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine(ex.Message);
-                    return null;
+                    // display helper message on request exception
+                    if (ex.InnerException is HttpRequestException hre)
+                    {
+                        Console.WriteLine("Verify you have permission to read the URL as well as the correctness of the URL");
+                    }
+
+                    throw;
                 }
             }
 
@@ -107,7 +112,7 @@ namespace CSE.WebValidate
                 ValidationResult result = ParameterValidator.Validate(r);
                 if (result.Failed)
                 {
-                    Console.WriteLine($"Error: Invalid json\n\t{JsonConvert.SerializeObject(r, Formatting.None, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore })}\n\t{string.Join("\n", result.ValidationErrors)}");
+                    Console.WriteLine($"Error: Invalid json\n\t{JsonSerializer.Serialize(r)}\n\t{string.Join("\n", result.ValidationErrors)}");
                     return false;
                 }
             }
@@ -160,7 +165,7 @@ namespace CSE.WebValidate
 
             if (!string.IsNullOrWhiteSpace(content))
             {
-                return JsonConvert.DeserializeObject<Dictionary<string, PerfTarget>>(content);
+                return JsonSerializer.Deserialize<Dictionary<string, PerfTarget>>(content, App.JsonSerializerOptions);
             }
 
             // return empty dictionary - perf targets are not required
@@ -183,13 +188,13 @@ namespace CSE.WebValidate
                 try
                 {
                     // try to parse the json
-                    data = JsonConvert.DeserializeObject<InputJson>(json);
+                    data = JsonSerializer.Deserialize<InputJson>(json, App.JsonSerializerOptions);
                 }
                 catch
                 {
                     // try to read the array of Requests style document
                     // this is being deprecated in v1.4
-                    list = JsonConvert.DeserializeObject<List<Request>>(json);
+                    list = JsonSerializer.Deserialize<List<Request>>(json, App.JsonSerializerOptions);
                 }
 
                 // replace placedholders with environment variables
@@ -203,7 +208,7 @@ namespace CSE.WebValidate
                         }
 
                         // reload from json
-                        data = JsonConvert.DeserializeObject<InputJson>(json);
+                        data = JsonSerializer.Deserialize<InputJson>(json, App.JsonSerializerOptions);
                     }
 
                     list = data.Requests;

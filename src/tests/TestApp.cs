@@ -1,6 +1,7 @@
 using System.CommandLine;
 using System.CommandLine.Parsing;
 using System.Linq;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Xunit;
 
@@ -57,7 +58,6 @@ namespace CSE.WebValidate.Tests.Unit
             ParseResult parse;
 
             // set all env vars
-            System.Environment.SetEnvironmentVariable(EnvKeys.Duration, "0");
             System.Environment.SetEnvironmentVariable(EnvKeys.Files, "msft.json");
             System.Environment.SetEnvironmentVariable(EnvKeys.Server, "test");
             System.Environment.SetEnvironmentVariable(EnvKeys.MaxConcurrent, "100");
@@ -67,17 +67,17 @@ namespace CSE.WebValidate.Tests.Unit
             System.Environment.SetEnvironmentVariable(EnvKeys.Sleep, "1000");
             System.Environment.SetEnvironmentVariable(EnvKeys.Verbose, "false");
             System.Environment.SetEnvironmentVariable(EnvKeys.VerboseErrors, "false");
-            System.Environment.SetEnvironmentVariable(EnvKeys.DelayStart, "0");
+            System.Environment.SetEnvironmentVariable(EnvKeys.DelayStart, "1");
 
             // test env vars
             parse = root.Parse(string.Empty);
             Assert.Equal(0, parse.Errors.Count);
-            Assert.Equal(16, parse.CommandResult.Children.Count);
+            Assert.Equal(17, parse.CommandResult.Children.Count);
 
             // override the files env var
             parse = root.Parse("-f file1 file2");
             Assert.Equal(0, parse.Errors.Count);
-            Assert.Equal(16, parse.CommandResult.Children.Count);
+            Assert.Equal(17, parse.CommandResult.Children.Count);
             Assert.Equal(2, parse.CommandResult.Children.First(c => c.Symbol.Name == "files").Tokens.Count);
 
             // test run-loop
@@ -152,12 +152,20 @@ namespace CSE.WebValidate.Tests.Unit
 
         private Config BuildConfig(string server)
         {
+            App.JsonSerializerOptions = new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true,
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                AllowTrailingCommas = true,
+                ReadCommentHandling = JsonCommentHandling.Skip,
+            };
+
             return new Config
             {
                 Server = server,
                 Timeout = 10,
                 MaxConcurrent = 100,
-                MaxErrors = 10
+                MaxErrors = 10,
             };
         }
 
