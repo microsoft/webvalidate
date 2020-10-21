@@ -286,6 +286,7 @@ We use the `--json-log` command line option to integrate Docker container logs w
 - --max-errors int
   - end test after max-errors
   - if --max-errors is exceeded, WebV will exit with non-zero exit code
+  - default 10
 - -t --timeout int
   - HTTP request timeout in seconds
   - default 30 sec
@@ -498,7 +499,7 @@ dotnet run -- -s https://www.microsoft.com -f envvars.json
   "variables": [ "ROBOTS", "FAVICON" ],
   "requests": [
     {
-      "Path": "/${ROBOTS}",
+      "path": "/${ROBOTS}",
       "validation": { "contentType": "text/plain" }
     },
     {
