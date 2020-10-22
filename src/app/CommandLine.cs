@@ -27,7 +27,7 @@ namespace CSE.WebValidate
                 TreatUnmatchedTokensAsErrors = true,
             };
 
-            root.AddOption(new Option<string>(new string[] { "-s", "--server" }, ParseString, true, "Server to test"));
+            root.AddOption(new Option<List<string>>(new string[] { "-s", "--server" }, ParseStringList, true, "Server to test"));
             root.AddOption(new Option<List<string>>(new string[] { "-f", "--files" }, ParseStringList, true, "List of files to test"));
             root.AddOption(new Option<string>(new string[] { "--tag" }, ParseString, true, "Tag for log and App Insights"));
             root.AddOption(new Option<int>(new string[] { "-l", "--sleep" }, ParseIntGTZero, true, "Sleep (ms) between each request"));

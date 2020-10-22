@@ -15,7 +15,7 @@ namespace CSE.WebValidate
         /// <summary>
         /// gets or sets the server / url
         /// </summary>
-        public string Server { get; set; }
+        public List<string> Server { get; set; }
 
         /// <summary>
         /// gets or sets the list of files to read
@@ -107,16 +107,26 @@ namespace CSE.WebValidate
         /// </summary>
         public void SetDefaultValues()
         {
-            // make it easier to pass server value
-            if (!Server.StartsWith("http", StringComparison.OrdinalIgnoreCase))
+            if (Server != null && Server.Count > 0)
             {
-                if (Server.StartsWith("localhost", StringComparison.OrdinalIgnoreCase) || Server.StartsWith("127.0.0.1", StringComparison.OrdinalIgnoreCase))
+                string s;
+
+                for (int i = 0; i < Server.Count; i++)
                 {
-                    Server = "http://" + Server;
-                }
-                else
-                {
-                    Server = string.Format(CultureInfo.InvariantCulture, $"https://{Server}.azurewebsites.net");
+                    s = Server[i];
+
+                    // make it easier to pass server value
+                    if (!s.StartsWith("http", StringComparison.OrdinalIgnoreCase))
+                    {
+                        if (s.StartsWith("localhost", StringComparison.OrdinalIgnoreCase) || s.StartsWith("127.0.0.1", StringComparison.OrdinalIgnoreCase))
+                        {
+                            Server[i] = "http://" + Server;
+                        }
+                        else
+                        {
+                            Server[i] = $"https://{s}.azurewebsites.net";
+                        }
+                    }
                 }
             }
 
