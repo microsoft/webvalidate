@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Threading;
@@ -16,10 +17,9 @@ namespace CSE.WebValidate
     /// <summary>
     /// Web Validation Test
     /// </summary>
-    public partial class WebV : IDisposable
+    public partial class WebV
     {
         private static List<Request> requestList;
-        private static HttpClient client;
         private static Semaphore loopController;
 
         private readonly Dictionary<string, PerfTarget> targets = new Dictionary<string, PerfTarget>();
@@ -61,19 +61,14 @@ namespace CSE.WebValidate
         /// Open an http client
         /// </summary>
         /// <param name="index">index of base URL</param>
-        private void OpenClient(int index)
+        private HttpClient OpenClient(int index)
         {
             if (index < 0 || index >= config.Server.Count)
             {
                 throw new ArgumentException($"Index out of range: {index}", nameof(index));
             }
 
-            if (client != null)
-            {
-                client.Dispose();
-            }
-
-            client = OpenHttpClient(config.Server[index]);
+            return OpenHttpClient(config.Server[index]);
         }
 
         /// <summary>
@@ -99,18 +94,20 @@ namespace CSE.WebValidate
             PerfLog pl;
             int errorCount = 0;
             int validationFailureCount = 0;
+            HttpClient client;
 
             // loop through each server
             for (int ndx = 0; ndx < config.Server.Count; ndx++)
             {
+                client = OpenClient(ndx);
+
                 if (config.Server.Count > 0)
                 {
                     if (ndx > 0)
                     {
-                        Console.WriteLine("\n");
+                        Console.WriteLine();
                         errorCount = 0;
                         validationFailureCount = 0;
-                        OpenClient(ndx);
                     }
                 }
 
@@ -131,7 +128,7 @@ namespace CSE.WebValidate
                         }
 
                         // execute the request
-                        pl = await ExecuteRequest(config.Server[ndx], r).ConfigureAwait(false);
+                        pl = await ExecuteRequest(client, config.Server[ndx], r).ConfigureAwait(false);
 
                         if (pl.Failed)
                         {
@@ -217,23 +214,6 @@ namespace CSE.WebValidate
                 dtMax = DateTime.UtcNow.AddSeconds(config.Duration);
             }
 
-            // create the shared state
-            TimerRequestState state = new TimerRequestState
-            {
-                MaxIndex = requestList.Count,
-                Test = this,
-
-                // current hour
-                CurrentLogTime = new DateTime(DateTime.UtcNow.Year, DateTime.UtcNow.Month, DateTime.UtcNow.Day, DateTime.UtcNow.Hour, 0, 0),
-
-                Token = token,
-            };
-
-            if (config.Random)
-            {
-                state.Random = new Random(DateTime.UtcNow.Millisecond);
-            }
-
             if (config.Sleep < 1)
             {
                 config.Sleep = 1;
@@ -241,23 +221,55 @@ namespace CSE.WebValidate
 
             DisplayStartupMessage(config);
 
-            // start the timers
-            using Timer timer = new Timer(new TimerCallback(SubmitRequestTask), state, 0, config.Sleep);
+            List<Timer> timers = new List<Timer>();
+            List<TimerRequestState> states = new List<TimerRequestState>();
+
+            foreach (string svr in config.Server)
+            {
+                // create the shared state
+                TimerRequestState state = new TimerRequestState
+                {
+                    Server = svr,
+                    Client = OpenHttpClient(svr),
+                    MaxIndex = requestList.Count,
+                    Test = this,
+
+                    // current hour
+                    CurrentLogTime = new DateTime(DateTime.UtcNow.Year, DateTime.UtcNow.Month, DateTime.UtcNow.Day, DateTime.UtcNow.Hour, 0, 0),
+
+                    Token = token,
+                };
+
+                if (config.Random)
+                {
+                    state.Random = new Random(DateTime.UtcNow.Millisecond);
+                }
+
+                states.Add(state);
+
+                // start the timers
+                timers.Add(new Timer(new TimerCallback(SubmitRequestTask), state, 0, config.Sleep));
+            }
+
+            //using Timer timer = new Timer(new TimerCallback(SubmitRequestTask), state, 0, config.Sleep);
 
             int frequency = int.MaxValue;
             int initialDelay = int.MaxValue;
 
             if (config.SummaryMinutes > 0)
             {
-                // get current summary
-                int cMin = DateTime.UtcNow.Minute / config.SummaryMinutes * config.SummaryMinutes;
-                state.CurrentLogTime = state.CurrentLogTime.AddMinutes(cMin);
-                initialDelay = (int)state.CurrentLogTime.AddMinutes(config.SummaryMinutes).Subtract(DateTime.UtcNow).TotalMilliseconds;
-                frequency = config.SummaryMinutes * 60 * 1000;
-            }
+                foreach (TimerRequestState trs in states)
+                {
+                    // get current summary
+                    int cMin = DateTime.UtcNow.Minute / config.SummaryMinutes * config.SummaryMinutes;
+                    trs.CurrentLogTime = trs.CurrentLogTime.AddMinutes(cMin);
+                    initialDelay = (int)trs.CurrentLogTime.AddMinutes(config.SummaryMinutes).Subtract(DateTime.UtcNow).TotalMilliseconds;
+                    frequency = config.SummaryMinutes * 60 * 1000;
 
-            // start the summary log timer
-            using Timer logTimer = new Timer(new TimerCallback(SummaryLogTask), state, initialDelay, frequency);
+                    // start the summary log timer
+                    using Timer logTimer = new Timer(new TimerCallback(SummaryLogTask), trs, initialDelay, frequency);
+                }
+            }
 
             try
             {
@@ -319,14 +331,20 @@ namespace CSE.WebValidate
         /// <summary>
         /// Execute a single validation test
         /// </summary>
+        /// <param name="client">http client</param>
         /// <param name="server">server URL</param>
         /// <param name="request">Request</param>
         /// <returns>PerfLog</returns>
-        public async Task<PerfLog> ExecuteRequest(string server, Request request)
+        public async Task<PerfLog> ExecuteRequest(HttpClient client, string server, Request request)
         {
             if (request == null)
             {
                 throw new ArgumentNullException(nameof(request));
+            }
+
+            if (client == null)
+            {
+                throw new ArgumentNullException(nameof(client));
             }
 
             PerfLog perfLog;
@@ -466,6 +484,13 @@ namespace CSE.WebValidate
                 return;
             }
 
+            // verify http client
+            if (state.Client == null)
+            {
+                Console.WriteLine($"{Now}\tError\tTimerState http client is null");
+                return;
+            }
+
             // exit if cancelled
             if (state.Token.IsCancellationRequested)
             {
@@ -504,8 +529,7 @@ namespace CSE.WebValidate
             try
             {
                 // Execute the request
-                // todo - fix this
-                PerfLog p = state.Test.ExecuteRequest(string.Empty, req).Result;
+                PerfLog p = state.Test.ExecuteRequest(state.Client, state.Server, req).Result;
 
                 lock (state.Lock)
                 {
@@ -537,7 +561,7 @@ namespace CSE.WebValidate
 
             string msg = $"{Now}\tStarting Web Validation Test";
             msg += $"\n\t\tVersion: {CSE.WebValidate.Version.AssemblyVersion}";
-            msg += $"\n\t\tHost: {config.Server}";
+            msg += $"\n\t\tHost: {string.Join(' ', config.Server)}";
 
             if (!string.IsNullOrEmpty(config.Tag))
             {
