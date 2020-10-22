@@ -120,7 +120,7 @@ namespace CSE.WebValidate
                     {
                         if (s.StartsWith("localhost", StringComparison.OrdinalIgnoreCase) || s.StartsWith("127.0.0.1", StringComparison.OrdinalIgnoreCase))
                         {
-                            Server[i] = "http://" + Server;
+                            Server[i] = $"http://{s}";
                         }
                         else
                         {
