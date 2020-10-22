@@ -32,7 +32,7 @@ namespace CSE.WebValidate
         /// <param name="config">Config</param>
         public WebV(Config config)
         {
-            if (config == null || config.Files == null || string.IsNullOrEmpty(config.Server))
+            if (config == null || config.Files == null || config.Server == null || config.Server.Count == 0)
             {
                 throw new ArgumentNullException(nameof(config));
             }
@@ -40,7 +40,7 @@ namespace CSE.WebValidate
             this.config = config;
 
             // setup the HttpClient
-            client = OpenHttpClient(config.Server);
+            OpenClient(0);
 
             // setup the semaphore
             loopController = new Semaphore(this.config.MaxConcurrent, this.config.MaxConcurrent);
@@ -55,6 +55,25 @@ namespace CSE.WebValidate
             {
                 throw new ArgumentException("RequestList is empty");
             }
+        }
+
+        /// <summary>
+        /// Open an http client
+        /// </summary>
+        /// <param name="index">index of base URL</param>
+        private void OpenClient(int index)
+        {
+            if (index < 0 || index >= config.Server.Count)
+            {
+                throw new ArgumentException($"Index out of range: {index}", nameof(index));
+            }
+
+            if (client != null)
+            {
+                client.Dispose();
+            }
+
+            client = OpenHttpClient(config.Server[index]);
         }
 
         /// <summary>
@@ -81,78 +100,94 @@ namespace CSE.WebValidate
             int errorCount = 0;
             int validationFailureCount = 0;
 
-            // send each request
-            foreach (Request r in requestList)
+            for (int ndx = 0; ndx < config.Server.Count; ndx++)
             {
-                try
+                if (config.Server.Count > 0)
                 {
-                    if (token.IsCancellationRequested)
+                    if (ndx > 0)
                     {
-                        break;
+                        Console.WriteLine("\n");
+                        errorCount = 0;
+                        validationFailureCount = 0;
+                        OpenClient(ndx);
                     }
 
-                    // stop after MaxErrors errors
-                    if ((errorCount + validationFailureCount) >= config.MaxErrors)
+                    Console.WriteLine($"Server: {config.Server[ndx]}");
+                }
+
+                // send each request
+                foreach (Request r in requestList)
+                {
+                    try
                     {
-                        break;
-                    }
-
-                    // execute the request
-                    pl = await ExecuteRequest(r).ConfigureAwait(false);
-
-                    if (pl.Failed)
-                    {
-                        errorCount++;
-                    }
-
-                    if (!pl.Failed && !pl.Validated)
-                    {
-                        validationFailureCount++;
-                    }
-
-                    // sleep if configured
-                    if (config.Sleep > 0)
-                    {
-                        duration = config.Sleep - (int)pl.Duration;
-
-                        if (duration > 0)
+                        if (token.IsCancellationRequested)
                         {
-                            await Task.Delay(duration, token).ConfigureAwait(false);
+                            break;
+                        }
+
+                        // stop after MaxErrors errors
+                        if ((errorCount + validationFailureCount) >= config.MaxErrors)
+                        {
+                            break;
+                        }
+
+                        // execute the request
+                        pl = await ExecuteRequest(r).ConfigureAwait(false);
+
+                        if (pl.Failed)
+                        {
+                            errorCount++;
+                        }
+
+                        if (!pl.Failed && !pl.Validated)
+                        {
+                            validationFailureCount++;
+                        }
+
+                        // sleep if configured
+                        if (config.Sleep > 0)
+                        {
+                            duration = config.Sleep - (int)pl.Duration;
+
+                            if (duration > 0)
+                            {
+                                await Task.Delay(duration, token).ConfigureAwait(false);
+                            }
                         }
                     }
-                }
-                catch (Exception ex)
-                {
-                    // ignore any exception caused by ctl-c or stop signal
-                    if (token.IsCancellationRequested)
+                    catch (Exception ex)
                     {
-                        break;
+                        // ignore any exception caused by ctl-c or stop signal
+                        if (token.IsCancellationRequested)
+                        {
+                            break;
+                        }
+
+                        // log error and keep processing
+                        Console.WriteLine($"{Now}\tException: {ex.Message}");
+                        errorCount++;
+                    }
+                }
+
+                if (!config.JsonLog)
+                {
+                    // log validation failure count
+                    if (validationFailureCount > 0)
+                    {
+                        Console.WriteLine($"Validation Errors: {validationFailureCount}");
                     }
 
-                    // log error and keep processing
-                    Console.WriteLine($"{Now}\tException: {ex.Message}");
-                    errorCount++;
-                }
-            }
+                    // log error count
+                    if (errorCount > 0)
+                    {
+                        Console.WriteLine($"Failed: {errorCount} Errors");
+                    }
 
-            if (!config.JsonLog)
-            {
-                // log validation failure count
-                if (validationFailureCount > 0)
-                {
-                    Console.WriteLine($"Validation Errors: {validationFailureCount}");
-                }
-
-                // log error count
-                if (errorCount > 0)
-                {
-                    Console.WriteLine($"Failed: {errorCount} Errors");
-                }
-
-                // log MaxErrors exceeded
-                if (errorCount + validationFailureCount >= config.MaxErrors)
-                {
-                    Console.Write($"Failed: Errors: {errorCount + validationFailureCount} >= MaxErrors: {config.MaxErrors}");
+                    // log MaxErrors exceeded
+                    if (errorCount + validationFailureCount >= config.MaxErrors)
+                    {
+                        Console.Write($"Failed: Errors: {errorCount + validationFailureCount} >= MaxErrors: {config.MaxErrors}");
+                    }
                 }
             }
 
