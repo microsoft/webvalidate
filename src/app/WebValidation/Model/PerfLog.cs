@@ -32,6 +32,11 @@ namespace CSE.WebValidate.Model
         public DateTime Date { get; set; } = DateTime.UtcNow;
 
         /// <summary>
+        /// gets or sets the server URL
+        /// </summary>
+        public string Server { get; set; }
+
+        /// <summary>
         /// Gets or sets the HTTP Status Code
         /// </summary>
         public int StatusCode { get; set; }

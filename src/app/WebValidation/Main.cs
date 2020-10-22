@@ -100,6 +100,7 @@ namespace CSE.WebValidate
             int errorCount = 0;
             int validationFailureCount = 0;
 
+            // loop through each server
             for (int ndx = 0; ndx < config.Server.Count; ndx++)
             {
                 if (config.Server.Count > 0)
@@ -111,8 +112,6 @@ namespace CSE.WebValidate
                         validationFailureCount = 0;
                         OpenClient(ndx);
                     }
-
-                    Console.WriteLine($"Server: {config.Server[ndx]}");
                 }
 
                 // send each request
@@ -132,7 +131,7 @@ namespace CSE.WebValidate
                         }
 
                         // execute the request
-                        pl = await ExecuteRequest(r).ConfigureAwait(false);
+                        pl = await ExecuteRequest(config.Server[ndx], r).ConfigureAwait(false);
 
                         if (pl.Failed)
                         {
@@ -320,9 +319,10 @@ namespace CSE.WebValidate
         /// <summary>
         /// Execute a single validation test
         /// </summary>
+        /// <param name="server">server URL</param>
         /// <param name="request">Request</param>
         /// <returns>PerfLog</returns>
-        public async Task<PerfLog> ExecuteRequest(Request request)
+        public async Task<PerfLog> ExecuteRequest(string server, Request request)
         {
             if (request == null)
             {
@@ -371,14 +371,14 @@ namespace CSE.WebValidate
                     valid = ResponseValidator.Validate(request, resp, body);
 
                     // check the performance
-                    perfLog = CreatePerfLog(request, valid, duration, (long)resp.Content.Headers.ContentLength, (int)resp.StatusCode);
+                    perfLog = CreatePerfLog(server, request, valid, duration, (long)resp.Content.Headers.ContentLength, (int)resp.StatusCode);
                 }
                 catch (Exception ex)
                 {
                     double duration = Math.Round(DateTime.UtcNow.Subtract(dt).TotalMilliseconds, 0);
                     valid = new ValidationResult { Failed = true };
                     valid.ValidationErrors.Add($"Exception: {ex.Message}");
-                    perfLog = CreatePerfLog(request, valid, duration, 0, 500);
+                    perfLog = CreatePerfLog(server, request, valid, duration, 0, 500);
                 }
             }
 
@@ -391,13 +391,14 @@ namespace CSE.WebValidate
         /// <summary>
         /// Create a PerfLog
         /// </summary>
+        /// <param name="server">server URL</param>
         /// <param name="request">Request</param>
         /// <param name="validationResult">validation errors</param>
         /// <param name="duration">duration</param>
         /// <param name="contentLength">content length</param>
         /// <param name="statusCode">status code</param>
         /// <returns>PerfLog</returns>
-        public PerfLog CreatePerfLog(Request request, ValidationResult validationResult, double duration, long contentLength, int statusCode)
+        public PerfLog CreatePerfLog(string server, Request request, ValidationResult validationResult, double duration, long contentLength, int statusCode)
         {
             if (validationResult == null)
             {
@@ -407,6 +408,7 @@ namespace CSE.WebValidate
             // map the parameters
             PerfLog log = new PerfLog(validationResult.ValidationErrors)
             {
+                Server = server,
                 Tag = config.Tag,
                 Path = request?.Path ?? string.Empty,
                 StatusCode = statusCode,
@@ -502,7 +504,8 @@ namespace CSE.WebValidate
             try
             {
                 // Execute the request
-                PerfLog p = state.Test.ExecuteRequest(req).Result;
+                // todo - fix this
+                PerfLog p = state.Test.ExecuteRequest(string.Empty, req).Result;
 
                 lock (state.Lock)
                 {
@@ -652,7 +655,7 @@ namespace CSE.WebValidate
             // only log 4XX and 5XX status codes unless verbose is true or there were validation errors
             else if (config.Verbose || perfLog.StatusCode > 399 || valid.Failed || valid.ValidationErrors.Count > 0)
             {
-                string log = $"{perfLog.Date.ToString("o", CultureInfo.InvariantCulture)}\t{perfLog.StatusCode}\t{valid.ValidationErrors.Count}\t{perfLog.Duration}\t{perfLog.ContentLength}\t";
+                string log = $"{perfLog.Date.ToString("o", CultureInfo.InvariantCulture)}\t{perfLog.Server}\t{perfLog.StatusCode}\t{valid.ValidationErrors.Count}\t{perfLog.Duration}\t{perfLog.ContentLength}\t";
 
                 // log tag if set
                 if (!string.IsNullOrEmpty(perfLog.Tag))
