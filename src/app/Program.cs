@@ -85,7 +85,7 @@ namespace CSE.WebValidate
             // create the test
             try
             {
-                WebV webv = new CSE.WebValidate.WebV(config);
+                WebV webv = new WebV(config);
 
                 if (config.DelayStart > 0)
                 {
