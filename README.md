@@ -256,7 +256,7 @@ We use the `--json-log` command line option to integrate Docker container logs w
   - environment variables are ignored
 - -d --dry-run
   - validate parameters but do not execute tests
-- -s --server string
+- -s --server string1 [string2 string3]
   - server Url (i.e. `https://www.microsoft.com`)
   - required
 - -f --files file1 [file2 file3 ...]
@@ -326,7 +326,7 @@ We use the `--json-log` command line option to integrate Docker container logs w
 
 ## Environment Variables
 
-- SERVER=string
+- SERVER=space separated list of string
 - FILES=space separated list of string
 - TAG=string
 - LOG_JSON=bool
