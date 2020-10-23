@@ -1,5 +1,9 @@
 # Change Log
 
+## v1.6.0 - October 2020
+
+- added support for running tests against multiple servers
+
 ## v1.5.0 - October 2020
 
 - added strict json parsing
