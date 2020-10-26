@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.CommandLine;
 using System.CommandLine.Parsing;
 using System.Linq;
@@ -34,7 +35,7 @@ namespace CSE.WebValidate.Tests.Unit
             // test all files
             Config cfg = new Config
             {
-                Server = "http://localhost",
+                Server = new List<string> { "http://localhost" },
                 Timeout = 30,
                 MaxConcurrent = 100
             };
@@ -42,7 +43,7 @@ namespace CSE.WebValidate.Tests.Unit
             cfg.Files.Add("msft.json");
 
             // load and validate all of our test files
-            using WebV wv = new WebV(cfg);
+            WebV wv = new WebV(cfg);
 
             // file not found test
             Assert.Null(wv.ReadJson("test"));
@@ -162,7 +163,7 @@ namespace CSE.WebValidate.Tests.Unit
 
             return new Config
             {
-                Server = server,
+                Server = new List<string> { server },
                 Timeout = 10,
                 MaxConcurrent = 100,
                 MaxErrors = 10,
@@ -176,7 +177,7 @@ namespace CSE.WebValidate.Tests.Unit
             cfg.Files.Add("msft.json");
 
             // load and validate all of our test files
-            using WebV wv = new WebV(cfg);
+            WebV wv = new WebV(cfg);
             Assert.Equal(0, await wv.RunOnce(cfg, new System.Threading.CancellationToken()).ConfigureAwait(false));
         }
 
@@ -187,7 +188,7 @@ namespace CSE.WebValidate.Tests.Unit
             cfg.Files.Add("github.json");
 
             // load and validate all of our test files
-            using WebV wv = new WebV(cfg);
+            WebV wv = new WebV(cfg);
             Assert.Equal(0, await wv.RunOnce(cfg, new System.Threading.CancellationToken()).ConfigureAwait(false));
         }
     }

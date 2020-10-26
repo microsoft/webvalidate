@@ -16,14 +16,11 @@ namespace CSE.WebValidate
     /// <summary>
     /// Web Validation Test
     /// </summary>
-    public partial class WebV : IDisposable
+    public partial class WebV
     {
         private static List<Request> requestList;
-        private static HttpClient client;
         private static Semaphore loopController;
-
         private readonly Dictionary<string, PerfTarget> targets = new Dictionary<string, PerfTarget>();
-
         private Config config;
 
         /// <summary>
@@ -32,15 +29,12 @@ namespace CSE.WebValidate
         /// <param name="config">Config</param>
         public WebV(Config config)
         {
-            if (config == null || config.Files == null || string.IsNullOrEmpty(config.Server))
+            if (config == null || config.Files == null || config.Server == null || config.Server.Count == 0)
             {
                 throw new ArgumentNullException(nameof(config));
             }
 
             this.config = config;
-
-            // setup the HttpClient
-            client = OpenHttpClient(config.Server);
 
             // setup the semaphore
             loopController = new Semaphore(this.config.MaxConcurrent, this.config.MaxConcurrent);
@@ -81,78 +75,95 @@ namespace CSE.WebValidate
             int errorCount = 0;
             int validationFailureCount = 0;
 
-            // send each request
-            foreach (Request r in requestList)
+            // loop through each server
+            for (int ndx = 0; ndx < config.Server.Count; ndx++)
             {
-                try
+                // reset error counts
+                if (config.Server.Count > 0)
                 {
-                    if (token.IsCancellationRequested)
+                    if (ndx > 0)
                     {
-                        break;
+                        Console.WriteLine();
+                        errorCount = 0;
+                        validationFailureCount = 0;
                     }
+                }
 
-                    // stop after MaxErrors errors
-                    if ((errorCount + validationFailureCount) >= config.MaxErrors)
+                using HttpClient client = OpenClient(ndx);
+
+                // send each request
+                foreach (Request r in requestList)
+                {
+                    try
                     {
-                        break;
-                    }
-
-                    // execute the request
-                    pl = await ExecuteRequest(r).ConfigureAwait(false);
-
-                    if (pl.Failed)
-                    {
-                        errorCount++;
-                    }
-
-                    if (!pl.Failed && !pl.Validated)
-                    {
-                        validationFailureCount++;
-                    }
-
-                    // sleep if configured
-                    if (config.Sleep > 0)
-                    {
-                        duration = config.Sleep - (int)pl.Duration;
-
-                        if (duration > 0)
+                        if (token.IsCancellationRequested)
                         {
-                            await Task.Delay(duration, token).ConfigureAwait(false);
+                            break;
+                        }
+
+                        // stop after MaxErrors errors
+                        if ((errorCount + validationFailureCount) >= config.MaxErrors)
+                        {
+                            break;
+                        }
+
+                        // execute the request
+                        pl = await ExecuteRequest(client, config.Server[ndx], r).ConfigureAwait(false);
+
+                        if (pl.Failed)
+                        {
+                            errorCount++;
+                        }
+
+                        if (!pl.Failed && !pl.Validated)
+                        {
+                            validationFailureCount++;
+                        }
+
+                        // sleep if configured
+                        if (config.Sleep > 0)
+                        {
+                            duration = config.Sleep - (int)pl.Duration;
+
+                            if (duration > 0)
+                            {
+                                await Task.Delay(duration, token).ConfigureAwait(false);
+                            }
                         }
                     }
-                }
-                catch (Exception ex)
-                {
-                    // ignore any exception caused by ctl-c or stop signal
-                    if (token.IsCancellationRequested)
+                    catch (Exception ex)
                     {
-                        break;
+                        // ignore any exception caused by ctl-c or stop signal
+                        if (token.IsCancellationRequested)
+                        {
+                            break;
+                        }
+
+                        // log error and keep processing
+                        Console.WriteLine($"{Now}\tException: {ex.Message}");
+                        errorCount++;
+                    }
+                }
+
+                if (!config.JsonLog)
+                {
+                    // log validation failure count
+                    if (validationFailureCount > 0)
+                    {
+                        Console.WriteLine($"Validation Errors: {validationFailureCount}");
                     }
 
-                    // log error and keep processing
-                    Console.WriteLine($"{Now}\tException: {ex.Message}");
-                    errorCount++;
-                }
-            }
+                    // log error count
+                    if (errorCount > 0)
+                    {
+                        Console.WriteLine($"Failed: {errorCount} Errors");
+                    }
 
-            if (!config.JsonLog)
-            {
-                // log validation failure count
-                if (validationFailureCount > 0)
-                {
-                    Console.WriteLine($"Validation Errors: {validationFailureCount}");
-                }
-
-                // log error count
-                if (errorCount > 0)
-                {
-                    Console.WriteLine($"Failed: {errorCount} Errors");
-                }
-
-                // log MaxErrors exceeded
-                if (errorCount + validationFailureCount >= config.MaxErrors)
-                {
-                    Console.Write($"Failed: Errors: {errorCount + validationFailureCount} >= MaxErrors: {config.MaxErrors}");
+                    // log MaxErrors exceeded
+                    if (errorCount + validationFailureCount >= config.MaxErrors)
+                    {
+                        Console.Write($"Failed: Errors: {errorCount + validationFailureCount} >= MaxErrors: {config.MaxErrors}");
+                    }
                 }
             }
 
@@ -183,23 +194,6 @@ namespace CSE.WebValidate
                 dtMax = DateTime.UtcNow.AddSeconds(config.Duration);
             }
 
-            // create the shared state
-            TimerRequestState state = new TimerRequestState
-            {
-                MaxIndex = requestList.Count,
-                Test = this,
-
-                // current hour
-                CurrentLogTime = new DateTime(DateTime.UtcNow.Year, DateTime.UtcNow.Month, DateTime.UtcNow.Day, DateTime.UtcNow.Hour, 0, 0),
-
-                Token = token,
-            };
-
-            if (config.Random)
-            {
-                state.Random = new Random(DateTime.UtcNow.Millisecond);
-            }
-
             if (config.Sleep < 1)
             {
                 config.Sleep = 1;
@@ -207,23 +201,53 @@ namespace CSE.WebValidate
 
             DisplayStartupMessage(config);
 
-            // start the timers
-            using Timer timer = new Timer(new TimerCallback(SubmitRequestTask), state, 0, config.Sleep);
+            List<Timer> timers = new List<Timer>();
+            List<TimerRequestState> states = new List<TimerRequestState>();
+
+            foreach (string svr in config.Server)
+            {
+                // create the shared state
+                TimerRequestState state = new TimerRequestState
+                {
+                    Server = svr,
+                    Client = OpenHttpClient(svr),
+                    MaxIndex = requestList.Count,
+                    Test = this,
+
+                    // current hour
+                    CurrentLogTime = new DateTime(DateTime.UtcNow.Year, DateTime.UtcNow.Month, DateTime.UtcNow.Day, DateTime.UtcNow.Hour, 0, 0),
+
+                    Token = token,
+                };
+
+                if (config.Random)
+                {
+                    state.Random = new Random(DateTime.UtcNow.Millisecond);
+                }
+
+                states.Add(state);
+
+                // start the timers
+                timers.Add(new Timer(new TimerCallback(SubmitRequestTask), state, 0, config.Sleep));
+            }
 
             int frequency = int.MaxValue;
             int initialDelay = int.MaxValue;
 
             if (config.SummaryMinutes > 0)
             {
-                // get current summary
-                int cMin = DateTime.UtcNow.Minute / config.SummaryMinutes * config.SummaryMinutes;
-                state.CurrentLogTime = state.CurrentLogTime.AddMinutes(cMin);
-                initialDelay = (int)state.CurrentLogTime.AddMinutes(config.SummaryMinutes).Subtract(DateTime.UtcNow).TotalMilliseconds;
-                frequency = config.SummaryMinutes * 60 * 1000;
-            }
+                foreach (TimerRequestState trs in states)
+                {
+                    // get current summary
+                    int cMin = DateTime.UtcNow.Minute / config.SummaryMinutes * config.SummaryMinutes;
+                    trs.CurrentLogTime = trs.CurrentLogTime.AddMinutes(cMin);
+                    initialDelay = (int)trs.CurrentLogTime.AddMinutes(config.SummaryMinutes).Subtract(DateTime.UtcNow).TotalMilliseconds;
+                    frequency = config.SummaryMinutes * 60 * 1000;
 
-            // start the summary log timer
-            using Timer logTimer = new Timer(new TimerCallback(SummaryLogTask), state, initialDelay, frequency);
+                    // start the summary log timer
+                    using Timer logTimer = new Timer(new TimerCallback(SummaryLogTask), trs, initialDelay, frequency);
+                }
+            }
 
             try
             {
@@ -285,13 +309,20 @@ namespace CSE.WebValidate
         /// <summary>
         /// Execute a single validation test
         /// </summary>
+        /// <param name="client">http client</param>
+        /// <param name="server">server URL</param>
         /// <param name="request">Request</param>
         /// <returns>PerfLog</returns>
-        public async Task<PerfLog> ExecuteRequest(Request request)
+        public async Task<PerfLog> ExecuteRequest(HttpClient client, string server, Request request)
         {
             if (request == null)
             {
                 throw new ArgumentNullException(nameof(request));
+            }
+
+            if (client == null)
+            {
+                throw new ArgumentNullException(nameof(client));
             }
 
             PerfLog perfLog;
@@ -336,14 +367,14 @@ namespace CSE.WebValidate
                     valid = ResponseValidator.Validate(request, resp, body);
 
                     // check the performance
-                    perfLog = CreatePerfLog(request, valid, duration, (long)resp.Content.Headers.ContentLength, (int)resp.StatusCode);
+                    perfLog = CreatePerfLog(server, request, valid, duration, (long)resp.Content.Headers.ContentLength, (int)resp.StatusCode);
                 }
                 catch (Exception ex)
                 {
                     double duration = Math.Round(DateTime.UtcNow.Subtract(dt).TotalMilliseconds, 0);
                     valid = new ValidationResult { Failed = true };
                     valid.ValidationErrors.Add($"Exception: {ex.Message}");
-                    perfLog = CreatePerfLog(request, valid, duration, 0, 500);
+                    perfLog = CreatePerfLog(server, request, valid, duration, 0, 500);
                 }
             }
 
@@ -356,13 +387,14 @@ namespace CSE.WebValidate
         /// <summary>
         /// Create a PerfLog
         /// </summary>
+        /// <param name="server">server URL</param>
         /// <param name="request">Request</param>
         /// <param name="validationResult">validation errors</param>
         /// <param name="duration">duration</param>
         /// <param name="contentLength">content length</param>
         /// <param name="statusCode">status code</param>
         /// <returns>PerfLog</returns>
-        public PerfLog CreatePerfLog(Request request, ValidationResult validationResult, double duration, long contentLength, int statusCode)
+        public PerfLog CreatePerfLog(string server, Request request, ValidationResult validationResult, double duration, long contentLength, int statusCode)
         {
             if (validationResult == null)
             {
@@ -372,6 +404,7 @@ namespace CSE.WebValidate
             // map the parameters
             PerfLog log = new PerfLog(validationResult.ValidationErrors)
             {
+                Server = server,
                 Tag = config.Tag,
                 Path = request?.Path ?? string.Empty,
                 StatusCode = statusCode,
@@ -429,6 +462,13 @@ namespace CSE.WebValidate
                 return;
             }
 
+            // verify http client
+            if (state.Client == null)
+            {
+                Console.WriteLine($"{Now}\tError\tTimerState http client is null");
+                return;
+            }
+
             // exit if cancelled
             if (state.Token.IsCancellationRequested)
             {
@@ -467,7 +507,7 @@ namespace CSE.WebValidate
             try
             {
                 // Execute the request
-                PerfLog p = state.Test.ExecuteRequest(req).Result;
+                PerfLog p = state.Test.ExecuteRequest(state.Client, state.Server, req).Result;
 
                 lock (state.Lock)
                 {
@@ -499,7 +539,7 @@ namespace CSE.WebValidate
 
             string msg = $"{Now}\tStarting Web Validation Test";
             msg += $"\n\t\tVersion: {CSE.WebValidate.Version.AssemblyVersion}";
-            msg += $"\n\t\tHost: {config.Server}";
+            msg += $"\n\t\tHost: {string.Join(' ', config.Server)}";
 
             if (!string.IsNullOrEmpty(config.Tag))
             {
@@ -524,6 +564,20 @@ namespace CSE.WebValidate
             msg += config.Verbose ? "\n\t\tVerbose" : string.Empty;
 
             Console.WriteLine(msg + "\n");
+        }
+
+        /// <summary>
+        /// Open an http client
+        /// </summary>
+        /// <param name="index">index of base URL</param>
+        private HttpClient OpenClient(int index)
+        {
+            if (index < 0 || index >= config.Server.Count)
+            {
+                throw new ArgumentException($"Index out of range: {index}", nameof(index));
+            }
+
+            return OpenHttpClient(config.Server[index]);
         }
 
         /// <summary>
@@ -617,7 +671,7 @@ namespace CSE.WebValidate
             // only log 4XX and 5XX status codes unless verbose is true or there were validation errors
             else if (config.Verbose || perfLog.StatusCode > 399 || valid.Failed || valid.ValidationErrors.Count > 0)
             {
-                string log = $"{perfLog.Date.ToString("o", CultureInfo.InvariantCulture)}\t{perfLog.StatusCode}\t{valid.ValidationErrors.Count}\t{perfLog.Duration}\t{perfLog.ContentLength}\t";
+                string log = $"{perfLog.Date.ToString("o", CultureInfo.InvariantCulture)}\t{perfLog.Server}\t{perfLog.StatusCode}\t{valid.ValidationErrors.Count}\t{perfLog.Duration}\t{perfLog.ContentLength}\t";
 
                 // log tag if set
                 if (!string.IsNullOrEmpty(perfLog.Tag))

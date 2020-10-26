@@ -2,6 +2,7 @@
 // Licensed under the MIT License. See LICENSE in the project root for license information.
 
 using System;
+using System.Net.Http;
 using System.Threading;
 
 namespace CSE.WebValidate
@@ -11,6 +12,16 @@ namespace CSE.WebValidate
     /// </summary>
     internal class TimerRequestState
     {
+        /// <summary>
+        /// gets or sets the server name
+        /// </summary>
+        public string Server { get; set; }
+
+        /// <summary>
+        /// gets or sets the http client to use
+        /// </summary>
+        public HttpClient Client { get; set; }
+
         /// <summary>
         /// gets or sets the request index
         /// </summary>

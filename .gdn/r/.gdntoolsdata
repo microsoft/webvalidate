@@ -1,0 +1,32 @@
+{
+  "$schema": "https://schemastore.azurewebsites.net/schemas/json/sarif-2.1.0-rtm.4.json",
+  "version": "2.1.0",
+  "runs": [
+    {
+      "tool": {
+        "driver": {
+          "name": "credscan",
+          "fullName": "Credential Scanner"
+        }
+      },
+      "results": [],
+      "columnKind": "utf16CodeUnits",
+      "properties": {
+        "toolInfoId": "credscan>>0>>202010230211"
+      }
+    },
+    {
+      "tool": {
+        "driver": {
+          "name": "credscan",
+          "fullName": "Credential Scanner"
+        }
+      },
+      "results": [],
+      "columnKind": "utf16CodeUnits",
+      "properties": {
+        "toolInfoId": "credscan>>0>>202010261224"
+      }
+    }
+  ]
+}

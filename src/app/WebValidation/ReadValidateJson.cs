@@ -14,7 +14,7 @@ namespace CSE.WebValidate
     /// <summary>
     /// WebV class (partial)
     /// </summary>
-    public partial class WebV : IDisposable
+    public partial class WebV
     {
         /// <summary>
         /// Reads a file from local or --base-url
