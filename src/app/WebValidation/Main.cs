@@ -20,9 +20,7 @@ namespace CSE.WebValidate
     {
         private static List<Request> requestList;
         private static Semaphore loopController;
-
         private readonly Dictionary<string, PerfTarget> targets = new Dictionary<string, PerfTarget>();
-
         private Config config;
 
         /// <summary>
@@ -38,9 +36,6 @@ namespace CSE.WebValidate
 
             this.config = config;
 
-            // setup the HttpClient
-            OpenClient(0);
-
             // setup the semaphore
             loopController = new Semaphore(this.config.MaxConcurrent, this.config.MaxConcurrent);
 
@@ -54,20 +49,6 @@ namespace CSE.WebValidate
             {
                 throw new ArgumentException("RequestList is empty");
             }
-        }
-
-        /// <summary>
-        /// Open an http client
-        /// </summary>
-        /// <param name="index">index of base URL</param>
-        private HttpClient OpenClient(int index)
-        {
-            if (index < 0 || index >= config.Server.Count)
-            {
-                throw new ArgumentException($"Index out of range: {index}", nameof(index));
-            }
-
-            return OpenHttpClient(config.Server[index]);
         }
 
         /// <summary>
@@ -93,13 +74,11 @@ namespace CSE.WebValidate
             PerfLog pl;
             int errorCount = 0;
             int validationFailureCount = 0;
-            HttpClient client;
 
             // loop through each server
             for (int ndx = 0; ndx < config.Server.Count; ndx++)
             {
-                client = OpenClient(ndx);
-
+                // reset error counts
                 if (config.Server.Count > 0)
                 {
                     if (ndx > 0)
@@ -109,6 +88,8 @@ namespace CSE.WebValidate
                         validationFailureCount = 0;
                     }
                 }
+
+                using HttpClient client = OpenClient(ndx);
 
                 // send each request
                 foreach (Request r in requestList)
@@ -249,8 +230,6 @@ namespace CSE.WebValidate
                 // start the timers
                 timers.Add(new Timer(new TimerCallback(SubmitRequestTask), state, 0, config.Sleep));
             }
-
-            //using Timer timer = new Timer(new TimerCallback(SubmitRequestTask), state, 0, config.Sleep);
 
             int frequency = int.MaxValue;
             int initialDelay = int.MaxValue;
@@ -585,6 +564,20 @@ namespace CSE.WebValidate
             msg += config.Verbose ? "\n\t\tVerbose" : string.Empty;
 
             Console.WriteLine(msg + "\n");
+        }
+
+        /// <summary>
+        /// Open an http client
+        /// </summary>
+        /// <param name="index">index of base URL</param>
+        private HttpClient OpenClient(int index)
+        {
+            if (index < 0 || index >= config.Server.Count)
+            {
+                throw new ArgumentException($"Index out of range: {index}", nameof(index));
+            }
+
+            return OpenHttpClient(config.Server[index]);
         }
 
         /// <summary>
