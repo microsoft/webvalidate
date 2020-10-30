@@ -10,6 +10,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using CSE.WebValidate.Model;
 using CSE.WebValidate.Validators;
+using Microsoft.CorrelationVector;
 
 namespace CSE.WebValidate
 {
@@ -18,6 +19,11 @@ namespace CSE.WebValidate
     /// </summary>
     public partial class WebV
     {
+        /// <summary>
+        /// Correlation Vector http header name
+        /// </summary>
+        public const string CVHeaderName = "X-Correlation-Vector";
+
         private static List<Request> requestList;
         private static Semaphore loopController;
         private readonly Dictionary<string, PerfTarget> targets = new Dictionary<string, PerfTarget>();
@@ -342,6 +348,10 @@ namespace CSE.WebValidate
                     }
                 }
 
+                // create correlation vector and add to headers
+                CorrelationVector cv = new CorrelationVector(CorrelationVectorVersion.V2);
+                req.Headers.Add(CVHeaderName, cv.Value);
+
                 // add the body to the http request
                 if (!string.IsNullOrEmpty(request.Body))
                 {
@@ -368,6 +378,9 @@ namespace CSE.WebValidate
 
                     // check the performance
                     perfLog = CreatePerfLog(server, request, valid, duration, (long)resp.Content.Headers.ContentLength, (int)resp.StatusCode);
+
+                    // add correlation vector to perf log
+                    perfLog.CorrelationVector = cv.Value;
                 }
                 catch (Exception ex)
                 {
@@ -416,29 +429,26 @@ namespace CSE.WebValidate
             };
 
             // determine the Performance Level based on category
-            if (!string.IsNullOrEmpty(log.Category))
+            if (targets.ContainsKey(log.Category))
             {
-                if (targets.ContainsKey(log.Category))
+                // lookup the target
+                PerfTarget target = targets[log.Category];
+
+                if (target != null &&
+                    !string.IsNullOrEmpty(target.Category) &&
+                    target.Quartiles != null &&
+                    target.Quartiles.Count == 3)
                 {
-                    // lookup the target
-                    PerfTarget target = targets[log.Category];
+                    // set to max
+                    log.Quartile = target.Quartiles.Count + 1;
 
-                    if (target != null &&
-                        !string.IsNullOrEmpty(target.Category) &&
-                        target.Quartiles != null &&
-                        target.Quartiles.Count == 3)
+                    for (int i = 0; i < target.Quartiles.Count; i++)
                     {
-                        // set to max
-                        log.Quartile = target.Quartiles.Count + 1;
-
-                        for (int i = 0; i < target.Quartiles.Count; i++)
+                        // find the lowest Perf Target achieved
+                        if (duration <= target.Quartiles[i])
                         {
-                            // find the lowest Perf Target achieved
-                            if (duration <= target.Quartiles[i])
-                            {
-                                log.Quartile = i + 1;
-                                break;
-                            }
+                            log.Quartile = i + 1;
+                            break;
                         }
                     }
                 }
@@ -451,6 +461,7 @@ namespace CSE.WebValidate
         /// Submit a request from the timer event
         /// </summary>
         /// <param name="timerState">TimerState</param>
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Security", "CA5394:Do not use insecure randomness", Justification = "not used for security purposes")]
         private static void SubmitRequestTask(object timerState)
         {
             int index = 0;
@@ -671,7 +682,7 @@ namespace CSE.WebValidate
             // only log 4XX and 5XX status codes unless verbose is true or there were validation errors
             else if (config.Verbose || perfLog.StatusCode > 399 || valid.Failed || valid.ValidationErrors.Count > 0)
             {
-                string log = $"{perfLog.Date.ToString("o", CultureInfo.InvariantCulture)}\t{perfLog.Server}\t{perfLog.StatusCode}\t{valid.ValidationErrors.Count}\t{perfLog.Duration}\t{perfLog.ContentLength}\t";
+                string log = $"{perfLog.Date.ToString("o", CultureInfo.InvariantCulture)}\t{perfLog.Server}\t{perfLog.StatusCode}\t{valid.ValidationErrors.Count}\t{perfLog.Duration}\t{perfLog.ContentLength}\t{perfLog.CorrelationVector}\t";
 
                 // log tag if set
                 if (!string.IsNullOrEmpty(perfLog.Tag))
