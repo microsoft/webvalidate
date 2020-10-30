@@ -52,6 +52,11 @@ namespace CSE.WebValidate.Model
         public bool Validated { get; set; } = true;
 
         /// <summary>
+        /// Gets or sets a the correlation vector for distributed tracing
+        /// </summary>
+        public string CorrelationVector { get; set; }
+
+        /// <summary>
         /// Gets the error count
         /// </summary>
         public int ErrorCount => Errors == null ? 0 : Errors.Count;
