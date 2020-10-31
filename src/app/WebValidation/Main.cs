@@ -219,6 +219,7 @@ namespace CSE.WebValidate
                     Client = OpenHttpClient(svr),
                     MaxIndex = requestList.Count,
                     Test = this,
+                    RequestList = requestList,
 
                     // current hour
                     CurrentLogTime = new DateTime(DateTime.UtcNow.Year, DateTime.UtcNow.Month, DateTime.UtcNow.Day, DateTime.UtcNow.Hour, 0, 0),
@@ -233,8 +234,10 @@ namespace CSE.WebValidate
 
                 states.Add(state);
 
+                state.Run(config.Sleep);
+
                 // start the timers
-                timers.Add(new Timer(new TimerCallback(SubmitRequestTask), state, 0, config.Sleep));
+                // timers.Add(new Timer(new TimerCallback(SubmitRequestTask), state, 0, config.Sleep));
             }
 
             int frequency = int.MaxValue;
@@ -468,7 +471,7 @@ namespace CSE.WebValidate
         /// </summary>
         /// <param name="timerState">TimerState</param>
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Security", "CA5394:Do not use insecure randomness", Justification = "not used for security purposes")]
-        private static void SubmitRequestTask(object timerState)
+        private static async void SubmitRequestTask(object timerState)
         {
             int index = 0;
 
@@ -524,7 +527,7 @@ namespace CSE.WebValidate
             try
             {
                 // Execute the request
-                PerfLog p = state.Test.ExecuteRequest(state.Client, state.Server, req).Result;
+                PerfLog p = await state.Test.ExecuteRequest(state.Client, state.Server, req).ConfigureAwait(false);
 
                 lock (state.Lock)
                 {

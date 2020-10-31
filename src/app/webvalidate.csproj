@@ -11,7 +11,7 @@
     <RunAnalyzersDuringLiveAnalysis>true</RunAnalyzersDuringLiveAnalysis>
     <RunAnalyzersDuringBuild>true</RunAnalyzersDuringBuild>
     <LangVersion>8.0</LangVersion>
-    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
     <PackAsTool>true</PackAsTool>
     <ToolCommandName>webv</ToolCommandName>
     <PackageOutputPath>./nupkg</PackageOutputPath>   

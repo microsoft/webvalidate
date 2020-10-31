@@ -2,8 +2,11 @@
 // Licensed under the MIT License. See LICENSE in the project root for license information.
 
 using System;
+using System.Collections.Generic;
 using System.Net.Http;
 using System.Threading;
+using System.Threading.Tasks;
+using CSE.WebValidate.Model;
 
 namespace CSE.WebValidate
 {
@@ -71,5 +74,72 @@ namespace CSE.WebValidate
         /// gets or sets the cancellation token
         /// </summary>
         public CancellationToken Token { get; set; }
+
+        public List<Request> RequestList { get; set; }
+
+        private string Now { get { return DateTime.UtcNow.ToString("s") + "Z"; } }
+
+        public void Run(double interval)
+        {
+            timer = new System.Timers.Timer(interval);
+            timer.Enabled = true;
+            timer.Elapsed += TimerEvent;
+            timer.Start();
+        }
+
+        private System.Timers.Timer timer;
+
+        private async void TimerEvent(object sender, System.Timers.ElapsedEventArgs e)
+        {
+            int index = 0;
+
+            // verify http client
+            if (Client == null)
+            {
+                Console.WriteLine($"{Now}\tError\tTimerState http client is null");
+                return;
+            }
+
+            // exit if cancelled
+            if (Token.IsCancellationRequested)
+            {
+                return;
+            }
+
+            // lock the state for updates
+            lock (Lock)
+            {
+                index = Index;
+
+                // increment
+                Index++;
+
+                // keep the index in range
+                if (Index >= MaxIndex)
+                {
+                    Index = 0;
+                }
+            }
+
+            Request req = RequestList[index];
+
+            try
+            {
+                // Execute the request
+                PerfLog p = await Test.ExecuteRequest(Client, Server, req).ConfigureAwait(false);
+
+                lock (Lock)
+                {
+                    // increment
+                    Count++;
+                    Duration += p.Duration;
+                }
+            }
+            catch (Exception ex)
+            {
+                // log and ignore any error
+                Console.WriteLine($"{Now}\tWebvException\t{ex.Message}");
+            }
+        }
     }
 }
