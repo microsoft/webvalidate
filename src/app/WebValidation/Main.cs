@@ -394,6 +394,12 @@ namespace CSE.WebValidate
             // log the test
             LogToConsole(request, valid, perfLog);
 
+            // log to Log Analytics
+            if (App.LogClient != null)
+            {
+                _ = App.LogClient.SendLogEntry<ALog>(ALog.GetLogFromPerfLog(perfLog), "webv");
+            }
+
             return perfLog;
         }
 
@@ -706,6 +712,45 @@ namespace CSE.WebValidate
 
                 Console.WriteLine(log);
             }
+        }
+    }
+
+#pragma warning disable SA1402 // File may only contain a single type
+    internal class ALog
+#pragma warning restore SA1402 // File may only contain a single type
+    {
+        public string Category { get; set; }
+        public long ContentLength { get; set; }
+        public string CorrelationVector { get; set; }
+        public DateTime Date { get; set; }
+        public double Duration { get; set; }
+        public int ErrorCount { get; set; }
+        public bool Failed { get; set; }
+        public string Path { get; set; }
+        public int Quartile { get; set; }
+        public string Server { get; set; }
+        public int StatusCode { get; set; }
+        public string Tag { get; set; }
+        public bool Validated { get; set; }
+
+        public static ALog GetLogFromPerfLog(PerfLog perfLog)
+        {
+            return new ALog
+            {
+                Category = perfLog.Category,
+                ContentLength = perfLog.ContentLength,
+                CorrelationVector = perfLog.CorrelationVector,
+                Date = perfLog.Date,
+                Duration = perfLog.Duration,
+                ErrorCount = perfLog.ErrorCount,
+                Failed = perfLog.Failed,
+                Path = perfLog.Path,
+                Quartile = (int)perfLog.Quartile,
+                Server = perfLog.Server,
+                StatusCode = perfLog.StatusCode,
+                Tag = perfLog.Tag,
+                Validated = perfLog.Validated
+            };
         }
     }
 }

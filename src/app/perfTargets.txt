@@ -7,3 +7,4 @@
   "SearchMovies":{"category":"SearchMovies","quartiles":[100,200,400]},
   "Static":{"category":"Static","quartiles":[40,80,160]}
 }
+
