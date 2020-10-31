@@ -13,7 +13,7 @@ namespace CSE.WebValidate
     /// <summary>
     /// Shared state for the Timer Request Tasks
     /// </summary>
-    internal class TimerRequestState
+    internal class TimerRequestState : IDisposable
     {
         /// <summary>
         /// gets or sets the server name
@@ -77,18 +77,23 @@ namespace CSE.WebValidate
 
         public List<Request> RequestList { get; set; }
 
-        private string Now { get { return DateTime.UtcNow.ToString("s") + "Z"; } }
-
-        public void Run(double interval)
+        public void Run(double interval, int maxConcurrent)
         {
-            timer = new System.Timers.Timer(interval);
-            timer.Enabled = true;
+            loopController = new Semaphore(maxConcurrent, maxConcurrent);
+
+            timer = new System.Timers.Timer(interval)
+            {
+                Enabled = true
+            };
             timer.Elapsed += TimerEvent;
             timer.Start();
         }
 
+        private static Semaphore loopController;
         private System.Timers.Timer timer;
+        private bool disposedValue;
 
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Security", "CA5394:Do not use insecure randomness", Justification = "not security related")]
         private async void TimerEvent(object sender, System.Timers.ElapsedEventArgs e)
         {
             int index = 0;
@@ -96,12 +101,18 @@ namespace CSE.WebValidate
             // verify http client
             if (Client == null)
             {
-                Console.WriteLine($"{Now}\tError\tTimerState http client is null");
+                Console.WriteLine($"{WebV.Now}\tError\tTimerState http client is null");
                 return;
             }
 
             // exit if cancelled
             if (Token.IsCancellationRequested)
+            {
+                return;
+            }
+
+            // get a semaphore slot - rate limit the requests
+            if (!loopController.WaitOne(10))
             {
                 return;
             }
@@ -121,6 +132,12 @@ namespace CSE.WebValidate
                 }
             }
 
+            // randomize request index
+            if (Random != null)
+            {
+                index = Random.Next(0, MaxIndex);
+            }
+
             Request req = RequestList[index];
 
             try
@@ -138,7 +155,36 @@ namespace CSE.WebValidate
             catch (Exception ex)
             {
                 // log and ignore any error
-                Console.WriteLine($"{Now}\tWebvException\t{ex.Message}");
+                Console.WriteLine($"{WebV.Now}\tWebvException\t{ex.Message}");
+            }
+
+            // make sure to release the semaphore
+            loopController.Release();
+        }
+
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("StyleCop.CSharp.OrderingRules", "SA1202:Elements should be ordered by access", Justification = "grouping IDispose methods")]
+        public void Dispose()
+        {
+            // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
+            Dispose(disposing: true);
+            GC.SuppressFinalize(this);
+        }
+
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("StyleCop.CSharp.OrderingRules", "SA1202:Elements should be ordered by access", Justification = "grouping IDispose methods")]
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!disposedValue)
+            {
+                if (disposing)
+                {
+                    if (timer != null)
+                    {
+                        timer.Stop();
+                        timer.Dispose();
+                    }
+                }
+
+                disposedValue = true;
             }
         }
     }

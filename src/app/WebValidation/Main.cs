@@ -60,7 +60,7 @@ namespace CSE.WebValidate
         /// <summary>
         /// Gets UtcNow as an ISO formatted date string
         /// </summary>
-        private static string Now => DateTime.UtcNow.ToString("o", CultureInfo.InvariantCulture);
+        public static string Now => DateTime.UtcNow.ToString("o", CultureInfo.InvariantCulture);
 
         /// <summary>
         /// Run the validation test one time
@@ -207,7 +207,6 @@ namespace CSE.WebValidate
 
             DisplayStartupMessage(config);
 
-            List<Timer> timers = new List<Timer>();
             List<TimerRequestState> states = new List<TimerRequestState>();
 
             foreach (string svr in config.Server)
@@ -234,10 +233,7 @@ namespace CSE.WebValidate
 
                 states.Add(state);
 
-                state.Run(config.Sleep);
-
-                // start the timers
-                // timers.Add(new Timer(new TimerCallback(SubmitRequestTask), state, 0, config.Sleep));
+                state.Run(config.Sleep, config.MaxConcurrent);
             }
 
             int frequency = int.MaxValue;
@@ -467,86 +463,6 @@ namespace CSE.WebValidate
         }
 
         /// <summary>
-        /// Submit a request from the timer event
-        /// </summary>
-        /// <param name="timerState">TimerState</param>
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Security", "CA5394:Do not use insecure randomness", Justification = "not used for security purposes")]
-        private static async void SubmitRequestTask(object timerState)
-        {
-            int index = 0;
-
-            // cast to TimerState
-            if (!(timerState is TimerRequestState state))
-            {
-                Console.WriteLine($"{Now}\tError\tTimerState is null");
-                return;
-            }
-
-            // verify http client
-            if (state.Client == null)
-            {
-                Console.WriteLine($"{Now}\tError\tTimerState http client is null");
-                return;
-            }
-
-            // exit if cancelled
-            if (state.Token.IsCancellationRequested)
-            {
-                return;
-            }
-
-            // get a semaphore slot - rate limit the requests
-            if (!loopController.WaitOne(10))
-            {
-                return;
-            }
-
-            // lock the state for updates
-            lock (state.Lock)
-            {
-                index = state.Index;
-
-                // increment
-                state.Index++;
-
-                // keep the index in range
-                if (state.Index >= state.MaxIndex)
-                {
-                    state.Index = 0;
-                }
-            }
-
-            // randomize request index
-            if (state.Random != null)
-            {
-                index = state.Random.Next(0, state.MaxIndex);
-            }
-
-            Request req = requestList[index];
-
-            try
-            {
-                // Execute the request
-                PerfLog p = await state.Test.ExecuteRequest(state.Client, state.Server, req).ConfigureAwait(false);
-
-                lock (state.Lock)
-                {
-                    // increment
-                    state.Count++;
-                    state.Duration += p.Duration;
-                }
-            }
-            catch (Exception ex)
-            {
-                // log and ignore any error
-                Console.WriteLine($"{Now}\tWebvException\t{ex.Message}");
-            }
-
-            // make sure to release the semaphore
-            loopController.Release();
-        }
-
-        /// <summary>
         /// Display the startup message for RunLoop
         /// </summary>
         private static void DisplayStartupMessage(Config config)
@@ -718,9 +634,8 @@ namespace CSE.WebValidate
         }
     }
 
-#pragma warning disable SA1402 // File may only contain a single type
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("StyleCop.CSharp.MaintainabilityRules", "SA1402:File may only contain a single type", Justification = "readability")]
     internal class ALog
-#pragma warning restore SA1402 // File may only contain a single type
     {
         public string Category { get; set; }
         public long ContentLength { get; set; }
