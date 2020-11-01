@@ -393,12 +393,6 @@ namespace CSE.WebValidate
             // log the test
             LogToConsole(request, valid, perfLog);
 
-            // log to Log Analytics
-            if (App.LogClient != null)
-            {
-                _ = App.LogClient.SendLogEntry<ALog>(ALog.GetLogFromPerfLog(perfLog), "webv");
-            }
-
             return perfLog;
         }
 
@@ -529,7 +523,7 @@ namespace CSE.WebValidate
                 Timeout = new TimeSpan(0, 0, config.Timeout),
                 BaseAddress = new Uri(host),
             };
-            client.DefaultRequestHeaders.Add("User-Agent", "webValidate");
+            client.DefaultRequestHeaders.Add("User-Agent", $"webv/{App.Version}");
 
             return client;
         }
@@ -603,25 +597,31 @@ namespace CSE.WebValidate
             {
                 Console.WriteLine(perfLog.ToJson(config.VerboseErrors));
             }
-
-            // only log 4XX and 5XX status codes unless verbose is true or there were validation errors
-            else if (config.Verbose || perfLog.StatusCode > 399 || valid.Failed || valid.ValidationErrors.Count > 0)
+            else
             {
+                // log tab delimited
                 string log = $"{perfLog.Date.ToString("o", CultureInfo.InvariantCulture)}\t{perfLog.Server}\t{perfLog.StatusCode}\t{valid.ValidationErrors.Count}\t{perfLog.Duration}\t{perfLog.ContentLength}\t{perfLog.CorrelationVector}\t";
 
                 // log tag if set
-                if (!string.IsNullOrEmpty(perfLog.Tag))
+                if (string.IsNullOrEmpty(perfLog.Tag))
                 {
-                    log += $"{perfLog.Tag}\t";
+                    perfLog.Tag = "-";
                 }
 
-                // log category and perf level if set
-                if (!string.IsNullOrEmpty(perfLog.Category) && perfLog.Quartile != null && perfLog.Quartile > 0 && perfLog.Quartile <= 4)
+                // default quartile to -
+                string quartile = "-";
+
+                if (string.IsNullOrEmpty(perfLog.Category))
                 {
-                    log += $"{perfLog.Quartile}\t{perfLog.Category}\t";
+                    perfLog.Category = "-";
                 }
 
-                log += $"{perfLog.Path}";
+                if (perfLog.Quartile != null && perfLog.Quartile > 0 && perfLog.Quartile <= 4)
+                {
+                    quartile = perfLog.Quartile.ToString();
+                }
+
+                log += $"{perfLog.Tag}\t{quartile}\t{perfLog.Category}\t{request.Verb}\t{perfLog.Path}";
 
                 // log error details
                 if (config.VerboseErrors && valid.ValidationErrors.Count > 0)
@@ -631,44 +631,6 @@ namespace CSE.WebValidate
 
                 Console.WriteLine(log);
             }
-        }
-    }
-
-    [System.Diagnostics.CodeAnalysis.SuppressMessage("StyleCop.CSharp.MaintainabilityRules", "SA1402:File may only contain a single type", Justification = "readability")]
-    internal class ALog
-    {
-        public string Category { get; set; }
-        public long ContentLength { get; set; }
-        public string CorrelationVector { get; set; }
-        public DateTime Date { get; set; }
-        public double Duration { get; set; }
-        public int ErrorCount { get; set; }
-        public bool Failed { get; set; }
-        public string Path { get; set; }
-        public int Quartile { get; set; }
-        public string Server { get; set; }
-        public int StatusCode { get; set; }
-        public string Tag { get; set; }
-        public bool Validated { get; set; }
-
-        public static ALog GetLogFromPerfLog(PerfLog perfLog)
-        {
-            return new ALog
-            {
-                Category = perfLog.Category,
-                ContentLength = perfLog.ContentLength,
-                CorrelationVector = perfLog.CorrelationVector,
-                Date = perfLog.Date,
-                Duration = perfLog.Duration,
-                ErrorCount = perfLog.ErrorCount,
-                Failed = perfLog.Failed,
-                Path = perfLog.Path,
-                Quartile = (int)perfLog.Quartile,
-                Server = perfLog.Server,
-                StatusCode = perfLog.StatusCode,
-                Tag = perfLog.Tag,
-                Validated = perfLog.Validated
-            };
         }
     }
 }
