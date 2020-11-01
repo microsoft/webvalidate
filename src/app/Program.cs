@@ -5,10 +5,10 @@ using System;
 using System.CommandLine;
 using System.CommandLine.Invocation;
 using System.CommandLine.Parsing;
+using System.Reflection;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
-using LogAnalytics.Client;
 
 namespace CSE.WebValidate
 {
@@ -17,10 +17,32 @@ namespace CSE.WebValidate
     /// </summary>
     public sealed partial class App
     {
-        private static readonly string WorkspaceId = Environment.GetEnvironmentVariable(nameof(WorkspaceId));
-        private static readonly string SharedKey = Environment.GetEnvironmentVariable(nameof(SharedKey));
+        // cache version info as it doesn't change
+        private static string version = string.Empty;
 
-        public static LogAnalyticsClient LogClient { get; set; }
+        /// <summary>
+        /// Gets the app version
+        /// </summary>
+        public static string Version
+        {
+            get
+            {
+                if (string.IsNullOrEmpty(version))
+                {
+                    if (Attribute.GetCustomAttribute(Assembly.GetEntryAssembly(), typeof(AssemblyInformationalVersionAttribute)) is AssemblyInformationalVersionAttribute v)
+                    {
+                        version = v.InformationalVersion;
+
+                        if (version.Contains('-', StringComparison.OrdinalIgnoreCase))
+                        {
+                            version = version.Substring(0, version.IndexOf('-', StringComparison.OrdinalIgnoreCase));
+                        }
+                    }
+                }
+
+                return version;
+            }
+        }
 
         /// <summary>
         /// Gets or sets json serialization options
@@ -42,13 +64,6 @@ namespace CSE.WebValidate
         /// <returns>0 on success</returns>
         public static async Task<int> Main(string[] args)
         {
-            // create Log Analytics client
-            if (!string.IsNullOrEmpty(WorkspaceId) && !string.IsNullOrEmpty(SharedKey))
-            {
-                LogClient = new LogAnalyticsClient(WorkspaceId, SharedKey);
-                Console.WriteLine("Log Analytics Client Created");
-            }
-
             // add ctl-c handler
             AddControlCHandler();
 
