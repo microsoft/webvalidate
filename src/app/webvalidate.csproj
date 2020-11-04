@@ -6,7 +6,7 @@
     <RootNamespace>CSE.WebValidate</RootNamespace>
     <VersionPrefix>1.6.1</VersionPrefix>
     <VersionSuffix>$([System.DateTime]::UtcNow.ToString(`MMdd-HHmm`))</VersionSuffix>
-  	<Company>Microsoft Corporation</Company>
+    <Company>Microsoft Corporation</Company>
     <Copyright>Copyright (c) Microsoft Corporation. All rights reserved.</Copyright>
     <RunAnalyzersDuringLiveAnalysis>true</RunAnalyzersDuringLiveAnalysis>
     <RunAnalyzersDuringBuild>true</RunAnalyzersDuringBuild>
