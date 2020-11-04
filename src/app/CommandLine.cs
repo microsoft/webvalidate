@@ -63,7 +63,7 @@ namespace CSE.WebValidate
             int? duration = durationRes.GetValueOrDefault<int?>();
             bool random = randomRes.GetValueOrDefault<bool>();
 
-            if (duration != null && (int)duration > 0 && !runLoop)
+            if (duration != null && duration > 0 && !runLoop)
             {
                 return "--run-loop must be true to use --duration";
             }
