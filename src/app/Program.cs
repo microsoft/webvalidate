@@ -5,7 +5,6 @@ using System;
 using System.CommandLine;
 using System.CommandLine.Invocation;
 using System.CommandLine.Parsing;
-using System.Reflection;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
@@ -17,33 +16,6 @@ namespace CSE.WebValidate
     /// </summary>
     public sealed partial class App
     {
-        // cache version info as it doesn't change
-        private static string version = string.Empty;
-
-        /// <summary>
-        /// Gets the app version
-        /// </summary>
-        public static string Version
-        {
-            get
-            {
-                if (string.IsNullOrEmpty(version))
-                {
-                    if (Attribute.GetCustomAttribute(Assembly.GetEntryAssembly(), typeof(AssemblyInformationalVersionAttribute)) is AssemblyInformationalVersionAttribute v)
-                    {
-                        version = v.InformationalVersion;
-
-                        if (version.Contains('-', StringComparison.OrdinalIgnoreCase))
-                        {
-                            version = version.Substring(0, version.IndexOf('-', StringComparison.OrdinalIgnoreCase));
-                        }
-                    }
-                }
-
-                return version;
-            }
-        }
-
         /// <summary>
         /// Gets or sets json serialization options
         /// </summary>
