@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.CommandLine;
 using System.CommandLine.Parsing;
+using System.IO;
 using System.Linq;
 
 namespace CSE.WebValidate
@@ -27,7 +28,7 @@ namespace CSE.WebValidate
                 TreatUnmatchedTokensAsErrors = true,
             };
 
-            root.AddOption(new Option<List<string>>(new string[] { "-s", "--server" }, ParseStringList, true, "Server to test"));
+            root.AddOption(new Option<List<string>>(new string[] { "-s", "--server" }, ParseStringList, true, "Server(s) to test"));
             root.AddOption(new Option<List<string>>(new string[] { "-f", "--files" }, ParseStringList, true, "List of files to test"));
             root.AddOption(new Option<string>(new string[] { "--tag" }, ParseString, true, "Tag for log and App Insights"));
             root.AddOption(new Option<int>(new string[] { "-l", "--sleep" }, ParseIntGTZero, true, "Sleep (ms) between each request"));
@@ -151,7 +152,7 @@ namespace CSE.WebValidate
 
                 if (string.IsNullOrWhiteSpace(env))
                 {
-                    result.ErrorMessage = "--files is a required parameter";
+                    result.ErrorMessage = $"--{result.Argument.Name} is a required parameter";
                     return null;
                 }
 
@@ -321,6 +322,8 @@ namespace CSE.WebValidate
         // handle --dry-run
         private static int DoDryRun(Config config)
         {
+            DisplayAsciiArt();
+
             // display the config
             Console.WriteLine("dry run");
             Console.WriteLine($"   Server          {config.Server}");
@@ -343,6 +346,17 @@ namespace CSE.WebValidate
             Console.WriteLine($"   Verbose         {config.Verbose}");
 
             return 0;
+        }
+
+        // Display the ASCII art file if it exists
+        private static void DisplayAsciiArt()
+        {
+            const string file = "core/ascii-art.txt";
+
+            if (File.Exists(file))
+            {
+                Console.WriteLine(File.ReadAllText(file));
+            }
         }
     }
 }
