@@ -51,6 +51,7 @@ namespace CSE.WebValidate
                 if (Attribute.GetCustomAttribute(Assembly.GetEntryAssembly(), typeof(AssemblyInformationalVersionAttribute)) is AssemblyInformationalVersionAttribute v)
                 {
                     version = v.InformationalVersion;
+                    shortVersion = version;
 
                     if (version.Contains('-', StringComparison.OrdinalIgnoreCase))
                     {
