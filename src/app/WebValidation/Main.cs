@@ -25,7 +25,6 @@ namespace CSE.WebValidate
         public const string CVHeaderName = "X-Correlation-Vector";
 
         private static List<Request> requestList;
-        private static Semaphore loopController;
         private readonly Dictionary<string, PerfTarget> targets = new Dictionary<string, PerfTarget>();
         private Config config;
 
@@ -41,9 +40,6 @@ namespace CSE.WebValidate
             }
 
             this.config = config;
-
-            // setup the semaphore
-            loopController = new Semaphore(this.config.MaxConcurrent, this.config.MaxConcurrent);
 
             // load the performance targets
             targets = LoadPerfTargets();
@@ -468,7 +464,7 @@ namespace CSE.WebValidate
             }
 
             string msg = $"{Now}\tStarting Web Validation Test";
-            msg += $"\n\t\tVersion: {CSE.WebValidate.Version.AssemblyVersion}";
+            msg += $"\n\t\tVersion: {Version.AssemblyVersion}";
             msg += $"\n\t\tHost: {string.Join(' ', config.Server)}";
 
             if (!string.IsNullOrEmpty(config.Tag))
@@ -523,7 +519,7 @@ namespace CSE.WebValidate
                 Timeout = new TimeSpan(0, 0, config.Timeout),
                 BaseAddress = new Uri(host),
             };
-            client.DefaultRequestHeaders.Add("User-Agent", $"webv/{App.Version}");
+            client.DefaultRequestHeaders.Add("User-Agent", $"webv/{Version.ShortVersion}");
 
             return client;
         }
