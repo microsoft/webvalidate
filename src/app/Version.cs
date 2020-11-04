@@ -13,6 +13,7 @@ namespace CSE.WebValidate
     {
         // cache the assembly version
         private static string version = string.Empty;
+        private static string shortVersion = string.Empty;
 
         /// <summary>
         /// Gets assembly version
@@ -21,15 +22,41 @@ namespace CSE.WebValidate
         {
             get
             {
-                if (string.IsNullOrEmpty(version))
-                {
-                    if (Attribute.GetCustomAttribute(Assembly.GetEntryAssembly(), typeof(AssemblyInformationalVersionAttribute)) is AssemblyInformationalVersionAttribute v)
-                    {
-                        version = v.InformationalVersion;
-                    }
-                }
+                SetVersion();
 
                 return version;
+            }
+        }
+
+        /// <summary>
+        /// Gets assembly version
+        /// </summary>
+        public static string ShortVersion
+        {
+            get
+            {
+                SetVersion();
+
+                return shortVersion;
+            }
+        }
+
+        /// <summary>
+        /// Gets assembly version
+        /// </summary>
+        private static void SetVersion()
+        {
+            if (string.IsNullOrEmpty(version))
+            {
+                if (Attribute.GetCustomAttribute(Assembly.GetEntryAssembly(), typeof(AssemblyInformationalVersionAttribute)) is AssemblyInformationalVersionAttribute v)
+                {
+                    version = v.InformationalVersion;
+
+                    if (version.Contains('-', StringComparison.OrdinalIgnoreCase))
+                    {
+                        shortVersion = version.Substring(0, version.IndexOf('-', StringComparison.OrdinalIgnoreCase));
+                    }
+                }
             }
         }
     }
