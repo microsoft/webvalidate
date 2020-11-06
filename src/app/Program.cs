@@ -5,6 +5,7 @@ using System;
 using System.CommandLine;
 using System.CommandLine.Invocation;
 using System.CommandLine.Parsing;
+using System.Linq;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
@@ -46,6 +47,13 @@ namespace CSE.WebValidate
             if (args == null)
             {
                 args = Array.Empty<string>();
+            }
+
+            if (args.Contains("-h") ||
+                args.Contains("--help") ||
+                args.Contains("--version"))
+            {
+                DisplayAsciiArt();
             }
 
             return await root.InvokeAsync(args).ConfigureAwait(false);

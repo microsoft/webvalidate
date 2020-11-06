@@ -10,6 +10,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using CSE.WebValidate.Model;
 using CSE.WebValidate.Validators;
+using Microsoft.CorrelationVector;
 
 namespace CSE.WebValidate
 {
@@ -18,8 +19,12 @@ namespace CSE.WebValidate
     /// </summary>
     public partial class WebV
     {
+        /// <summary>
+        /// Correlation Vector http header name
+        /// </summary>
+        public const string CVHeaderName = "X-Correlation-Vector";
+
         private static List<Request> requestList;
-        private static Semaphore loopController;
         private readonly Dictionary<string, PerfTarget> targets = new Dictionary<string, PerfTarget>();
         private Config config;
 
@@ -36,9 +41,6 @@ namespace CSE.WebValidate
 
             this.config = config;
 
-            // setup the semaphore
-            loopController = new Semaphore(this.config.MaxConcurrent, this.config.MaxConcurrent);
-
             // load the performance targets
             targets = LoadPerfTargets();
 
@@ -54,7 +56,7 @@ namespace CSE.WebValidate
         /// <summary>
         /// Gets UtcNow as an ISO formatted date string
         /// </summary>
-        private static string Now => DateTime.UtcNow.ToString("o", CultureInfo.InvariantCulture);
+        public static string Now => DateTime.UtcNow.ToString("o", CultureInfo.InvariantCulture);
 
         /// <summary>
         /// Run the validation test one time
@@ -201,7 +203,6 @@ namespace CSE.WebValidate
 
             DisplayStartupMessage(config);
 
-            List<Timer> timers = new List<Timer>();
             List<TimerRequestState> states = new List<TimerRequestState>();
 
             foreach (string svr in config.Server)
@@ -213,6 +214,7 @@ namespace CSE.WebValidate
                     Client = OpenHttpClient(svr),
                     MaxIndex = requestList.Count,
                     Test = this,
+                    RequestList = requestList,
 
                     // current hour
                     CurrentLogTime = new DateTime(DateTime.UtcNow.Year, DateTime.UtcNow.Month, DateTime.UtcNow.Day, DateTime.UtcNow.Hour, 0, 0),
@@ -227,8 +229,7 @@ namespace CSE.WebValidate
 
                 states.Add(state);
 
-                // start the timers
-                timers.Add(new Timer(new TimerCallback(SubmitRequestTask), state, 0, config.Sleep));
+                state.Run(config.Sleep, config.MaxConcurrent);
             }
 
             int frequency = int.MaxValue;
@@ -342,6 +343,10 @@ namespace CSE.WebValidate
                     }
                 }
 
+                // create correlation vector and add to headers
+                CorrelationVector cv = new CorrelationVector(CorrelationVectorVersion.V2);
+                req.Headers.Add(CVHeaderName, cv.Value);
+
                 // add the body to the http request
                 if (!string.IsNullOrEmpty(request.Body))
                 {
@@ -368,6 +373,9 @@ namespace CSE.WebValidate
 
                     // check the performance
                     perfLog = CreatePerfLog(server, request, valid, duration, (long)resp.Content.Headers.ContentLength, (int)resp.StatusCode);
+
+                    // add correlation vector to perf log
+                    perfLog.CorrelationVector = cv.Value;
                 }
                 catch (Exception ex)
                 {
@@ -416,114 +424,32 @@ namespace CSE.WebValidate
             };
 
             // determine the Performance Level based on category
-            if (!string.IsNullOrEmpty(log.Category))
+            if (targets.ContainsKey(log.Category))
             {
-                if (targets.ContainsKey(log.Category))
+                // lookup the target
+                PerfTarget target = targets[log.Category];
+
+                if (target != null &&
+                    !string.IsNullOrEmpty(target.Category) &&
+                    target.Quartiles != null &&
+                    target.Quartiles.Count == 3)
                 {
-                    // lookup the target
-                    PerfTarget target = targets[log.Category];
+                    // set to max
+                    log.Quartile = target.Quartiles.Count + 1;
 
-                    if (target != null &&
-                        !string.IsNullOrEmpty(target.Category) &&
-                        target.Quartiles != null &&
-                        target.Quartiles.Count == 3)
+                    for (int i = 0; i < target.Quartiles.Count; i++)
                     {
-                        // set to max
-                        log.Quartile = target.Quartiles.Count + 1;
-
-                        for (int i = 0; i < target.Quartiles.Count; i++)
+                        // find the lowest Perf Target achieved
+                        if (duration <= target.Quartiles[i])
                         {
-                            // find the lowest Perf Target achieved
-                            if (duration <= target.Quartiles[i])
-                            {
-                                log.Quartile = i + 1;
-                                break;
-                            }
+                            log.Quartile = i + 1;
+                            break;
                         }
                     }
                 }
             }
 
             return log;
-        }
-
-        /// <summary>
-        /// Submit a request from the timer event
-        /// </summary>
-        /// <param name="timerState">TimerState</param>
-        private static void SubmitRequestTask(object timerState)
-        {
-            int index = 0;
-
-            // cast to TimerState
-            if (!(timerState is TimerRequestState state))
-            {
-                Console.WriteLine($"{Now}\tError\tTimerState is null");
-                return;
-            }
-
-            // verify http client
-            if (state.Client == null)
-            {
-                Console.WriteLine($"{Now}\tError\tTimerState http client is null");
-                return;
-            }
-
-            // exit if cancelled
-            if (state.Token.IsCancellationRequested)
-            {
-                return;
-            }
-
-            // get a semaphore slot - rate limit the requests
-            if (!loopController.WaitOne(10))
-            {
-                return;
-            }
-
-            // lock the state for updates
-            lock (state.Lock)
-            {
-                index = state.Index;
-
-                // increment
-                state.Index++;
-
-                // keep the index in range
-                if (state.Index >= state.MaxIndex)
-                {
-                    state.Index = 0;
-                }
-            }
-
-            // randomize request index
-            if (state.Random != null)
-            {
-                index = state.Random.Next(0, state.MaxIndex);
-            }
-
-            Request req = requestList[index];
-
-            try
-            {
-                // Execute the request
-                PerfLog p = state.Test.ExecuteRequest(state.Client, state.Server, req).Result;
-
-                lock (state.Lock)
-                {
-                    // increment
-                    state.Count++;
-                    state.Duration += p.Duration;
-                }
-            }
-            catch (Exception ex)
-            {
-                // log and ignore any error
-                Console.WriteLine($"{Now}\tWebvException\t{ex.Message}");
-            }
-
-            // make sure to release the semaphore
-            loopController.Release();
         }
 
         /// <summary>
@@ -538,7 +464,7 @@ namespace CSE.WebValidate
             }
 
             string msg = $"{Now}\tStarting Web Validation Test";
-            msg += $"\n\t\tVersion: {CSE.WebValidate.Version.AssemblyVersion}";
+            msg += $"\n\t\tVersion: {Version.AssemblyVersion}";
             msg += $"\n\t\tHost: {string.Join(' ', config.Server)}";
 
             if (!string.IsNullOrEmpty(config.Tag))
@@ -593,7 +519,7 @@ namespace CSE.WebValidate
                 Timeout = new TimeSpan(0, 0, config.Timeout),
                 BaseAddress = new Uri(host),
             };
-            client.DefaultRequestHeaders.Add("User-Agent", "webValidate");
+            client.DefaultRequestHeaders.Add("User-Agent", $"webv/{Version.ShortVersion}");
 
             return client;
         }
@@ -671,21 +597,29 @@ namespace CSE.WebValidate
             // only log 4XX and 5XX status codes unless verbose is true or there were validation errors
             else if (config.Verbose || perfLog.StatusCode > 399 || valid.Failed || valid.ValidationErrors.Count > 0)
             {
-                string log = $"{perfLog.Date.ToString("o", CultureInfo.InvariantCulture)}\t{perfLog.Server}\t{perfLog.StatusCode}\t{valid.ValidationErrors.Count}\t{perfLog.Duration}\t{perfLog.ContentLength}\t";
+                // log tab delimited
+                string log = $"{perfLog.Date.ToString("o", CultureInfo.InvariantCulture)}\t{perfLog.Server}\t{perfLog.StatusCode}\t{valid.ValidationErrors.Count}\t{perfLog.Duration}\t{perfLog.ContentLength}\t{perfLog.CorrelationVector}\t";
 
                 // log tag if set
-                if (!string.IsNullOrEmpty(perfLog.Tag))
+                if (string.IsNullOrEmpty(perfLog.Tag))
                 {
-                    log += $"{perfLog.Tag}\t";
+                    perfLog.Tag = "-";
                 }
 
-                // log category and perf level if set
-                if (!string.IsNullOrEmpty(perfLog.Category) && perfLog.Quartile != null && perfLog.Quartile > 0 && perfLog.Quartile <= 4)
+                // default quartile to -
+                string quartile = "-";
+
+                if (string.IsNullOrEmpty(perfLog.Category))
                 {
-                    log += $"{perfLog.Quartile}\t{perfLog.Category}\t";
+                    perfLog.Category = "-";
                 }
 
-                log += $"{perfLog.Path}";
+                if (perfLog.Quartile != null && perfLog.Quartile > 0 && perfLog.Quartile <= 4)
+                {
+                    quartile = perfLog.Quartile.ToString();
+                }
+
+                log += $"{perfLog.Tag}\t{quartile}\t{perfLog.Category}\t{request.Verb}\t{perfLog.Path}";
 
                 // log error details
                 if (config.VerboseErrors && valid.ValidationErrors.Count > 0)
