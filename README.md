@@ -240,6 +240,11 @@ We use the `--json-log` command line option to integrate Docker container logs w
 
 --run-loop --duration 300 --verbose
 
+# continuously run twice as many tests against microsoft.com
+# run testing for 300 seconds
+
+--server https://www.microsoft.com https://www.microsoft.com --run-loop --duration 300
+
 ```
 
 > Example Dashboard
