@@ -239,12 +239,6 @@ namespace CSE.WebValidate
             return val;
         }
 
-        // parser for integer >= 0
-        private static int ParseIntGEZero(ArgumentResult result)
-        {
-            return ParseInt(result, 0);
-        }
-
         // parser for integer > 0
         private static int ParseIntGTZero(ArgumentResult result)
         {
