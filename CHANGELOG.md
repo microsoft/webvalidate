@@ -1,5 +1,9 @@
 # Change Log
 
+## v1.7.0 - April 2021
+
+- TODO - update
+
 ## v1.6.0 - October 2020
 
 - added support for running tests against multiple servers
