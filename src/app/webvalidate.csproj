@@ -22,7 +22,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.CodeAnalysis.FxCopAnalyzers" Version="3.3.1">
+    <PackageReference Include="Microsoft.CodeAnalysis.FxCopAnalyzers" Version="3.3.2">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
@@ -31,7 +31,7 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference> 
-    <PackageReference Include="System.CommandLine" Version="2.0.0-beta1.20427.1" />
+    <PackageReference Include="System.CommandLine" Version="2.0.0-beta1.20574.7" />
   </ItemGroup>
 
   <ItemGroup>
