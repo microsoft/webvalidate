@@ -101,6 +101,10 @@ namespace CSE.WebValidate
         /// </summary>
         public bool StrictJson { get; set; }
 
+        public string WebvPrefix { get; set; }
+
+        public string WebvSuffix { get; set; }
+
         /// <summary>
         /// Set the default config values
         /// </summary>
@@ -117,13 +121,14 @@ namespace CSE.WebValidate
                     // make it easier to pass server value
                     if (!s.StartsWith("http", StringComparison.OrdinalIgnoreCase))
                     {
-                        if (s.StartsWith("localhost", StringComparison.OrdinalIgnoreCase) || s.StartsWith("127.0.0.1", StringComparison.OrdinalIgnoreCase))
+                        if (s.StartsWith("localhost", StringComparison.OrdinalIgnoreCase) ||
+                            s.StartsWith("127.0.0.1", StringComparison.OrdinalIgnoreCase))
                         {
                             Server[i] = $"http://{s}";
                         }
                         else
                         {
-                            Server[i] = $"https://{s}.azurewebsites.net";
+                            Server[i] = $"{WebvPrefix}{s}{WebvSuffix}";
                         }
                     }
                 }

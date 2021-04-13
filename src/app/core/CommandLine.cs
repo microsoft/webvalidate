@@ -45,6 +45,8 @@ namespace CSE.WebValidate
             root.AddOption(new Option<int>(new string[] { "--max-concurrent" }, ParseIntGTZero, true, "Max concurrent requests"));
             root.AddOption(new Option<int>(new string[] { "--max-errors" }, ParseIntGTZero, true, "Max validation errors"));
             root.AddOption(new Option<int>(new string[] { "--delay-start" }, ParseIntGTZero, true, "Delay test start (seconds)"));
+            root.AddOption(new Option<string>(new string[] { "--webv-prefix" }, ParseString, true, "Server address prefix"));
+            root.AddOption(new Option<string>(new string[] { "--webv-suffix" }, ParseString, true, "Server address suffix"));
             root.AddOption(new Option<bool>(new string[] { "-d", "--dry-run" }, "Validates configuration"));
 
             // these require access to --run-loop so are added at the root level
@@ -100,7 +102,22 @@ namespace CSE.WebValidate
                         result.ErrorMessage = $"--{result.Parent.Symbol.Name} is required";
                     }
 
-                    return null;
+                    if (string.IsNullOrWhiteSpace(env))
+                    {
+                        switch (result.Parent.Symbol.Name)
+                        {
+                            case "webv-prefix":
+                                env = "https://";
+                                break;
+                            case "webv-suffix":
+                                env = ".azurewebsites.net";
+                                break;
+                            default:
+                                break;
+                        }
+                    }
+
+                    return env;
                 }
                 else
                 {
