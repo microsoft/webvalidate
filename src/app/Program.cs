@@ -44,17 +44,7 @@ namespace CSE.WebValidate
             RootCommand root = BuildRootCommand();
             root.Handler = CommandHandler.Create((Config cfg) => App.Run(cfg));
 
-            if (args == null)
-            {
-                args = Array.Empty<string>();
-            }
-
-            if (args.Contains("-h") ||
-                args.Contains("--help") ||
-                args.Contains("--version"))
-            {
-                DisplayAsciiArt();
-            }
+            DisplayAsciiArt(args, "core/ascii-art.txt");
 
             return await root.InvokeAsync(args).ConfigureAwait(false);
         }

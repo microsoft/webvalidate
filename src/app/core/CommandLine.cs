@@ -316,8 +316,6 @@ namespace CSE.WebValidate
         // handle --dry-run
         private static int DoDryRun(Config config)
         {
-            DisplayAsciiArt();
-
             // display the config
             Console.WriteLine("dry run");
             Console.WriteLine($"   Server          {config.Server}");
@@ -343,13 +341,23 @@ namespace CSE.WebValidate
         }
 
         // Display the ASCII art file if it exists
-        private static void DisplayAsciiArt()
+        private static void DisplayAsciiArt(string[] args, string file)
         {
-            const string file = "core/ascii-art.txt";
-
-            if (File.Exists(file))
+            if (args != null &&
+                !args.Contains("--version") &&
+                (args.Contains("-h") ||
+                 args.Contains("--help") ||
+                 args.Contains("--dry-run") ||
+                 args.Contains("-d")))
             {
-                Console.WriteLine(File.ReadAllText(file));
+                string path = Path.Combine(Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location), file);
+
+                if (File.Exists(path))
+                {
+                    Console.ForegroundColor = ConsoleColor.DarkMagenta;
+                    Console.WriteLine(File.ReadAllText(path));
+                    Console.ResetColor();
+                }
             }
         }
     }
