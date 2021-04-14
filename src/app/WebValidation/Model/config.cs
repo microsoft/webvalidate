@@ -101,8 +101,16 @@ namespace CSE.WebValidate
         /// </summary>
         public bool StrictJson { get; set; }
 
+        /// <summary>
+        /// gets or sets the prefix for server(s)
+        /// default: https://
+        /// </summary>
         public string WebvPrefix { get; set; }
 
+        /// <summary>
+        /// gets or sets the suffix for server(s)
+        /// default: .azurewebsites.net
+        /// </summary>
         public string WebvSuffix { get; set; }
 
         /// <summary>
@@ -132,6 +140,11 @@ namespace CSE.WebValidate
                         }
                     }
                 }
+            }
+
+            if (RunLoop)
+            {
+                Sleep = Sleep < 1 ? 1 : Sleep;
             }
 
             // add a trailing slash if necessary

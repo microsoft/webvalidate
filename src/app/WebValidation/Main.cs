@@ -595,7 +595,7 @@ namespace CSE.WebValidate
             }
 
             // only log 4XX and 5XX status codes unless verbose is true or there were validation errors
-            else if (config.Verbose || perfLog.StatusCode > 399 || valid.Failed || valid.ValidationErrors.Count > 0)
+            else if (!config.RunLoop || config.Verbose || perfLog.StatusCode > 399 || valid.Failed || valid.ValidationErrors.Count > 0)
             {
                 // log tab delimited
                 string log = $"{perfLog.Date.ToString("o", CultureInfo.InvariantCulture)}\t{perfLog.Server}\t{perfLog.StatusCode}\t{valid.ValidationErrors.Count}\t{perfLog.Duration}\t{perfLog.ContentLength}\t{perfLog.CorrelationVector}\t";
