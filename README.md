@@ -7,8 +7,15 @@ Web Validate (WebV) is a web request validation tool that we use to run end-to-e
 
 ## Deprecation Warnings
 
+- This release is the last release supporting `dotnet 3.1`
+  - The 2.0 release will require `dotnet 5.0`
+  - You can continue to use this release by specifying the version
+
+- This release is the last release published to `DockerHub`
+  - This release and future releases will be published to `ghcr.io/retaildevcrews/webvalidate`
+
 - Test files must migrate to the new json format
-- This is a breaking change in the next release
+- This is a breaking change in the 2.0 release
 
 ```json
 
@@ -21,11 +28,6 @@ Web Validate (WebV) is a web request validation tool that we use to run end-to-e
 }
 
 ```
-
-- Strict json parsing will become the default in the next release
-  - specify --strict-json false to keep current behavior
-  - this is potentially a breaking change
-  - see Command Line Parameters below for more details
 
 ## WebV Quick Start
 
@@ -177,22 +179,6 @@ docker run -it --rm retaildevcrew/webvalidate --help
 
 ```
 
-Run the debug WebV container directly from source
-
-The debug version allows you to connect to the running container to debug any latency or network issues. The debug version has useful network tools such as `netstat`, `nslookup`, `traceroute`, `nmap` and several others pre-installed. In addition, the image also contains common utilities including `nano`, `curl`, `httpie` and `unzip`.
-
-> There are security risks in using this container since several tools require `sudo` privileges and all of the utilities are installed.
->
-> The debug image is also larger in size (about 800 MB) so deployments will take longer.
-
-```bash
-
-docker run -it --rm --name webv-debug retaildevcrew/webvalidate:debug -s https://www.microsoft.com -f msft.json -r -l 20000
-docker exec -it webv-debug /bin/bash
-$ ...
-
-```
-
 Use your own test files
 
 ```bash
@@ -224,10 +210,9 @@ We use the `--json-log` command line option to integrate Docker container logs w
 
 ```bash
 # continuously send request every 15 seconds
-# log summary every five minutes to Log Analytics
 # tag to distinguish between WebV instances in Azure Monitor
 
---run-loop --sleep 15000 --summary-minutes 5 --json-log --tag my_webv_instance_name
+--run-loop --sleep 15000 --json-log --tag my_webv_instance_name
 
 ```
 
@@ -258,20 +243,24 @@ We use the `--json-log` command line option to integrate Docker container logs w
   - validate parameters but do not execute tests
 - -s --server string1 [string2 string3]
   - server Url (i.e. `https://www.microsoft.com`)
-  - required
+  - `required`
 - -f --files file1 [file2 file3 ...]
   - one or more json test files
   - default location current directory
+  - `required`
+- --webv-prefix string
+  - prefix to add to server values that don't begin with http
+  - default `https://`
+- --webv-suffix string
+  - suffix to add to server values that don't begin with http
+  - default `.azurewebsites.net`
 - -j --strict-json
   - use strict RFC rules when parsing the json
   - json property names are case sensitive
   - exceptions will occur for
     - trailing commas in json arrays
     - comments in json
-  - default false
-    - `deprecation warning`
-      - the default is currently false as it is a breaking change
-      - the default will change to true in the next release
+  - default `false`
 - --tag
   - user defined tag to include in logs and App Insights
     - can be used to identify location, instance, etc.
@@ -282,47 +271,51 @@ We use the `--json-log` command line option to integrate Docker container logs w
     - ex: `https://raw.githubusercontent.com/retaildevcrews/webvalidate/main/TestFiles/`
 - -l --sleep int
   - number of milliseconds to sleep between requests
-  - default 0
+  - default `0`
 - --max-errors int
   - end test after max-errors
   - if --max-errors is exceeded, WebV will exit with non-zero exit code
-  - default 10
+  - default `10`
 - -t --timeout int
   - HTTP request timeout in seconds
-  - default 30 sec
+  - default `30 sec`
 - --verbose
   - log 200 and 300 results as well as errors
-  - default true
+  - default `true`
 - --verbose-errors
   - display validation error messages
-  - default true
+  - default `false`
 - --delay-start int
   - delay starting the validation test for int seconds
-  - default 0
+  - default `0`
 
 ### RunLoop Mode Parameters
+
+- Some parameters are only valid if `--run-loop` is specified
+- Some parameters have different defaults if `--run-loop` is specified
 
 - -r --run-loop
   - runs the test in a continuous loop
 - -l --sleep int
   - number of milliseconds to sleep between requests
-  - default 1000
+  - default `1000`
 - --duration int
   - run test for duration seconds then exit
-  - default 0 (run until OS signal)
+  - default `0 (run until OS signal)`
 - --max-concurrent int
   - max concurrent requests
-  - default 100
+  - default `100`
 - --random
   - randomize requests
-  - default false
+  - default `false`
 - --summary-minutes
+  - `Planned deprecation in 2.0`
   - display summary count and average duration every x minutes
   - valid: >= 0
-  - default 0 (don't display)
+  - default `0 (don't display)`
 - --verbose
   - log 200 and 300 results as well as errors
-  - default false
+  - default `false`
 
 ## Environment Variables
 
@@ -338,6 +331,8 @@ We use the `--json-log` command line option to integrate Docker container logs w
 - VERBOSE_ERRORS=bool
 - DELAY_START=int
 - STRICT_JSON=bool
+- WEBV_PREFIX=string
+- WEBV_SUFFIX=string
 
 ### Additional run Loop environment variables
 
