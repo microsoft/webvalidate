@@ -90,58 +90,6 @@ popd
 
 ```
 
-## Running from source
-
-```bash
-
-# change to the app directory
-pushd src/app
-
-```
-
-Run a sample validation test against `microsoft.com`
-
-```bash
-
-# run a test
-dotnet run -- --server https://www.microsoft.com --files msft.json
-
-```
-
-Run more complex tests against the GitHub API by using:
-
-```bash
-
-# github tests
-dotnet run -- -s https://api.github.com -f github.json
-
-```
-
-Run a test that fails validation and causes a non-zero exit code
-
-```bash
-
-dotnet run -- -s https://www.microsoft.com -f failOnValidationError.json
-
-```
-
-Experiment with WebV
-
-```bash
-
-# get help
-dotnet run -- --help
-
-```
-
-Make sure to change back to the root of the repo
-
-```bash
-
-popd
-
-```
-
 ## Running as a docker container
 
 Run a sample validation test against `microsoft.com`
@@ -482,7 +430,7 @@ export ROBOTS=robots.txt
 export FAVICON=favicon.ico
 
 # run the test
-dotnet run -- -s https://www.microsoft.com -f envvars.json
+webv -s https://www.microsoft.com -f envvars.json
 
 ```
 
@@ -686,42 +634,6 @@ The msft.json file contains sample validation tests that will will successfully 
 }
 
 ```
-
-## CI-CD
-
-This repo uses [GitHub Actions](/.github/workflows/dockerCI.yml) for Continuous Integration.
-
-- CI supports pushing to Azure Container Registry or DockerHub
-- The action is setup to execute on a PR or commit to `main`
-  - The action does not run on commits to branches other than `main`
-- The action always publishes an image with the `:beta` tag
-- If you tag the repo with a version i.e. `v1.1.0` the action will also
-  - Tag the image with `:1.1.0`
-  - Tag the image with `:latest`
-  - Note that the `v` is case sensitive (lower case)
-
-### Pushing to Azure Container Registry
-
-In order to push to ACR, you must create a Service Principal that has push permissions to the ACR and set the following `secrets` in your GitHub repo:
-
-- Azure Login Information
-  - TENANT
-  - SERVICE_PRINCIPAL
-  - SERVICE_PRINCIPAL_SECRET
-
-- ACR Information
-  - ACR_REG
-  - ACR_REPO
-  - ACR_IMAGE
-
-### Pushing to DockerHub
-
-In order to push to DockerHub, you must set the following `secrets` in your GitHub repo:
-
-- DOCKER_REPO
-- DOCKER_USER
-- DOCKER_PAT
-  - Personal Access Token
 
 ## Contributing
 
