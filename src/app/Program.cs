@@ -62,14 +62,14 @@ namespace CSE.WebValidate
                 return -1;
             }
 
-            // set any missing values
-            config.SetDefaultValues();
-
             // don't run the test on a dry run
             if (config.DryRun)
             {
                 return DoDryRun(config);
             }
+
+            // set any missing values
+            config.SetDefaultValues();
 
             // set json options based on --strict-json
             App.JsonSerializerOptions = new JsonSerializerOptions

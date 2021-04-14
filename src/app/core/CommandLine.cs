@@ -31,10 +31,10 @@ namespace CSE.WebValidate
                 TreatUnmatchedTokensAsErrors = true,
             };
 
-            root.AddOption(EnvVarOptionList(new string[] { "--server", "-s" }, "Server(s) to test (required)", null));
-            root.AddOption(EnvVarOptionList(new string[] { "--files", "-f" }, "List of files to test (required)", null));
+            root.AddOption(EnvVarOption<List<string>>(new string[] { "--server", "-s" }, "Server(s) to test (required)", null));
+            root.AddOption(EnvVarOption<List<string>>(new string[] { "--files", "-f" }, "List of files to test (required)", null));
             root.AddOption(EnvVarOption(new string[] { "--tag" }, "Tag for log and App Insights", string.Empty));
-            root.AddOption(EnvVarOption(new string[] { "--sleep", "-l" }, "Sleep (ms) between each request", 0, 0));
+            root.AddOption(EnvVarOption<int>(new string[] { "--sleep", "-l" }, "Sleep (ms) between each request", 0, 0));
             root.AddOption(EnvVarOption(new string[] { "--strict-json", "-j" }, "Use strict json when parsing", false));
             root.AddOption(EnvVarOption(new string[] { "--base-url", "-u" }, "Base url for files", string.Empty));
             root.AddOption(EnvVarOption(new string[] { "--verbose", "-v" }, "Display verbose results", false));
@@ -42,12 +42,12 @@ namespace CSE.WebValidate
             root.AddOption(EnvVarOption(new string[] { "--run-loop", "-r" }, "Run test in an infinite loop", false));
             root.AddOption(EnvVarOption(new string[] { "--verbose-errors" }, "Log verbose error messages", false));
             root.AddOption(EnvVarOption(new string[] { "--random" }, "Run requests randomly (requires --run-loop)", false));
-            root.AddOption(EnvVarOption(new string[] { "--duration" }, "Test duration (seconds)  (requires --run-loop)", 0, 0));
-            root.AddOption(EnvVarOption(new string[] { "--summary-minutes" }, "Display summary results (minutes)  (requires --run-loop)", 0, 0));
-            root.AddOption(EnvVarOption(new string[] { "--timeout", "-t" }, "Request timeout (seconds)", 30, 1));
-            root.AddOption(EnvVarOption(new string[] { "--max-concurrent" }, "Max concurrent requests", 100, 1));
-            root.AddOption(EnvVarOption(new string[] { "--max-errors" }, "Max validation errors", 10, 0));
-            root.AddOption(EnvVarOption(new string[] { "--delay-start" }, "Delay test start (seconds)", 0, 0));
+            root.AddOption(EnvVarOption<int>(new string[] { "--duration" }, "Test duration (seconds)  (requires --run-loop)", 0, 0));
+            root.AddOption(EnvVarOption<int>(new string[] { "--summary-minutes" }, "Display summary results (minutes)  (requires --run-loop)", 0, 0));
+            root.AddOption(EnvVarOption<int>(new string[] { "--timeout", "-t" }, "Request timeout (seconds)", 30, 1));
+            root.AddOption(EnvVarOption<int>(new string[] { "--max-concurrent" }, "Max concurrent requests", 100, 1));
+            root.AddOption(EnvVarOption<int>(new string[] { "--max-errors" }, "Max validation errors", 10, 0));
+            root.AddOption(EnvVarOption<int>(new string[] { "--delay-start" }, "Delay test start (seconds)", 0, 0));
             root.AddOption(EnvVarOption(new string[] { "--webv-prefix" }, "Server address prefix", "https://"));
             root.AddOption(EnvVarOption(new string[] { "--webv-suffix" }, "Server address suffix", ".azurewebsites.net"));
             root.AddOption(new Option<bool>(new string[] { "--dry-run", "-d" }, "Validates configuration"));
@@ -142,7 +142,7 @@ namespace CSE.WebValidate
         }
 
         // insert env vars as default
-        private static Option<List<string>> EnvVarOptionList(string[] names, string description, List<string> defaultValue)
+        private static Option EnvVarOption<T>(string[] names, string description, List<string> defaultValue)
         {
             if (string.IsNullOrWhiteSpace(description))
             {
@@ -165,7 +165,7 @@ namespace CSE.WebValidate
         }
 
         // insert env vars as default with min val for ints
-        private static Option<int> EnvVarOption(string[] names, string description, int defaultValue, int minValue)
+        private static Option EnvVarOption<T>(string[] names, string description, int defaultValue, int minValue)
         {
             if (string.IsNullOrWhiteSpace(description))
             {
@@ -249,6 +249,8 @@ namespace CSE.WebValidate
                 Console.WriteLine($"   Tag             {config.Tag}");
             }
 
+            Console.WriteLine($"   WebV Prefix     {config.WebvPrefix}");
+            Console.WriteLine($"   WebV Suffix     {config.WebvSuffix}");
             Console.WriteLine($"   Run Loop        {config.RunLoop}");
             Console.WriteLine($"   Sleep           {config.Sleep}");
             Console.WriteLine($"   Verbose Errors  {config.VerboseErrors}");
