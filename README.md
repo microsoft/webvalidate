@@ -308,6 +308,10 @@ WebV will return a non-zero exit code (fail) under the following conditions
 
 ## Validation Files
 
+> Validations are often nested to test the JSON object
+>
+> We use a simple test file generator to build complex validations
+
 Validation files are located in the /app/TestFiles directory and are json files that control the validation tests.
 
 You can mount a local volume into the Docker container at /app/TestFiles to test your files against your server if you don't want to rebuild the container
@@ -327,12 +331,14 @@ You can mount a local volume into the Docker container at /app/TestFiles to test
 - Validation (optional)
   - if not specified in test file, no validation checks will run
   - StatusCode
+    - required
     - http status code
     - a validation error will cause the test to fail and return a non-zero error code
     - no other validation checks are executed
     - default: 200
     - valid: 100-599
   - ContentType
+    - required
     - http Content-Type header
     - a validation error will cause the test to fail and return a non-zero error code
     - no other validation checks are executed
