@@ -32,6 +32,11 @@ namespace CSE.WebValidate.Model
         public DateTime Date { get; set; } = DateTime.UtcNow;
 
         /// <summary>
+        /// Gets or sets the http verb
+        /// </summary>
+        public string Verb { get; set; } = "GET";
+
+        /// <summary>
         /// gets or sets the server URL
         /// </summary>
         public string Server { get; set; }

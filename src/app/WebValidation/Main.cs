@@ -19,11 +19,6 @@ namespace CSE.WebValidate
     /// </summary>
     public partial class WebV
     {
-        /// <summary>
-        /// Correlation Vector http header name
-        /// </summary>
-        public const string CVHeaderName = "X-Correlation-Vector";
-
         private static List<Request> requestList;
         private readonly Dictionary<string, PerfTarget> targets = new Dictionary<string, PerfTarget>();
         private Config config;
@@ -345,7 +340,7 @@ namespace CSE.WebValidate
 
                 // create correlation vector and add to headers
                 CorrelationVector cv = new CorrelationVector(CorrelationVectorVersion.V2);
-                req.Headers.Add(CVHeaderName, cv.Value);
+                req.Headers.Add(CorrelationVector.HeaderName, cv.Value);
 
                 // add the body to the http request
                 if (!string.IsNullOrEmpty(request.Body))
@@ -372,17 +367,14 @@ namespace CSE.WebValidate
                     valid = ResponseValidator.Validate(request, resp, body);
 
                     // check the performance
-                    perfLog = CreatePerfLog(server, request, valid, duration, (long)resp.Content.Headers.ContentLength, (int)resp.StatusCode);
-
-                    // add correlation vector to perf log
-                    perfLog.CorrelationVector = cv.Value;
+                    perfLog = CreatePerfLog(server, request, valid, duration, (long)resp.Content.Headers.ContentLength, (int)resp.StatusCode, cv.Value);
                 }
                 catch (Exception ex)
                 {
                     double duration = Math.Round(DateTime.UtcNow.Subtract(dt).TotalMilliseconds, 0);
                     valid = new ValidationResult { Failed = true };
                     valid.ValidationErrors.Add($"Exception: {ex.Message}");
-                    perfLog = CreatePerfLog(server, request, valid, duration, 0, 500);
+                    perfLog = CreatePerfLog(server, request, valid, duration, 0, 500, cv.Value);
                 }
             }
 
@@ -401,8 +393,9 @@ namespace CSE.WebValidate
         /// <param name="duration">duration</param>
         /// <param name="contentLength">content length</param>
         /// <param name="statusCode">status code</param>
+        /// <param name="correlationVector">Correlation Vector</param>
         /// <returns>PerfLog</returns>
-        public PerfLog CreatePerfLog(string server, Request request, ValidationResult validationResult, double duration, long contentLength, int statusCode)
+        public PerfLog CreatePerfLog(string server, Request request, ValidationResult validationResult, double duration, long contentLength, int statusCode, string correlationVector = "")
         {
             if (validationResult == null)
             {
@@ -421,6 +414,8 @@ namespace CSE.WebValidate
                 Duration = duration,
                 ContentLength = contentLength,
                 Failed = validationResult.Failed,
+                Verb = request.Verb,
+                CorrelationVector = correlationVector,
             };
 
             // determine the Performance Level based on category
