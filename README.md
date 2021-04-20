@@ -216,7 +216,7 @@ We use the `--json-log` command line option to integrate Docker container logs w
 - --tag
   - user defined tag to include in logs and App Insights
     - can be used to identify location, instance, etc.
-- --log-json
+- --json-log
   - log requests to console in json format (instead of tab delimited)
 - -u --base-url
   - base URL of test files using http
