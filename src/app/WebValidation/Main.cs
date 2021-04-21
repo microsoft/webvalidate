@@ -406,7 +406,7 @@ namespace CSE.WebValidate
             PerfLog log = new PerfLog(validationResult.ValidationErrors)
             {
                 Server = server,
-                Tag = config.Tag,
+                Tag = string.IsNullOrWhiteSpace(request.Tag) ? config.Tag : request.Tag,
                 Path = request?.Path ?? string.Empty,
                 StatusCode = statusCode,
                 Category = request?.PerfTarget?.Category ?? string.Empty,

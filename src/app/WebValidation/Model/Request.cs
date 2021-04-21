@@ -22,6 +22,11 @@ namespace CSE.WebValidate.Model
         public string Path { get; set; }
 
         /// <summary>
+        /// Gets or sets the tag value
+        /// </summary>
+        public string Tag { get; set; } = string.Empty;
+
+        /// <summary>
         /// Gets or sets a value indicating whether validation should fail on error
         /// </summary>
         public bool FailOnValidationError { get; set; }
