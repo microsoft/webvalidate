@@ -325,6 +325,10 @@ You can mount a local volume into the Docker container at /app/TestFiles to test
 - Verb
   - default: GET
   - valid: HTTP verbs
+- Tag
+  - default: string.empty
+  - tag for the request
+    - this will override the --tag value for that request
 - FailOnValidationError (optional)
   - If true, any validation error will cause that test to fail
   - default: false
