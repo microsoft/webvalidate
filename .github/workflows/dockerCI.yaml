@@ -82,17 +82,11 @@ jobs:
         # Build base container
         docker build . -t webv
 
-        # Build debug container
-        docker build . -f ./Dockerfile.debug -t webv-debug
-
     - name: Docker Push
       if: ${{ env.DOCKER_SET == 'true' }}
       run: |
         # tag the base image with :beta
         docker tag webv ${DOCKER_REPO}:beta
-
-        # tag the debug image with :debug
-        docker tag webv-debug ${DOCKER_REPO}:debug
 
         # Tag image based on repo tag if a github label
         if [[ "${{ github.ref }}" == "refs/tags/"* ]]
@@ -104,14 +98,14 @@ jobs:
           # Strip "v" prefix from tag name
           VERSION=$(echo $VERSION | sed -e 's/^v//')
 
-          # tag the image with :Version, :latest and debug-image with :debug
+          # tag the image with :Version and :latest
           docker tag webv ${DOCKER_REPO}:$VERSION
           docker tag webv ${DOCKER_REPO}:latest
           docker tag webv-debug ${DOCKER_REPO}:$VERSION-debug
         fi
 
         # Push to the repo
-        docker push $DOCKER_REPO
+        docker push -a $DOCKER_REPO
 
     - name: Pack and Publish
       run: |
