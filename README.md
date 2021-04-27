@@ -1,18 +1,17 @@
 # Web Validate - A web request validation tool
 
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
-![Docker Image Build](https://github.com/retaildevcrews/webvalidate/workflows/Docker%20Image%20Build/badge.svg)
+![Docker Image Build](https://github.com/microsoft/webvalidate/workflows/Docker%20Image%20Build/badge.svg)
 
 Web Validate (WebV) is a web request validation tool that we use to run end-to-end tests and long-running smoke tests.
 
 ## Deprecation Warnings
 
+- This release and future releases are published to `ghcr.io/retaildevcrews/webvalidate`
+
 - This release is the last release supporting `dotnet 3.1`
   - The 2.0 release will require `dotnet 5.0`
   - You can continue to use this release by specifying the version
-
-- This release is the last release published to `DockerHub`
-  - This release and future releases will be published to `ghcr.io/retaildevcrews/webvalidate`
 
 - `--json-log` is deprecated in v2.0
   - use `--log-format json` instead (starting with this release)
@@ -106,7 +105,7 @@ Run a sample validation test against `microsoft.com`
 ```bash
 
 # run the tests from Docker
-docker run -it --rm retaildevcrew/webvalidate --server https://www.microsoft.com --files msft.json
+docker run -it --rm ghcr.io/retaildevcrews/webvalidate --server https://www.microsoft.com --files msft.json
 
 ```
 
@@ -115,7 +114,7 @@ Run more complex tests against the GitHub API by using:
 ```bash
 
 # github tests
-docker run -it --rm retaildevcrew/webvalidate -s https://api.github.com -f github.json
+docker run -it --rm ghcr.io/retaildevcrews/webvalidate -s https://api.github.com -f github.json
 
 ```
 
@@ -123,7 +122,7 @@ Run a test that fails validation and causes a non-zero exit code
 
 ```bash
 
-docker run -it --rm retaildevcrew/webvalidate -s https://www.microsoft.com -f failOnValidationError.json
+docker run -it --rm ghcr.io/retaildevcrews/webvalidate -s https://www.microsoft.com -f failOnValidationError.json
 
 ```
 
@@ -132,7 +131,7 @@ Experiment with WebV
 ```bash
 
 # get help
-docker run -it --rm retaildevcrew/webvalidate --help
+docker run -it --rm ghcr.io/retaildevcrews/webvalidate --help
 
 ```
 
@@ -142,10 +141,10 @@ Use your own test files
 
 # assuming you want to mount MyTestFiles to the containers /app/TestFiles
 # this will start bash so you can verify the mount worked correctly
-docker run -it --rm -v MyTestFiles:/app/TestFiles --entrypoint bash retaildevcrew/webvalidate
+docker run -it --rm -v MyTestFiles:/app/TestFiles --entrypoint bash ghcr.io/retaildevcrews/webvalidate
 
 # run a test against a local web server running on port 8080 using ~/webv/myTest.json
-docker run -it --rm -v MyTestFiles:/app/TestFiles --net=host  retaildevcrew/webvalidate --server localhost:8080 --files myTest.json
+docker run -it --rm -v MyTestFiles:/app/TestFiles --net=host  ghcr.io/retaildevcrews/webvalidate --server localhost:8080 --files myTest.json
 
 ```
 
@@ -220,7 +219,7 @@ We use the `--log-format json` command line option to integrate Docker container
 - --base-url
   - -u BASE_URL
   - base URL and optional path to the test files (http or https)
-    - ex: `https://raw.githubusercontent.com/retaildevcrews/webvalidate/main/TestFiles/`
+    - ex: `https://raw.githubusercontent.com/microsoft/webvalidate/main/TestFiles/`
 - --delay-start int
   - DELAY_START
   - delay starting the validation test for int seconds

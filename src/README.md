@@ -1,18 +1,17 @@
 # Web Validate - A web request validation tool
 
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
-![Docker Image Build](https://github.com/retaildevcrews/webvalidate/workflows/Docker%20Image%20Build/badge.svg)
+![Docker Image Build](https://github.com/microsoft/webvalidate/workflows/Docker%20Image%20Build/badge.svg)
 
 Web Validate (WebV) is a web request validation tool that we use to run end-to-end tests and long-running smoke tests.
 
 ## Deprecation Warnings
 
+- This release and future releases are published to `ghcr.io/retaildevcrews/webvalidate`
+
 - This release is the last release supporting `dotnet 3.1`
   - The 2.0 release will require `dotnet 5.0`
   - You can continue to use this release by specifying the version
-
-- This release is the last release published to `DockerHub`
-  - This release and future releases will be published to `ghcr.io/retaildevcrews/webvalidate`
 
 - `--json-log` is deprecated in v2.0
   - use `--log-format json` instead (starting with this release)
