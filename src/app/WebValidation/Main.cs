@@ -142,7 +142,20 @@ namespace CSE.WebValidate
                     }
                 }
 
-                if (config.LogFormat == LogFormat.Tsv)
+                // write test summary in xml
+                if (config.XmlSummary)
+                {
+                    // todo - implement standard xml
+                    TestSummary res = new TestSummary
+                    {
+                        ValidationErrorCount = validationFailureCount,
+                        ErrorCount = errorCount,
+                        MaxErrors = config.MaxErrors,
+                    };
+
+                    res.WriteXmlToConsole();
+                }
+                else if (config.LogFormat == LogFormat.Tsv)
                 {
                     // log validation failure count
                     if (validationFailureCount > 0)
@@ -224,12 +237,14 @@ namespace CSE.WebValidate
 
                 states.Add(state);
 
+                // todo - remove in v2.0
                 state.Run(config.Sleep, config.MaxConcurrent);
             }
 
             int frequency = int.MaxValue;
             int initialDelay = int.MaxValue;
 
+            // todo - remove in v2.0
             if (config.SummaryMinutes > 0)
             {
                 foreach (TimerRequestState trs in states)
@@ -520,6 +535,7 @@ namespace CSE.WebValidate
         // Summarize the requests for the hour
         private void SummaryLogTask(object timerState)
         {
+            // todo - remove in v2.0
             if (config.SummaryMinutes < 1)
             {
                 return;

@@ -38,7 +38,9 @@ namespace CSE.WebValidate
             root.AddOption(EnvVarOption<int>(new string[] { "--duration" }, "Test duration (seconds)  (requires --run-loop)", 0, 0));
             root.AddOption(EnvVarOption(new string[] { "--log-format", "-g" }, "Log format", LogFormat.Tsv));
             root.AddOption(EnvVarOption<int>(new string[] { "--max-errors" }, "Max validation errors", 10, 0));
+            root.AddOption(EnvVarOption(new string[] { "--prometheus" }, "Send metrics to Prometheus (Not Implemented) (requires --run-loop)", false));
             root.AddOption(EnvVarOption(new string[] { "--random" }, "Run requests randomly (requires --run-loop)", false));
+            root.AddOption(EnvVarOption(new string[] { "--region" }, "Region deployed to (user defined)", string.Empty));
             root.AddOption(EnvVarOption(new string[] { "--run-loop", "-r" }, "Run test in an infinite loop", false));
             root.AddOption(EnvVarOption<int>(new string[] { "--sleep", "-l" }, "Sleep (ms) between each request", 0, 0));
             root.AddOption(EnvVarOption(new string[] { "--strict-json", "-j" }, "Use strict json when parsing", false));
@@ -49,9 +51,15 @@ namespace CSE.WebValidate
             root.AddOption(EnvVarOption(new string[] { "--webv-prefix" }, "Server address prefix", "https://"));
             root.AddOption(EnvVarOption(new string[] { "--webv-suffix" }, "Server address suffix", ".azurewebsites.net"));
 
+            // todo - remove not fully implemented once complete
+            // root.AddOption(EnvVarOption(new string[] { "--xml-summary" }, "Display test summary in XML", false));
+            root.AddOption(EnvVarOption(new string[] { "--xml-summary" }, "Display test summary in XML (not fully implemented)", false));
+
+            root.AddOption(EnvVarOption(new string[] { "--zone" }, "Zone deployed to (user defined)", string.Empty));
             root.AddOption(new Option<bool>(new string[] { "--dry-run", "-d" }, "Validates configuration"));
             root.AddOption(new Option<bool>(new string[] { "--version" }, "Displays version and exits"));
 
+            // todo - remove deprecated options in v2.0
             root.AddOption(EnvVarOption(new string[] { "--json-log" }, "Deprecated - Use '--log-format json'", false));
             root.AddOption(EnvVarOption<int>(new string[] { "--max-concurrent" }, "Deprecated", 100, 1));
             root.AddOption(EnvVarOption<int>(new string[] { "--summary-minutes" }, "Deprecated", 0, 0));
@@ -80,9 +88,9 @@ namespace CSE.WebValidate
             bool runLoop = runLoopRes.GetValueOrDefault<bool>();
             int duration = durationRes.GetValueOrDefault<int>();
             bool random = randomRes.GetValueOrDefault<bool>();
-            bool prom = false;
+            bool prom = promRes.GetValueOrDefault<bool>();
             bool verbose = verboseRes.GetValueOrDefault<bool>();
-            bool xml = false;
+            bool xml = xmlRes.GetValueOrDefault<bool>();
             LogFormat logFormat = formatRes.GetValueOrDefault<LogFormat>();
 
             string errors = string.Empty;

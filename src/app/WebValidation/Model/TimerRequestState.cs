@@ -83,6 +83,8 @@ namespace CSE.WebValidate
         /// </summary>
         public List<Request> RequestList { get; set; }
 
+        // todo - remove maxConcurrent in 2.0
+
         /// <summary>
         /// Timer run method
         /// </summary>

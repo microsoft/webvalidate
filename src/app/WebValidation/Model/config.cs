@@ -181,6 +181,7 @@ namespace CSE.WebValidate
                     Sleep = RunLoop ? 1000 : 0;
                 }
 
+                // todo - remove in v2.0
                 if (parseResult.CommandResult.Children.FirstOrDefault(c => c.Symbol.Name == "json-log") is OptionResult jsonLogRes && !jsonLogRes.IsImplicit)
                 {
                     Console.ForegroundColor = ConsoleColor.Yellow;
@@ -210,6 +211,7 @@ namespace CSE.WebValidate
                 }
             }
 
+            // todo - remove this in v2.0
             if (JsonLog)
             {
                 LogFormat = LogFormat.Json;
