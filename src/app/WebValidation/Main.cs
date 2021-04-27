@@ -191,11 +191,6 @@ namespace CSE.WebValidate
         {
             this.config = config ?? throw new ArgumentNullException(nameof(config));
 
-            if (token == null)
-            {
-                throw new ArgumentNullException(nameof(token));
-            }
-
             DateTime dtMax = DateTime.MaxValue;
 
             // only run for duration (seconds)
