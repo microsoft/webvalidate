@@ -2,6 +2,7 @@
 
 ## v1.7.0 - April 2021
 
+- Docker image moved to `ghcr.io/retaildevcrews/webvalidate`
 - added deprecation warnings
 - added `--webv-prefix` and `--webv-suffix`
 - added `--log-format`
