@@ -7,23 +7,16 @@ Web Validate (WebV) is a web request validation tool that we use to run end-to-e
 
 ## Deprecation Warnings
 
-- This release and future releases are published to `ghcr.io/retaildevcrews/webvalidate`
-
-- This release is the last release supporting `dotnet 3.1`
-  - The 2.0 release will require `dotnet 5.0`
-  - You can continue to use this release by specifying the version
-
-- `--json-log` is deprecated in v2.0
+- The Docker repo is `ghcr.io/retaildevcrews/webvalidate`
+- This release `dotnet 5.0`
+- `--json-log` was removed
   - use `--log-format json` instead (starting with this release)
-
-- `--summary-minutes` is deprecated in v2.0
+- `--summary-minutes` was removed
   - use some type of log to store and summarize the results
-
-- `--max-concurrent` is deprecated in v2.0
+- `--max-concurrent` was removed
   - use `--sleep` and `--timeout` to control connections
 
-- Test files must migrate to the new `json format`
-  - This is a breaking change in the 2.0 release
+- Test files require the current `json format`
 
 ```json
 
