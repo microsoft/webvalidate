@@ -99,7 +99,6 @@ jobs:
           # tag the image with :Version and :latest
           docker tag webv ${DOCKER_REPO}:$VERSION
           docker tag webv ${DOCKER_REPO}:latest
-          docker tag webv-debug ${DOCKER_REPO}:$VERSION-debug
         fi
 
         # Push to the repo
