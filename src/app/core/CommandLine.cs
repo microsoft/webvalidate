@@ -31,26 +31,30 @@ namespace CSE.WebValidate
                 TreatUnmatchedTokensAsErrors = true,
             };
 
-            root.AddOption(EnvVarOption<List<string>>(new string[] { "--server", "-s" }, "Server(s) to test (required)", null));
             root.AddOption(EnvVarOption<List<string>>(new string[] { "--files", "-f" }, "List of files to test (required)", null));
-            root.AddOption(EnvVarOption(new string[] { "--tag" }, "Tag for log and App Insights", string.Empty));
+            root.AddOption(EnvVarOption<List<string>>(new string[] { "--server", "-s" }, "Server(s) to test (required)", null));
+            root.AddOption(EnvVarOption(new string[] { "--base-url", "-u" }, "Base url for files", string.Empty));
+            root.AddOption(EnvVarOption<int>(new string[] { "--delay-start" }, "Delay test start (seconds)", 0, 0));
+            root.AddOption(EnvVarOption<int>(new string[] { "--duration" }, "Test duration (seconds)  (requires --run-loop)", 0, 0));
+            root.AddOption(EnvVarOption(new string[] { "--log-format", "-g" }, "Log format", LogFormat.Tsv));
+            root.AddOption(EnvVarOption<int>(new string[] { "--max-errors" }, "Max validation errors", 10, 0));
+            root.AddOption(EnvVarOption(new string[] { "--random" }, "Run requests randomly (requires --run-loop)", false));
+            root.AddOption(EnvVarOption(new string[] { "--run-loop", "-r" }, "Run test in an infinite loop", false));
             root.AddOption(EnvVarOption<int>(new string[] { "--sleep", "-l" }, "Sleep (ms) between each request", 0, 0));
             root.AddOption(EnvVarOption(new string[] { "--strict-json", "-j" }, "Use strict json when parsing", false));
-            root.AddOption(EnvVarOption(new string[] { "--base-url", "-u" }, "Base url for files", string.Empty));
-            root.AddOption(EnvVarOption(new string[] { "--verbose", "-v" }, "Display verbose results", false));
-            root.AddOption(EnvVarOption(new string[] { "--json-log" }, "Use json log format (implies --verbose)", false));
-            root.AddOption(EnvVarOption(new string[] { "--run-loop", "-r" }, "Run test in an infinite loop", false));
-            root.AddOption(EnvVarOption(new string[] { "--verbose-errors" }, "Log verbose error messages", false));
-            root.AddOption(EnvVarOption(new string[] { "--random" }, "Run requests randomly (requires --run-loop)", false));
-            root.AddOption(EnvVarOption<int>(new string[] { "--duration" }, "Test duration (seconds)  (requires --run-loop)", 0, 0));
-            root.AddOption(EnvVarOption<int>(new string[] { "--summary-minutes" }, "Display summary results (minutes)  (requires --run-loop)", 0, 0));
+            root.AddOption(EnvVarOption(new string[] { "--tag" }, "Tag for log and App Insights", string.Empty));
             root.AddOption(EnvVarOption<int>(new string[] { "--timeout", "-t" }, "Request timeout (seconds)", 30, 1));
-            root.AddOption(EnvVarOption<int>(new string[] { "--max-concurrent" }, "Max concurrent requests", 100, 1));
-            root.AddOption(EnvVarOption<int>(new string[] { "--max-errors" }, "Max validation errors", 10, 0));
-            root.AddOption(EnvVarOption<int>(new string[] { "--delay-start" }, "Delay test start (seconds)", 0, 0));
+            root.AddOption(EnvVarOption(new string[] { "--verbose", "-v" }, "Display verbose results", false));
+            root.AddOption(EnvVarOption(new string[] { "--verbose-errors" }, "Log verbose error messages", false));
             root.AddOption(EnvVarOption(new string[] { "--webv-prefix" }, "Server address prefix", "https://"));
             root.AddOption(EnvVarOption(new string[] { "--webv-suffix" }, "Server address suffix", ".azurewebsites.net"));
+
             root.AddOption(new Option<bool>(new string[] { "--dry-run", "-d" }, "Validates configuration"));
+            root.AddOption(new Option<bool>(new string[] { "--version" }, "Displays version and exits"));
+
+            root.AddOption(EnvVarOption(new string[] { "--json-log" }, "Deprecated - Use '--log-format json'", false));
+            root.AddOption(EnvVarOption<int>(new string[] { "--max-concurrent" }, "Deprecated", 100, 1));
+            root.AddOption(EnvVarOption<int>(new string[] { "--summary-minutes" }, "Deprecated", 0, 0));
 
             // these require access to --run-loop so are added at the root level
             root.AddValidator(ValidateRunLoopDependencies);
@@ -64,14 +68,22 @@ namespace CSE.WebValidate
             OptionResult runLoopRes = result.Children.FirstOrDefault(c => c.Symbol.Name == "run-loop") as OptionResult;
             OptionResult durationRes = result.Children.FirstOrDefault(c => c.Symbol.Name == "duration") as OptionResult;
             OptionResult randomRes = result.Children.FirstOrDefault(c => c.Symbol.Name == "random") as OptionResult;
+            OptionResult verboseRes = result.Children.FirstOrDefault(c => c.Symbol.Name == "verbose") as OptionResult;
+            OptionResult promRes = result.Children.FirstOrDefault(c => c.Symbol.Name == "prometheus") as OptionResult;
             OptionResult serverRes = result.Children.FirstOrDefault(c => c.Symbol.Name == "server") as OptionResult;
             OptionResult filesRes = result.Children.FirstOrDefault(c => c.Symbol.Name == "files") as OptionResult;
+            OptionResult xmlRes = result.Children.FirstOrDefault(c => c.Symbol.Name == "xml-summary") as OptionResult;
+            OptionResult formatRes = result.Children.FirstOrDefault(c => c.Symbol.Name == "log-format") as OptionResult;
 
             List<string> servers = serverRes.GetValueOrDefault<List<string>>();
             List<string> files = serverRes.GetValueOrDefault<List<string>>();
             bool runLoop = runLoopRes.GetValueOrDefault<bool>();
-            int? duration = durationRes.GetValueOrDefault<int?>();
+            int duration = durationRes.GetValueOrDefault<int>();
             bool random = randomRes.GetValueOrDefault<bool>();
+            bool prom = false;
+            bool verbose = verboseRes.GetValueOrDefault<bool>();
+            bool xml = false;
+            LogFormat logFormat = formatRes.GetValueOrDefault<LogFormat>();
 
             string errors = string.Empty;
 
@@ -85,7 +97,7 @@ namespace CSE.WebValidate
                 errors += "--files must be provided\n";
             }
 
-            if (duration != null && duration > 0 && !runLoop)
+            if (duration > 0 && !runLoop)
             {
                 errors += "--run-loop must be true to use --duration\n";
             }
@@ -93,6 +105,26 @@ namespace CSE.WebValidate
             if (random && !runLoop)
             {
                 errors += "--run-loop must be true to use --random\n";
+            }
+
+            if (xml && runLoop)
+            {
+                errors += "--xml-summary conflicts with --run-loop\n";
+            }
+
+            if (xml && logFormat == LogFormat.None)
+            {
+                errors += "--xml-summary conflicts with --log-format None\n";
+            }
+
+            if (verbose && logFormat == LogFormat.None)
+            {
+                errors += "--verbose conflicts with --log-format None\n";
+            }
+
+            if (prom && !runLoop)
+            {
+                errors += "--run-loop must be true to use --prometheus\n";
             }
 
             return errors;
@@ -244,24 +276,56 @@ namespace CSE.WebValidate
             Console.WriteLine("dry run");
             Console.WriteLine($"   Server          {string.Join(' ', config.Server)}");
             Console.WriteLine($"   Files           {string.Join(' ', config.Files)}");
+            if (config.DelayStart > 0)
+            {
+                Console.WriteLine($"   Delay Start     {config.DelayStart}");
+            }
+
+            if (config.Duration > 0)
+            {
+                Console.WriteLine($"   Duration        {config.Duration}");
+            }
+
+            if (!config.RunLoop)
+            {
+                Console.WriteLine($"   Max Errors      {config.MaxErrors}");
+            }
+
+            if (config.RunLoop)
+            {
+                Console.WriteLine($"   Prometheus      {config.Prometheus}");
+            }
+
+            if (config.RunLoop)
+            {
+                Console.WriteLine($"   Random          {config.Random}");
+            }
+
+            if (!string.IsNullOrEmpty(config.Region))
+            {
+                Console.WriteLine($"   Region          {config.Region}");
+            }
+
+            Console.WriteLine($"   Run Loop        {config.RunLoop}");
+            Console.WriteLine($"   Sleep           {config.Sleep}");
+            Console.WriteLine($"   Strict Json     {config.StrictJson}");
+
             if (!string.IsNullOrWhiteSpace(config.Tag))
             {
                 Console.WriteLine($"   Tag             {config.Tag}");
             }
 
-            Console.WriteLine($"   WebV Prefix     {config.WebvPrefix}");
-            Console.WriteLine($"   WebV Suffix     {config.WebvSuffix}");
-            Console.WriteLine($"   Run Loop        {config.RunLoop}");
-            Console.WriteLine($"   Sleep           {config.Sleep}");
-            Console.WriteLine($"   Verbose Errors  {config.VerboseErrors}");
-            Console.WriteLine($"   Strict Json     {config.StrictJson}");
-            Console.WriteLine($"   Duration        {config.Duration}");
-            Console.WriteLine($"   Delay Start     {config.DelayStart}");
-            Console.WriteLine($"   Max Concurrent  {config.MaxConcurrent}");
-            Console.WriteLine($"   Max Errors      {config.MaxErrors}");
-            Console.WriteLine($"   Random          {config.Random}");
             Console.WriteLine($"   Timeout         {config.Timeout}");
             Console.WriteLine($"   Verbose         {config.Verbose}");
+            Console.WriteLine($"   Verbose Errors  {config.VerboseErrors}");
+            Console.WriteLine($"   WebV Prefix     {config.WebvPrefix}");
+            Console.WriteLine($"   WebV Suffix     {config.WebvSuffix}");
+            Console.WriteLine($"   XML Summary     {config.XmlSummary}");
+
+            if (!string.IsNullOrEmpty(config.Zone))
+            {
+                Console.WriteLine($"   Zone            {config.Zone}");
+            }
 
             return 0;
         }

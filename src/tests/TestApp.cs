@@ -55,7 +55,6 @@ namespace CSE.WebValidate.Tests.Unit
         [Fact]
         public void EnvironmentVariableTest()
         {
-            RootCommand root = App.BuildRootCommand();
             ParseResult parse;
 
             // set all env vars
@@ -71,24 +70,24 @@ namespace CSE.WebValidate.Tests.Unit
             System.Environment.SetEnvironmentVariable(EnvKeys.DelayStart, "1");
 
             // test env vars
-            parse = root.Parse(string.Empty);
+            parse = App.BuildRootCommand().Parse(string.Empty);
             Assert.Equal(0, parse.Errors.Count);
-            Assert.Equal(17, parse.CommandResult.Children.Count);
+            Assert.Equal(20, parse.CommandResult.Children.Count);
 
             // override the files env var
-            parse = root.Parse("-f file1 file2");
+            parse = App.BuildRootCommand().Parse("-f file1 file2");
             Assert.Equal(0, parse.Errors.Count);
-            Assert.Equal(17, parse.CommandResult.Children.Count);
             Assert.Equal(2, parse.CommandResult.Children.First(c => c.Symbol.Name == "files").Tokens.Count);
+            Assert.Equal(20, parse.CommandResult.Children.Count);
 
             // test run-loop
             System.Environment.SetEnvironmentVariable(EnvKeys.Duration, "30");
-            parse = root.Parse(string.Empty);
+            parse = App.BuildRootCommand().Parse(string.Empty);
             Assert.Equal(1, parse.Errors.Count);
 
             // test run-loop
             System.Environment.SetEnvironmentVariable(EnvKeys.Random, "true");
-            parse = root.Parse(string.Empty);
+            parse = App.BuildRootCommand().Parse(string.Empty);
             Assert.Equal(1, parse.Errors.Count);
 
             // clear env vars

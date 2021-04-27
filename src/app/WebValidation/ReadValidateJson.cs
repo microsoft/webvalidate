@@ -193,8 +193,13 @@ namespace CSE.WebValidate
                 catch
                 {
                     // try to read the array of Requests style document
-                    // this is being deprecated in v1.4
+                    // this is being deprecated in v2.0
                     list = JsonSerializer.Deserialize<List<Request>>(json, App.JsonSerializerOptions);
+
+                    // display deprecation error
+                    Console.ForegroundColor = ConsoleColor.Yellow;
+                    Console.Error.WriteLine("This file format is deprecated in v2.0. Please check readme.md");
+                    Console.ResetColor();
                 }
 
                 // replace placedholders with environment variables

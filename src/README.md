@@ -14,8 +14,17 @@ Web Validate (WebV) is a web request validation tool that we use to run end-to-e
 - This release is the last release published to `DockerHub`
   - This release and future releases will be published to `ghcr.io/retaildevcrews/webvalidate`
 
-- Test files must migrate to the new json format
-- This is a breaking change in the 2.0 release
+- `--json-log` is deprecated in v2.0
+  - use `--log-format json` instead (starting with this release)
+
+- `--summary-minutes` is deprecated in v2.0
+  - use some type of log to store and summarize the results
+
+- `--max-concurrent` is deprecated in v2.0
+  - use `--sleep` and `--timeout` to control connections
+
+- Test files must migrate to the `new json format`
+  - `This is a breaking change in the 2.0 release`
 
 ```json
 
@@ -133,20 +142,6 @@ This repo uses [GitHub Actions](/.github/workflows/dockerCI.yml) for Continuous 
   - Tag the image with `:1.1.0`
   - Tag the image with `:latest`
   - Note that the `v` is case sensitive (lower case)
-
-### Pushing to Azure Container Registry
-
-In order to push to ACR, you must create a Service Principal that has push permissions to the ACR and set the following `secrets` in your GitHub repo:
-
-- Azure Login Information
-  - TENANT
-  - SERVICE_PRINCIPAL
-  - SERVICE_PRINCIPAL_SECRET
-
-- ACR Information
-  - ACR_REG
-  - ACR_REPO
-  - ACR_IMAGE
 
 ### Pushing to DockerHub
 

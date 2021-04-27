@@ -1,0 +1,4 @@
+[
+  {"path":"/api/movies/tt0473188","perfTarget":{"category":"DirectRead"}},
+  {"tag":"tag2", "path":"/api/movies?genre=Animation","perfTarget":{"category":"SearchMovies"},"validation":{"jsonArray":{"count":49}}}
+]

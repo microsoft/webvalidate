@@ -4,6 +4,8 @@
 
 - added deprecation warnings
 - added `--webv-prefix` and `--webv-suffix`
+- added `--log-format`
+  - TSV  JSON  None
 
 ## v1.6.0 - October 2020
 

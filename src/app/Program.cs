@@ -5,6 +5,7 @@ using System;
 using System.CommandLine;
 using System.CommandLine.Invocation;
 using System.CommandLine.Parsing;
+using System.Linq;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
@@ -25,9 +26,9 @@ namespace CSE.WebValidate
         };
 
         /// <summary>
-        /// Gets or sets cancellation token
+        /// Gets cancellation token
         /// </summary>
-        public static CancellationTokenSource TokenSource { get; set; } = new CancellationTokenSource();
+        public static CancellationTokenSource TokenSource { get; } = new CancellationTokenSource();
 
         /// <summary>
         /// Main entry point
@@ -36,15 +37,24 @@ namespace CSE.WebValidate
         /// <returns>0 on success</returns>
         public static async Task<int> Main(string[] args)
         {
+            // display version info
+            // there is a bug in System.CommandLine that causes the built-in version handler to fail
+            if (args != null && args.Contains("--version"))
+            {
+                Console.WriteLine(Version.AssemblyVersion);
+                return 0;
+            }
+
             // add ctl-c handler
             AddControlCHandler();
 
-            // build the System.CommandLine.RootCommand
-            RootCommand root = BuildRootCommand();
-            root.Handler = CommandHandler.Create((Config cfg) => App.Run(cfg));
-
             DisplayAsciiArt(args, "core/ascii-art.txt");
 
+            // build and parse the System.CommandLine.RootCommand
+            RootCommand root = BuildRootCommand();
+            root.Handler = CommandHandler.Create((Config cfg) => Run(cfg, root.Parse(args)));
+
+            // run the app
             return await root.InvokeAsync(args).ConfigureAwait(false);
         }
 
@@ -52,8 +62,9 @@ namespace CSE.WebValidate
         /// System.CommandLine.CommandHandler implementation
         /// </summary>
         /// <param name="config">configuration</param>
+        /// <param name="parseResult">parse results</param>
         /// <returns>non-zero on failure</returns>
-        public static async Task<int> Run(Config config)
+        public static async Task<int> Run(Config config, ParseResult parseResult)
         {
             if (config == null)
             {
@@ -61,17 +72,17 @@ namespace CSE.WebValidate
                 return -1;
             }
 
+            // set default values
+            config.SetDefaultValues(parseResult);
+
             // don't run the test on a dry run
             if (config.DryRun)
             {
                 return DoDryRun(config);
             }
 
-            // set any missing values
-            config.SetDefaultValues();
-
             // set json options based on --strict-json
-            App.JsonSerializerOptions = new JsonSerializerOptions
+            JsonSerializerOptions = new JsonSerializerOptions
             {
                 PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
                 PropertyNameCaseInsensitive = !config.StrictJson,
@@ -86,7 +97,7 @@ namespace CSE.WebValidate
 
                 if (config.DelayStart > 0)
                 {
-                    if (!config.JsonLog)
+                    if (config.LogFormat == LogFormat.Tsv)
                     {
                         Console.WriteLine($"Waiting {config.DelayStart} seconds to start test ...\n");
                     }

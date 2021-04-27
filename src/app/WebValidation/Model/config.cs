@@ -3,9 +3,33 @@
 
 using System;
 using System.Collections.Generic;
+using System.CommandLine.Parsing;
+using System.Linq;
 
 namespace CSE.WebValidate
 {
+    /// <summary>
+    /// Log Format enum
+    /// </summary>
+    public enum LogFormat
+    {
+        /// <summary>
+        /// Tab Separated Values
+        /// </summary>
+        Tsv,
+
+        /// <summary>
+        /// json
+        /// </summary>
+        Json,
+
+        /// <summary>
+        /// Don't log
+        /// --xml-summary and exceptions will still be written to stdout / stderr
+        /// </summary>
+        None,
+    }
+
     /// <summary>
     /// Web Validation Test Configuration
     /// </summary>
@@ -114,10 +138,92 @@ namespace CSE.WebValidate
         public string WebvSuffix { get; set; }
 
         /// <summary>
+        /// Gets or sets a value indicating whether the test summary should be written in xml
+        /// </summary>
+        public bool XmlSummary { get; set; }
+
+        /// <summary>
+        /// Gets or sets Log Format
+        /// </summary>
+        public LogFormat LogFormat { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether to expose the :8080/metrics end point for Prometheus
+        /// </summary>
+        public bool Prometheus { get; set; }
+
+        /// <summary>
+        /// Gets or sets the Region deployed to (user defined)
+        /// </summary>
+        public string Region { get; set; }
+
+        /// <summary>
+        /// Gets or sets the Zone deployed to (user defined)
+        /// </summary>
+        public string Zone { get; set; }
+
+        /// <summary>
         /// Set the default config values
         /// </summary>
-        public void SetDefaultValues()
+        /// <param name="parseResult">system.commandline parse result</param>
+        public void SetDefaultValues(ParseResult parseResult = null)
         {
+            // default values are different based on --run-loop
+            if (parseResult != null)
+            {
+                if (parseResult.CommandResult.Children.FirstOrDefault(c => c.Symbol.Name == "verbose") is OptionResult vRes && vRes.IsImplicit)
+                {
+                    Verbose = !RunLoop && !XmlSummary;
+                }
+
+                if (parseResult.CommandResult.Children.FirstOrDefault(c => c.Symbol.Name == "sleep") is OptionResult sleepRes && sleepRes.IsImplicit)
+                {
+                    Sleep = RunLoop ? 1000 : 0;
+                }
+
+                if (parseResult.CommandResult.Children.FirstOrDefault(c => c.Symbol.Name == "json-log") is OptionResult jsonLogRes && !jsonLogRes.IsImplicit)
+                {
+                    Console.ForegroundColor = ConsoleColor.Yellow;
+                    Console.Error.WriteLine("--json-log is deprecated in v2.0 - Use '--log-format json'");
+                    Console.ResetColor();
+                }
+
+                if (parseResult.CommandResult.Children.FirstOrDefault(c => c.Symbol.Name == "summary-minutes") is OptionResult summaryRes && !summaryRes.IsImplicit)
+                {
+                    Console.ForegroundColor = ConsoleColor.Yellow;
+                    Console.Error.WriteLine("--summary-minutes is deprecated in v2.0");
+                    Console.ResetColor();
+                }
+
+                if (parseResult.CommandResult.Children.FirstOrDefault(c => c.Symbol.Name == "max-concurrent") is OptionResult concurrentRes && !concurrentRes.IsImplicit)
+                {
+                    Console.ForegroundColor = ConsoleColor.Yellow;
+                    Console.Error.WriteLine("--max-concurrent is deprecated in v2.0");
+                    Console.ResetColor();
+                }
+
+                if (parseResult.CommandResult.Children.FirstOrDefault(c => c.Symbol.Name == "prometheus") is OptionResult promRes && !promRes.IsImplicit)
+                {
+                    Console.ForegroundColor = ConsoleColor.Yellow;
+                    Console.Error.WriteLine("--prometheus not implemented");
+                    Console.ResetColor();
+                }
+            }
+
+            if (JsonLog)
+            {
+                LogFormat = LogFormat.Json;
+            }
+
+            // min sleep is 1ms in --run-loop
+            Sleep = RunLoop && Sleep < 1 ? 1 : Sleep;
+
+            // add a trailing slash if necessary
+            if (!string.IsNullOrEmpty(BaseUrl) && !BaseUrl.EndsWith('/'))
+            {
+                BaseUrl += "/";
+            }
+
             if (Server != null && Server.Count > 0)
             {
                 string s;
@@ -140,17 +246,6 @@ namespace CSE.WebValidate
                         }
                     }
                 }
-            }
-
-            if (RunLoop)
-            {
-                Sleep = Sleep < 1 ? 1 : Sleep;
-            }
-
-            // add a trailing slash if necessary
-            if (!string.IsNullOrEmpty(BaseUrl) && !BaseUrl.EndsWith('/'))
-            {
-                BaseUrl += "/";
             }
         }
     }
