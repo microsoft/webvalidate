@@ -14,6 +14,10 @@ namespace CSE.WebValidate
     /// </summary>
     internal class TimerRequestState : IDisposable
     {
+        private static Semaphore loopController;
+        private System.Timers.Timer timer;
+        private bool disposedValue;
+
         /// <summary>
         /// gets or sets the server name
         /// </summary>
@@ -74,25 +78,28 @@ namespace CSE.WebValidate
         /// </summary>
         public CancellationToken Token { get; set; }
 
+        /// <summary>
+        /// Gets or sets the List of Request objects
+        /// </summary>
         public List<Request> RequestList { get; set; }
 
+        /// <summary>
+        /// Timer run method
+        /// </summary>
+        /// <param name="interval">timer interval</param>
+        /// <param name="maxConcurrent">deprecated</param>
         public void Run(double interval, int maxConcurrent)
         {
             loopController = new Semaphore(maxConcurrent, maxConcurrent);
 
             timer = new System.Timers.Timer(interval)
             {
-                Enabled = true
+                Enabled = true,
             };
             timer.Elapsed += TimerEvent;
             timer.Start();
         }
 
-        private static Semaphore loopController;
-        private System.Timers.Timer timer;
-        private bool disposedValue;
-
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Security", "CA5394:Do not use insecure randomness", Justification = "not security related")]
         private async void TimerEvent(object sender, System.Timers.ElapsedEventArgs e)
         {
             int index = 0;
@@ -161,6 +168,9 @@ namespace CSE.WebValidate
             loopController.Release();
         }
 
+        /// <summary>
+        /// IDisposable
+        /// </summary>
         [System.Diagnostics.CodeAnalysis.SuppressMessage("StyleCop.CSharp.OrderingRules", "SA1202:Elements should be ordered by access", Justification = "grouping IDispose methods")]
         public void Dispose()
         {
@@ -169,7 +179,10 @@ namespace CSE.WebValidate
             GC.SuppressFinalize(this);
         }
 
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("StyleCop.CSharp.OrderingRules", "SA1202:Elements should be ordered by access", Justification = "grouping IDispose methods")]
+        /// <summary>
+        /// IDisposable
+        /// </summary>
+        /// <param name="disposing">already disposing flag</param>
         protected virtual void Dispose(bool disposing)
         {
             if (!disposedValue)

@@ -1,5 +1,12 @@
 # Change Log
 
+## v1.7.0 - April 2021
+
+- added deprecation warnings
+- added `--webv-prefix` and `--webv-suffix`
+- added `--log-format`
+  - TSV  JSON  None
+
 ## v1.6.0 - October 2020
 
 - added support for running tests against multiple servers
@@ -8,7 +15,6 @@
 
 - added strict json parsing
 - converted to system.text.json
-- added deprecation warnings
 - bug fixes
 
 ## v1.4.0 - October 2020
@@ -37,4 +43,4 @@
 
 ## V1.0.0 - Jan 2020
 
-- Split from Helium repo
+- Initial release

@@ -15,6 +15,9 @@ namespace CSE.WebValidate
     /// </summary>
     public sealed partial class App
     {
+        // capture parse errors from env vars
+        private static readonly List<string> EnvVarErrors = new List<string>();
+
         /// <summary>
         /// Build the RootCommand for parsing
         /// </summary>
@@ -28,24 +31,30 @@ namespace CSE.WebValidate
                 TreatUnmatchedTokensAsErrors = true,
             };
 
-            root.AddOption(new Option<List<string>>(new string[] { "-s", "--server" }, ParseStringList, true, "Server(s) to test"));
-            root.AddOption(new Option<List<string>>(new string[] { "-f", "--files" }, ParseStringList, true, "List of files to test"));
-            root.AddOption(new Option<string>(new string[] { "--tag" }, ParseString, true, "Tag for log and App Insights"));
-            root.AddOption(new Option<int>(new string[] { "-l", "--sleep" }, ParseIntGTZero, true, "Sleep (ms) between each request"));
-            root.AddOption(new Option<bool>(new string[] { "-j", "--strict-json" }, ParseBool, true, "Use strict json when parsing"));
-            root.AddOption(new Option<string>(new string[] { "-u", "--base-url" }, ParseString, true, "Base url for files"));
-            root.AddOption(new Option<bool>(new string[] { "-v", "--verbose" }, ParseBool, true, "Display verbose results"));
-            root.AddOption(new Option<bool>(new string[] { "--json-log" }, ParseBool, true, "Use json log format (implies --verbose)"));
-            root.AddOption(new Option<bool>(new string[] { "-r", "--run-loop" }, ParseBool, true, "Run test in an infinite loop"));
-            root.AddOption(new Option<bool>(new string[] { "--verbose-errors" }, ParseBool, true, "Log verbose error messages"));
-            root.AddOption(new Option<bool>(new string[] { "--random" }, ParseBool, true, "Run requests randomly (requires --run-loop)"));
-            root.AddOption(new Option<int>(new string[] { "--duration" }, ParseIntGTZero, true, "Test duration (seconds)  (requires --run-loop)"));
-            root.AddOption(new Option<int>(new string[] { "--summary-minutes" }, ParseIntGTZero, true, "Display summary results (minutes)  (requires --run-loop)"));
-            root.AddOption(new Option<int>(new string[] { "-t", "--timeout" }, ParseIntGTZero, true, "Request timeout (seconds)"));
-            root.AddOption(new Option<int>(new string[] { "--max-concurrent" }, ParseIntGTZero, true, "Max concurrent requests"));
-            root.AddOption(new Option<int>(new string[] { "--max-errors" }, ParseIntGTZero, true, "Max validation errors"));
-            root.AddOption(new Option<int>(new string[] { "--delay-start" }, ParseIntGTZero, true, "Delay test start (seconds)"));
-            root.AddOption(new Option<bool>(new string[] { "-d", "--dry-run" }, "Validates configuration"));
+            root.AddOption(EnvVarOption<List<string>>(new string[] { "--files", "-f" }, "List of files to test (required)", null));
+            root.AddOption(EnvVarOption<List<string>>(new string[] { "--server", "-s" }, "Server(s) to test (required)", null));
+            root.AddOption(EnvVarOption(new string[] { "--base-url", "-u" }, "Base url for files", string.Empty));
+            root.AddOption(EnvVarOption<int>(new string[] { "--delay-start" }, "Delay test start (seconds)", 0, 0));
+            root.AddOption(EnvVarOption<int>(new string[] { "--duration" }, "Test duration (seconds)  (requires --run-loop)", 0, 0));
+            root.AddOption(EnvVarOption(new string[] { "--log-format", "-g" }, "Log format", LogFormat.Tsv));
+            root.AddOption(EnvVarOption<int>(new string[] { "--max-errors" }, "Max validation errors", 10, 0));
+            root.AddOption(EnvVarOption(new string[] { "--random" }, "Run requests randomly (requires --run-loop)", false));
+            root.AddOption(EnvVarOption(new string[] { "--run-loop", "-r" }, "Run test in an infinite loop", false));
+            root.AddOption(EnvVarOption<int>(new string[] { "--sleep", "-l" }, "Sleep (ms) between each request", 0, 0));
+            root.AddOption(EnvVarOption(new string[] { "--strict-json", "-j" }, "Use strict json when parsing", false));
+            root.AddOption(EnvVarOption(new string[] { "--tag" }, "Tag for log and App Insights", string.Empty));
+            root.AddOption(EnvVarOption<int>(new string[] { "--timeout", "-t" }, "Request timeout (seconds)", 30, 1));
+            root.AddOption(EnvVarOption(new string[] { "--verbose", "-v" }, "Display verbose results", false));
+            root.AddOption(EnvVarOption(new string[] { "--verbose-errors" }, "Log verbose error messages", false));
+            root.AddOption(EnvVarOption(new string[] { "--webv-prefix" }, "Server address prefix", "https://"));
+            root.AddOption(EnvVarOption(new string[] { "--webv-suffix" }, "Server address suffix", ".azurewebsites.net"));
+
+            root.AddOption(new Option<bool>(new string[] { "--dry-run", "-d" }, "Validates configuration"));
+            root.AddOption(new Option<bool>(new string[] { "--version" }, "Displays version and exits"));
+
+            root.AddOption(EnvVarOption(new string[] { "--json-log" }, "Deprecated - Use '--log-format json'", false));
+            root.AddOption(EnvVarOption<int>(new string[] { "--max-concurrent" }, "Deprecated", 100, 1));
+            root.AddOption(EnvVarOption<int>(new string[] { "--summary-minutes" }, "Deprecated", 0, 0));
 
             // these require access to --run-loop so are added at the root level
             root.AddValidator(ValidateRunLoopDependencies);
@@ -59,303 +68,286 @@ namespace CSE.WebValidate
             OptionResult runLoopRes = result.Children.FirstOrDefault(c => c.Symbol.Name == "run-loop") as OptionResult;
             OptionResult durationRes = result.Children.FirstOrDefault(c => c.Symbol.Name == "duration") as OptionResult;
             OptionResult randomRes = result.Children.FirstOrDefault(c => c.Symbol.Name == "random") as OptionResult;
+            OptionResult verboseRes = result.Children.FirstOrDefault(c => c.Symbol.Name == "verbose") as OptionResult;
+            OptionResult promRes = result.Children.FirstOrDefault(c => c.Symbol.Name == "prometheus") as OptionResult;
+            OptionResult serverRes = result.Children.FirstOrDefault(c => c.Symbol.Name == "server") as OptionResult;
+            OptionResult filesRes = result.Children.FirstOrDefault(c => c.Symbol.Name == "files") as OptionResult;
+            OptionResult xmlRes = result.Children.FirstOrDefault(c => c.Symbol.Name == "xml-summary") as OptionResult;
+            OptionResult formatRes = result.Children.FirstOrDefault(c => c.Symbol.Name == "log-format") as OptionResult;
 
+            List<string> servers = serverRes.GetValueOrDefault<List<string>>();
+            List<string> files = serverRes.GetValueOrDefault<List<string>>();
             bool runLoop = runLoopRes.GetValueOrDefault<bool>();
-            int? duration = durationRes.GetValueOrDefault<int?>();
+            int duration = durationRes.GetValueOrDefault<int>();
             bool random = randomRes.GetValueOrDefault<bool>();
+            bool prom = false;
+            bool verbose = verboseRes.GetValueOrDefault<bool>();
+            bool xml = false;
+            LogFormat logFormat = formatRes.GetValueOrDefault<LogFormat>();
 
-            if (duration != null && duration > 0 && !runLoop)
+            string errors = string.Empty;
+
+            if (servers == null || servers.Count == 0)
             {
-                return "--run-loop must be true to use --duration";
+                errors += "--server must be provided\n";
+            }
+
+            if (files == null || files.Count == 0)
+            {
+                errors += "--files must be provided\n";
+            }
+
+            if (duration > 0 && !runLoop)
+            {
+                errors += "--run-loop must be true to use --duration\n";
             }
 
             if (random && !runLoop)
             {
-                return "--run-loop must be true to use --random";
+                errors += "--run-loop must be true to use --random\n";
             }
 
-            return string.Empty;
+            if (xml && runLoop)
+            {
+                errors += "--xml-summary conflicts with --run-loop\n";
+            }
+
+            if (xml && logFormat == LogFormat.None)
+            {
+                errors += "--xml-summary conflicts with --log-format None\n";
+            }
+
+            if (verbose && logFormat == LogFormat.None)
+            {
+                errors += "--verbose conflicts with --log-format None\n";
+            }
+
+            if (prom && !runLoop)
+            {
+                errors += "--run-loop must be true to use --prometheus\n";
+            }
+
+            return errors;
         }
 
-        // parse string command line arg
-        private static string ParseString(ArgumentResult result)
+        // insert env vars as default
+        private static Option EnvVarOption<T>(string[] names, string description, T defaultValue)
         {
-            string name = result.Parent?.Symbol.Name.ToUpperInvariant().Replace('-', '_');
-            if (string.IsNullOrEmpty(name))
+            if (string.IsNullOrWhiteSpace(description))
             {
-                result.ErrorMessage = "result.Parent is null";
-                return null;
+                throw new ArgumentNullException(nameof(description));
             }
 
-            string val;
+            // this will throw on bad names
+            string env = GetValueFromEnvironment(names, out string key);
 
-            if (result.Tokens.Count == 0)
+            T value = defaultValue;
+
+            // set default to environment value if set
+            if (!string.IsNullOrWhiteSpace(env))
             {
-                string env = Environment.GetEnvironmentVariable(name);
-
-                if (string.IsNullOrWhiteSpace(env))
+                if (defaultValue.GetType().IsEnum)
                 {
-                    if (name == "SERVER")
+                    if (Enum.TryParse(defaultValue.GetType(), env, true, out object result))
                     {
-                        result.ErrorMessage = $"--{result.Parent.Symbol.Name} is required";
-                    }
-
-                    return null;
-                }
-                else
-                {
-                    val = env.Trim();
-                }
-            }
-            else
-            {
-                val = result.Tokens[0].Value.Trim();
-            }
-
-            if (string.IsNullOrWhiteSpace(val))
-            {
-                if (name == "SERVER")
-                {
-                    result.ErrorMessage = $"--{result.Parent.Symbol.Name} is required";
-                }
-
-                return null;
-            }
-            else if (val.Length < 3)
-            {
-                result.ErrorMessage = $"--{result.Parent.Symbol.Name} must be at least 3 characters";
-                return null;
-            }
-            else if (val.Length > 100)
-            {
-                result.ErrorMessage = $"--{result.Parent.Symbol.Name} must be 100 characters or less";
-            }
-
-            return val;
-        }
-
-        // parse List<string> command line arg (--files)
-        private static List<string> ParseStringList(ArgumentResult result)
-        {
-            string name = result.Parent?.Symbol.Name.ToUpperInvariant().Replace('-', '_');
-            if (string.IsNullOrEmpty(name))
-            {
-                result.ErrorMessage = "result.Parent is null";
-                return null;
-            }
-
-            List<string> val = new List<string>();
-
-            if (result.Tokens.Count == 0)
-            {
-                string env = Environment.GetEnvironmentVariable(name);
-
-                if (string.IsNullOrWhiteSpace(env))
-                {
-                    result.ErrorMessage = $"--{result.Argument.Name} is a required parameter";
-                    return null;
-                }
-
-                string[] files = env.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-
-                foreach (string f in files)
-                {
-                    val.Add(f.Trim());
-                }
-            }
-            else
-            {
-                for (int i = 0; i < result.Tokens.Count; i++)
-                {
-                    val.Add(result.Tokens[i].Value.Trim());
-                }
-            }
-
-            return val;
-        }
-
-        // parse boolean command line arg
-        private static bool ParseBool(ArgumentResult result)
-        {
-            string name = result.Parent?.Symbol.Name.ToUpperInvariant().Replace('-', '_');
-
-            if (string.IsNullOrEmpty(name))
-            {
-                result.ErrorMessage = "result.Parent is null";
-                return false;
-            }
-
-            string errorMessage = $"--{result.Parent.Symbol.Name} must be true or false";
-            bool val;
-
-            // bool options default to true if value not specified (ie -r and -r true)
-            if (result.Parent.Parent.Children.FirstOrDefault(c => c.Symbol.Name == result.Parent.Symbol.Name) is OptionResult res &&
-                !res.IsImplicit &&
-                result.Tokens.Count == 0)
-            {
-                return true;
-            }
-
-            // nothing to validate
-            if (result.Tokens.Count == 0)
-            {
-                string env = Environment.GetEnvironmentVariable(name);
-
-                if (!string.IsNullOrWhiteSpace(env))
-                {
-                    if (bool.TryParse(env, out val))
-                    {
-                        return val;
+                        value = (T)result;
                     }
                     else
                     {
-                        result.ErrorMessage = errorMessage;
-                        return false;
+                        EnvVarErrors.Add($"Environment variable {key} is invalid");
                     }
-                }
-
-                // default to true
-                if (result.Parent.Symbol.Name == "verbose-errors")
-                {
-                    return true;
-                }
-
-                if (result.Parent.Symbol.Name == "verbose" &&
-                    result.Parent.Parent.Children.FirstOrDefault(c => c.Symbol.Name == "run-loop") is OptionResult resRunLoop &&
-                    !resRunLoop.GetValueOrDefault<bool>())
-                {
-                    return true;
-                }
-
-                return false;
-            }
-
-            if (!bool.TryParse(result.Tokens[0].Value, out val))
-            {
-                result.ErrorMessage = errorMessage;
-                return false;
-            }
-
-            return val;
-        }
-
-        // parser for integer >= 0
-        private static int ParseIntGEZero(ArgumentResult result)
-        {
-            return ParseInt(result, 0);
-        }
-
-        // parser for integer > 0
-        private static int ParseIntGTZero(ArgumentResult result)
-        {
-            return ParseInt(result, 1);
-        }
-
-        // parser for integer
-        private static int ParseInt(ArgumentResult result, int minValue)
-        {
-            string name = result.Parent?.Symbol.Name.ToUpperInvariant().Replace('-', '_');
-
-            if (string.IsNullOrEmpty(name))
-            {
-                result.ErrorMessage = "result.Parent is null";
-                return -1;
-            }
-
-            string errorMessage = $"--{result.Parent.Symbol.Name} must be an integer >= {minValue}";
-            int val;
-
-            // nothing to validate
-            if (result.Tokens.Count == 0)
-            {
-                string env = Environment.GetEnvironmentVariable(name);
-
-                if (string.IsNullOrWhiteSpace(env))
-                {
-                    return GetCommandDefaultValues(result);
                 }
                 else
                 {
-                    if (!int.TryParse(env, out val) || val < minValue)
+                    try
                     {
-                        result.ErrorMessage = errorMessage;
-                        return -1;
+                        value = (T)Convert.ChangeType(env, typeof(T));
                     }
-
-                    return val;
+                    catch
+                    {
+                        EnvVarErrors.Add($"Environment variable {key} is invalid");
+                    }
                 }
             }
 
-            if (!int.TryParse(result.Tokens[0].Value, out val) || val < minValue)
-            {
-                result.ErrorMessage = errorMessage;
-                return -1;
-            }
-
-            return val;
+            return new Option<T>(names, () => value, description);
         }
 
-        // get default values for command line args
-        private static int GetCommandDefaultValues(ArgumentResult result)
+        // insert env vars as default
+        private static Option EnvVarOption<T>(string[] names, string description, List<string> defaultValue)
         {
-            switch (result.Parent.Symbol.Name)
+            if (string.IsNullOrWhiteSpace(description))
             {
-                case "max-errors":
-                    return 10;
-                case "max-concurrent":
-                    return 100;
-                case "sleep":
-                    // check run-loop
-                    if (result.Parent.Parent.Children.FirstOrDefault(c => c.Symbol.Name == "run-loop") is OptionResult res && res.GetValueOrDefault<bool>())
-                    {
-                        return 1000;
-                    }
-
-                    return 0;
-                case "timeout":
-                    return 30;
-                default:
-                    return 0;
+                throw new ArgumentNullException(nameof(description));
             }
+
+            // this will throw on bad names
+            string env = GetValueFromEnvironment(names, out string key);
+
+            List<string> value = defaultValue;
+
+            // set default to environment value if set
+            if (!string.IsNullOrWhiteSpace(env))
+            {
+                string[] items = env.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                value = new List<string>(items);
+            }
+
+            return new Option<List<string>>(names, () => value, description);
+        }
+
+        // insert env vars as default with min val for ints
+        private static Option EnvVarOption<T>(string[] names, string description, int defaultValue, int minValue)
+        {
+            if (string.IsNullOrWhiteSpace(description))
+            {
+                throw new ArgumentNullException(nameof(description));
+            }
+
+            // this will throw on bad names
+            string env = GetValueFromEnvironment(names, out string key);
+
+            int value = defaultValue;
+
+            // set default to environment value if set
+            if (!string.IsNullOrWhiteSpace(env))
+            {
+                if (!int.TryParse(env, out value))
+                {
+                    EnvVarErrors.Add($"Environment variable {key} is invalid");
+                }
+            }
+
+            Option<int> opt = new Option<int>(names, () => value, description);
+
+            opt.AddValidator((res) =>
+            {
+                string s = string.Empty;
+                int val;
+
+                try
+                {
+                    val = (int)res.GetValueOrDefault();
+
+                    if (val < minValue)
+                    {
+                        s = $"{names[0]} must be >= {minValue}";
+                    }
+                }
+                catch
+                {
+                }
+
+                return s;
+            });
+
+            return opt;
+        }
+
+        // check for environment variable value
+        private static string GetValueFromEnvironment(string[] names, out string key)
+        {
+            if (names == null ||
+                names.Length < 1 ||
+                names[0].Trim().Length < 4)
+            {
+                throw new ArgumentNullException(nameof(names));
+            }
+
+            for (int i = 1; i < names.Length; i++)
+            {
+                if (string.IsNullOrWhiteSpace(names[i]) ||
+                    names[i].Length != 2 ||
+                    names[i][0] != '-')
+                {
+                    throw new ArgumentException($"Invalid command line parameter at position {i}", nameof(names));
+                }
+            }
+
+            key = names[0][2..].Trim().ToUpperInvariant().Replace('-', '_');
+
+            return Environment.GetEnvironmentVariable(key);
         }
 
         // handle --dry-run
         private static int DoDryRun(Config config)
         {
-            DisplayAsciiArt();
-
             // display the config
             Console.WriteLine("dry run");
-            Console.WriteLine($"   Server          {config.Server}");
-            Console.WriteLine($"   Files (count)   {config.Files.Count}");
+            Console.WriteLine($"   Server          {string.Join(' ', config.Server)}");
+            Console.WriteLine($"   Files           {string.Join(' ', config.Files)}");
+            if (config.DelayStart > 0)
+            {
+                Console.WriteLine($"   Delay Start     {config.DelayStart}");
+            }
+
+            if (config.Duration > 0)
+            {
+                Console.WriteLine($"   Duration        {config.Duration}");
+            }
+
+            if (!config.RunLoop)
+            {
+                Console.WriteLine($"   Max Errors      {config.MaxErrors}");
+            }
+
+            if (config.RunLoop)
+            {
+                Console.WriteLine($"   Prometheus      {config.Prometheus}");
+            }
+
+            if (config.RunLoop)
+            {
+                Console.WriteLine($"   Random          {config.Random}");
+            }
+
+            if (!string.IsNullOrEmpty(config.Region))
+            {
+                Console.WriteLine($"   Region          {config.Region}");
+            }
+
+            Console.WriteLine($"   Run Loop        {config.RunLoop}");
+            Console.WriteLine($"   Sleep           {config.Sleep}");
+            Console.WriteLine($"   Strict Json     {config.StrictJson}");
+
             if (!string.IsNullOrWhiteSpace(config.Tag))
             {
                 Console.WriteLine($"   Tag             {config.Tag}");
             }
 
-            Console.WriteLine($"   Run Loop        {config.RunLoop}");
-            Console.WriteLine($"   Sleep           {config.Sleep}");
-            Console.WriteLine($"   Verbose Errors  {config.VerboseErrors}");
-            Console.WriteLine($"   Strict Json     {config.StrictJson}");
-            Console.WriteLine($"   Duration        {config.Duration}");
-            Console.WriteLine($"   Delay Start     {config.DelayStart}");
-            Console.WriteLine($"   Max Concurrent  {config.MaxConcurrent}");
-            Console.WriteLine($"   Max Errors      {config.MaxErrors}");
-            Console.WriteLine($"   Random          {config.Random}");
             Console.WriteLine($"   Timeout         {config.Timeout}");
             Console.WriteLine($"   Verbose         {config.Verbose}");
+            Console.WriteLine($"   Verbose Errors  {config.VerboseErrors}");
+            Console.WriteLine($"   WebV Prefix     {config.WebvPrefix}");
+            Console.WriteLine($"   WebV Suffix     {config.WebvSuffix}");
+            Console.WriteLine($"   XML Summary     {config.XmlSummary}");
+
+            if (!string.IsNullOrEmpty(config.Zone))
+            {
+                Console.WriteLine($"   Zone            {config.Zone}");
+            }
 
             return 0;
         }
 
         // Display the ASCII art file if it exists
-        private static void DisplayAsciiArt()
+        private static void DisplayAsciiArt(string[] args, string file)
         {
-            const string file = "core/ascii-art.txt";
-
-            if (File.Exists(file))
+            if (args != null &&
+                !args.Contains("--version") &&
+                (args.Contains("-h") ||
+                 args.Contains("--help") ||
+                 args.Contains("--dry-run") ||
+                 args.Contains("-d")))
             {
-                Console.WriteLine(File.ReadAllText(file));
+                string path = Path.Combine(Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location), file);
+
+                if (File.Exists(path))
+                {
+                    Console.ForegroundColor = ConsoleColor.DarkMagenta;
+                    Console.WriteLine(File.ReadAllText(path));
+                    Console.ResetColor();
+                }
             }
         }
     }

@@ -19,11 +19,6 @@ namespace CSE.WebValidate
     /// </summary>
     public partial class WebV
     {
-        /// <summary>
-        /// Correlation Vector http header name
-        /// </summary>
-        public const string CVHeaderName = "X-Correlation-Vector";
-
         private static List<Request> requestList;
         private readonly Dictionary<string, PerfTarget> targets = new Dictionary<string, PerfTarget>();
         private Config config;
@@ -147,7 +142,7 @@ namespace CSE.WebValidate
                     }
                 }
 
-                if (!config.JsonLog)
+                if (config.LogFormat == LogFormat.Tsv)
                 {
                     // log validation failure count
                     if (validationFailureCount > 0)
@@ -345,7 +340,7 @@ namespace CSE.WebValidate
 
                 // create correlation vector and add to headers
                 CorrelationVector cv = new CorrelationVector(CorrelationVectorVersion.V2);
-                req.Headers.Add(CVHeaderName, cv.Value);
+                req.Headers.Add(CorrelationVector.HeaderName, cv.Value);
 
                 // add the body to the http request
                 if (!string.IsNullOrEmpty(request.Body))
@@ -372,17 +367,14 @@ namespace CSE.WebValidate
                     valid = ResponseValidator.Validate(request, resp, body);
 
                     // check the performance
-                    perfLog = CreatePerfLog(server, request, valid, duration, (long)resp.Content.Headers.ContentLength, (int)resp.StatusCode);
-
-                    // add correlation vector to perf log
-                    perfLog.CorrelationVector = cv.Value;
+                    perfLog = CreatePerfLog(server, request, valid, duration, (long)resp.Content.Headers.ContentLength, (int)resp.StatusCode, cv.Value);
                 }
                 catch (Exception ex)
                 {
                     double duration = Math.Round(DateTime.UtcNow.Subtract(dt).TotalMilliseconds, 0);
                     valid = new ValidationResult { Failed = true };
                     valid.ValidationErrors.Add($"Exception: {ex.Message}");
-                    perfLog = CreatePerfLog(server, request, valid, duration, 0, 500);
+                    perfLog = CreatePerfLog(server, request, valid, duration, 0, 500, cv.Value);
                 }
             }
 
@@ -401,8 +393,9 @@ namespace CSE.WebValidate
         /// <param name="duration">duration</param>
         /// <param name="contentLength">content length</param>
         /// <param name="statusCode">status code</param>
+        /// <param name="correlationVector">Correlation Vector</param>
         /// <returns>PerfLog</returns>
-        public PerfLog CreatePerfLog(string server, Request request, ValidationResult validationResult, double duration, long contentLength, int statusCode)
+        public PerfLog CreatePerfLog(string server, Request request, ValidationResult validationResult, double duration, long contentLength, int statusCode, string correlationVector = "")
         {
             if (validationResult == null)
             {
@@ -413,7 +406,7 @@ namespace CSE.WebValidate
             PerfLog log = new PerfLog(validationResult.ValidationErrors)
             {
                 Server = server,
-                Tag = config.Tag,
+                Tag = string.IsNullOrWhiteSpace(request.Tag) ? config.Tag : request.Tag,
                 Path = request?.Path ?? string.Empty,
                 StatusCode = statusCode,
                 Category = request?.PerfTarget?.Category ?? string.Empty,
@@ -421,6 +414,8 @@ namespace CSE.WebValidate
                 Duration = duration,
                 ContentLength = contentLength,
                 Failed = validationResult.Failed,
+                Verb = request.Verb,
+                CorrelationVector = correlationVector,
             };
 
             // determine the Performance Level based on category
@@ -452,13 +447,11 @@ namespace CSE.WebValidate
             return log;
         }
 
-        /// <summary>
-        /// Display the startup message for RunLoop
-        /// </summary>
+        // Display the startup message for RunLoop
         private static void DisplayStartupMessage(Config config)
         {
             // don't display if json logging is on
-            if (config.JsonLog || config.SummaryMinutes > 0)
+            if (config.LogFormat == LogFormat.Json || config.SummaryMinutes > 0)
             {
                 return;
             }
@@ -524,10 +517,7 @@ namespace CSE.WebValidate
             return client;
         }
 
-        /// <summary>
-        /// Summarize the requests for the hour
-        /// </summary>
-        /// <param name="timerState">TimerState</param>
+        // Summarize the requests for the hour
         private void SummaryLogTask(object timerState)
         {
             if (config.SummaryMinutes < 1)
@@ -567,11 +557,7 @@ namespace CSE.WebValidate
             }
         }
 
-        /// <summary>
-        /// Log the test
-        /// </summary>
-        /// <param name="request">Request</param>
-        /// <param name="perfLog">PerfLog</param>
+        // Log the test
         private void LogToConsole(Request request, ValidationResult valid, PerfLog perfLog)
         {
             if (request == null)
@@ -589,45 +575,80 @@ namespace CSE.WebValidate
                 throw new ArgumentNullException(nameof(perfLog));
             }
 
-            if (config.JsonLog)
+            switch (config.LogFormat)
             {
-                Console.WriteLine(perfLog.ToJson(config.VerboseErrors));
+                case LogFormat.Json:
+                    Console.WriteLine(perfLog.ToJson(config.VerboseErrors));
+                    break;
+                case LogFormat.Tsv:
+                    LogToTsv(request, valid, perfLog);
+                    break;
+                case LogFormat.None:
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        // Log the test result to TSV
+        private void LogToTsv(Request request, ValidationResult valid, PerfLog perfLog)
+        {
+            if (request == null)
+            {
+                throw new ArgumentNullException(nameof(request));
             }
 
-            // only log 4XX and 5XX status codes unless verbose is true or there were validation errors
-            else if (config.Verbose || perfLog.StatusCode > 399 || valid.Failed || valid.ValidationErrors.Count > 0)
+            if (valid == null)
             {
-                // log tab delimited
-                string log = $"{perfLog.Date.ToString("o", CultureInfo.InvariantCulture)}\t{perfLog.Server}\t{perfLog.StatusCode}\t{valid.ValidationErrors.Count}\t{perfLog.Duration}\t{perfLog.ContentLength}\t{perfLog.CorrelationVector}\t";
+                throw new ArgumentNullException(nameof(valid));
+            }
 
-                // log tag if set
-                if (string.IsNullOrEmpty(perfLog.Tag))
+            if (perfLog == null)
+            {
+                throw new ArgumentNullException(nameof(perfLog));
+            }
+
+            if (config.LogFormat == LogFormat.Tsv)
+            {
+                // check XmlSummary
+                if (!config.XmlSummary || (config.XmlSummary && config.Verbose))
                 {
-                    perfLog.Tag = "-";
+                    // only log 4XX and 5XX status codes unless verbose is true or there were validation errors
+                    if (config.Verbose || perfLog.StatusCode > 399 || valid.Failed || valid.ValidationErrors.Count > 0)
+                    {
+                        // log tab delimited
+                        string log = $"{perfLog.Date.ToString("o", CultureInfo.InvariantCulture)}\t{perfLog.Server}\t{perfLog.StatusCode}\t{valid.ValidationErrors.Count}\t{perfLog.Duration}\t{perfLog.ContentLength}\t{perfLog.CorrelationVector}\t";
+
+                        // log tag if set
+                        if (string.IsNullOrEmpty(perfLog.Tag))
+                        {
+                            perfLog.Tag = "-";
+                        }
+
+                        // default quartile to -
+                        string quartile = "-";
+
+                        if (string.IsNullOrEmpty(perfLog.Category))
+                        {
+                            perfLog.Category = "-";
+                        }
+
+                        if (perfLog.Quartile != null && perfLog.Quartile > 0 && perfLog.Quartile <= 4)
+                        {
+                            quartile = perfLog.Quartile.ToString();
+                        }
+
+                        log += $"{perfLog.Tag}\t{quartile}\t{perfLog.Category}\t{request.Verb}\t{perfLog.Path}";
+
+                        // log error details
+                        if (config.VerboseErrors && valid.ValidationErrors.Count > 0)
+                        {
+                            log += "\n  " + string.Join("\n  ", perfLog.Errors);
+                        }
+
+                        Console.WriteLine(log);
+                    }
                 }
-
-                // default quartile to -
-                string quartile = "-";
-
-                if (string.IsNullOrEmpty(perfLog.Category))
-                {
-                    perfLog.Category = "-";
-                }
-
-                if (perfLog.Quartile != null && perfLog.Quartile > 0 && perfLog.Quartile <= 4)
-                {
-                    quartile = perfLog.Quartile.ToString();
-                }
-
-                log += $"{perfLog.Tag}\t{quartile}\t{perfLog.Category}\t{request.Verb}\t{perfLog.Path}";
-
-                // log error details
-                if (config.VerboseErrors && valid.ValidationErrors.Count > 0)
-                {
-                    log += "\n  " + string.Join("\n  ", perfLog.Errors);
-                }
-
-                Console.WriteLine(log);
             }
         }
     }

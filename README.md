@@ -7,8 +7,24 @@ Web Validate (WebV) is a web request validation tool that we use to run end-to-e
 
 ## Deprecation Warnings
 
-- Test files must migrate to the new json format
-- This is a breaking change in the next release
+- This release is the last release supporting `dotnet 3.1`
+  - The 2.0 release will require `dotnet 5.0`
+  - You can continue to use this release by specifying the version
+
+- This release is the last release published to `DockerHub`
+  - This release and future releases will be published to `ghcr.io/retaildevcrews/webvalidate`
+
+- `--json-log` is deprecated in v2.0
+  - use `--log-format json` instead (starting with this release)
+
+- `--summary-minutes` is deprecated in v2.0
+  - use some type of log to store and summarize the results
+
+- `--max-concurrent` is deprecated in v2.0
+  - use `--sleep` and `--timeout` to control connections
+
+- Test files must migrate to the new `json format`
+  - This is a breaking change in the 2.0 release
 
 ```json
 
@@ -21,11 +37,6 @@ Web Validate (WebV) is a web request validation tool that we use to run end-to-e
 }
 
 ```
-
-- Strict json parsing will become the default in the next release
-  - specify --strict-json false to keep current behavior
-  - this is potentially a breaking change
-  - see Command Line Parameters below for more details
 
 ## WebV Quick Start
 
@@ -88,58 +99,6 @@ popd
 
 ```
 
-## Running from source
-
-```bash
-
-# change to the app directory
-pushd src/app
-
-```
-
-Run a sample validation test against `microsoft.com`
-
-```bash
-
-# run a test
-dotnet run -- --server https://www.microsoft.com --files msft.json
-
-```
-
-Run more complex tests against the GitHub API by using:
-
-```bash
-
-# github tests
-dotnet run -- -s https://api.github.com -f github.json
-
-```
-
-Run a test that fails validation and causes a non-zero exit code
-
-```bash
-
-dotnet run -- -s https://www.microsoft.com -f failOnValidationError.json
-
-```
-
-Experiment with WebV
-
-```bash
-
-# get help
-dotnet run -- --help
-
-```
-
-Make sure to change back to the root of the repo
-
-```bash
-
-popd
-
-```
-
 ## Running as a docker container
 
 Run a sample validation test against `microsoft.com`
@@ -177,22 +136,6 @@ docker run -it --rm retaildevcrew/webvalidate --help
 
 ```
 
-Run the debug WebV container directly from source
-
-The debug version allows you to connect to the running container to debug any latency or network issues. The debug version has useful network tools such as `netstat`, `nslookup`, `traceroute`, `nmap` and several others pre-installed. In addition, the image also contains common utilities including `nano`, `curl`, `httpie` and `unzip`.
-
-> There are security risks in using this container since several tools require `sudo` privileges and all of the utilities are installed.
->
-> The debug image is also larger in size (about 800 MB) so deployments will take longer.
-
-```bash
-
-docker run -it --rm --name webv-debug retaildevcrew/webvalidate:debug -s https://www.microsoft.com -f msft.json -r -l 20000
-docker exec -it webv-debug /bin/bash
-$ ...
-
-```
-
 Use your own test files
 
 ```bash
@@ -218,16 +161,15 @@ By doing this, not only can we ensure against a [large cloud bill](https://hacke
 
 `Azure Container Instances` integrate with [Azure Monitor](https://azure.microsoft.com/en-us/services/monitor/) to provide out-of-the-box monitoring, dashboards and alerts. Setup instructions, sample queries and sample dashboards are available [here](https://github.com/retaildevcrews/helium/blob/main/docs/AppService.md#smoke-test-setup).
 
-We use the `--json-log` command line option to integrate Docker container logs with `Log Analytics`. The integration is automatic using `Azure Container Instances`.
+We use the `--log-format json` command line option to integrate Docker container logs with `Log Analytics`. The integration is automatic using `Azure Container Instances`.
 
 ### Example Arguments for Long Running Tests
 
 ```bash
 # continuously send request every 15 seconds
-# log summary every five minutes to Log Analytics
-# tag to distinguish between WebV instances in Azure Monitor
+# user defined region, tag and zone to distinguish between WebV instances
 
---run-loop --sleep 15000 --summary-minutes 5 --json-log --tag my_webv_instance_name
+--run-loop --sleep 15000 --log-format json --tag my_webv_instance_name --region Central --zone az-central-us
 
 ```
 
@@ -235,10 +177,14 @@ We use the `--json-log` command line option to integrate Docker container logs w
 
 ```bash
 
-# continuously run testing for 300 seconds
+# continuously run testing for 60 seconds
 # write all results to console (tab delimited)
 
---run-loop --duration 300 --verbose
+--run-loop --duration 60 --verbose
+
+# continuously run twice as many tests against microsoft.com
+# run testing for 60 seconds
+--server https://www.microsoft.com https://www.microsoft.com --run-loop --duration 60
 
 ```
 
@@ -248,118 +194,147 @@ We use the `--json-log` command line option to integrate Docker container logs w
 
 ## Command Line Parameters
 
+> Includes short flags and environment variable names where applicable.
+>
+> Command Line args take precedent over environment variables
+
 - --version
   - other parameters are ignored
   - environment variables are ignored
-- -h --help
+- --help
+  - -h
   - other parameters are ignored
   - environment variables are ignored
-- -d --dry-run
+- --dry-run
+  - -d
   - validate parameters but do not execute tests
-- -s --server string1 [string2 string3]
+- --server string1 [string2 string3]
+  - -s SERVER
   - server Url (i.e. `https://www.microsoft.com`)
-  - required
-- -f --files file1 [file2 file3 ...]
+  - `required`
+- --files file1 [file2 file3 ...]
+  - -f FILES
   - one or more json test files
   - default location current directory
-- -j --strict-json
+  - `required`
+- --base-url
+  - -u BASE_URL
+  - base URL and optional path to the test files (http or https)
+    - ex: `https://raw.githubusercontent.com/retaildevcrews/webvalidate/main/TestFiles/`
+- --delay-start int
+  - DELAY_START
+  - delay starting the validation test for int seconds
+  - default `0`
+- --log-format
+  - LOG_FORMAT
+  - format of log items (TSV (default), JSON, None)
+  - LogFormat.None conflicts with --verbose and will throw an error
+  - LogFormat.Json implies --verbose true
+- --max-errors int
+  - MAX_ERRORS
+  - end test after max-errors
+  - if --max-errors is exceeded, WebV will exit with non-zero exit code
+  - default `10`
+- --region
+  - REGION
+  - deployment Region for logging (user defined)
+  - default: `null`
+- --sleep int
+  - -l SLEEP
+  - number of milliseconds to sleep between requests
+  - default `0`
+- --strict-json
+  - -j STRICT_JSON
   - use strict RFC rules when parsing the json
   - json property names are case sensitive
   - exceptions will occur for
     - trailing commas in json arrays
     - comments in json
-  - default false
-    - `deprecation warning`
-      - the default is currently false as it is a breaking change
-      - the default will change to true in the next release
+  - default `false`
 - --tag
+  - TAG
   - user defined tag to include in logs and App Insights
     - can be used to identify location, instance, etc.
-- --log-json
-  - log requests to console in json format (instead of tab delimited)
-- -u --base-url
-  - base URL of test files using http
-    - ex: `https://raw.githubusercontent.com/retaildevcrews/webvalidate/main/TestFiles/`
-- -l --sleep int
-  - number of milliseconds to sleep between requests
-  - default 0
-- --max-errors int
-  - end test after max-errors
-  - if --max-errors is exceeded, WebV will exit with non-zero exit code
-  - default 10
-- -t --timeout int
+- --timeout int
+  - -T TIMEOUT
   - HTTP request timeout in seconds
-  - default 30 sec
+  - default `30 sec`
 - --verbose
+  - VERBOSE
   - log 200 and 300 results as well as errors
-  - default true
+  - default `true`
 - --verbose-errors
+  - VERBOSE_ERRORS
   - display validation error messages
-  - default true
-- --delay-start int
-  - delay starting the validation test for int seconds
-  - default 0
+  - default `false`
+- --webv-prefix string
+  - WEBV_PREFIX
+  - prefix to add to server values that don't begin with http
+  - default `https://`
+- --webv-suffix string
+  - WEBV_SUFFIX
+  - suffix to add to server values that don't begin with http
+  - default `.azurewebsites.net`
+- --zone
+  - ZONE
+  - deployment Zone for logging (user defined)
+  - default: `null`
+- --json-log
+  - `DEPRECATED - use --log-format json`
 
 ### RunLoop Mode Parameters
 
-- -r --run-loop
+- Some parameters are only valid if `--run-loop` is specified
+- Some parameters have different defaults if `--run-loop` is specified
+
+- --run-loop
+  - -r RUN_LOOP
   - runs the test in a continuous loop
-- -l --sleep int
-  - number of milliseconds to sleep between requests
-  - default 1000
 - --duration int
+  - DURATION
   - run test for duration seconds then exit
-  - default 0 (run until OS signal)
-- --max-concurrent int
-  - max concurrent requests
-  - default 100
+  - default `0 (run until OS signal)`
+- --prometheus
+  - PROMETHEUS
+  - `not implemented`
+  - expose the :8080/metrics end point for Prometheus
+  - default: `false`
 - --random
+  - RANDOM
   - randomize requests
-  - default false
-- --summary-minutes
-  - display summary count and average duration every x minutes
-  - valid: >= 0
-  - default 0 (don't display)
+  - default `false`
+- --sleep int
+  -l SLEEP
+  - number of milliseconds to sleep between requests
+  - default `1000`
 - --verbose
+  - VERBOSE
   - log 200 and 300 results as well as errors
-  - default false
-
-## Environment Variables
-
-- SERVER=space separated list of string
-- FILES=space separated list of string
-- TAG=string
-- LOG_JSON=bool
-- SLEEP=int
-- TIMEOUT=int
-- VERBOSE=bool
-- MAX_ERRORS=int
-- BASE_URL=string
-- VERBOSE_ERRORS=bool
-- DELAY_START=int
-- STRICT_JSON=bool
-
-### Additional run Loop environment variables
-
-- RUN_LOOP=true
-- DURATION=int
-- MAX_CONCURRENT=int
-- RANDOM=bool
-- SUMMARY_MINUTES=int
+  - default `false`
+    - LogFormat.Json default: `true`
+- --max-concurrent int
+  - `Deprecated in 2.0`
+- --summary-minutes
+  - `Deprecated in 2.0`
 
 ## Running as part of an CI-CD pipeline
 
 WebV will return a non-zero exit code (fail) under the following conditions
 
 - Error parsing the test files
-- If an exception is thrown during a test
+- If an unhandled exception is thrown during a test
 - StatusCode validation fails
 - ContentType validation fails
 - --max-errors is exceeded
   - To cause the test to fail on any validation error, set --max-errors 1 (default is 10)
 - Any validation error on a test that has FailOnValidationError set to true
+- Request timeout
 
 ## Validation Files
+
+> Validations are often nested to test the JSON object
+>
+> We use a simple test file generator to build complex validations
 
 Validation files are located in the /app/TestFiles directory and are json files that control the validation tests.
 
@@ -374,18 +349,24 @@ You can mount a local volume into the Docker container at /app/TestFiles to test
 - Verb
   - default: GET
   - valid: HTTP verbs
+- Tag
+  - default: string.empty
+  - tag for the request
+    - this will override the --tag value for that request
 - FailOnValidationError (optional)
   - If true, any validation error will cause that test to fail
   - default: false
 - Validation (optional)
   - if not specified in test file, no validation checks will run
   - StatusCode
+    - required
     - http status code
     - a validation error will cause the test to fail and return a non-zero error code
     - no other validation checks are executed
     - default: 200
     - valid: 100-599
   - ContentType
+    - required
     - http Content-Type header
     - a validation error will cause the test to fail and return a non-zero error code
     - no other validation checks are executed
@@ -487,7 +468,7 @@ export ROBOTS=robots.txt
 export FAVICON=favicon.ico
 
 # run the test
-dotnet run -- -s https://www.microsoft.com -f envvars.json
+webv -s https://www.microsoft.com -f envvars.json
 
 ```
 
@@ -691,42 +672,6 @@ The msft.json file contains sample validation tests that will will successfully 
 }
 
 ```
-
-## CI-CD
-
-This repo uses [GitHub Actions](/.github/workflows/dockerCI.yml) for Continuous Integration.
-
-- CI supports pushing to Azure Container Registry or DockerHub
-- The action is setup to execute on a PR or commit to `main`
-  - The action does not run on commits to branches other than `main`
-- The action always publishes an image with the `:beta` tag
-- If you tag the repo with a version i.e. `v1.1.0` the action will also
-  - Tag the image with `:1.1.0`
-  - Tag the image with `:latest`
-  - Note that the `v` is case sensitive (lower case)
-
-### Pushing to Azure Container Registry
-
-In order to push to ACR, you must create a Service Principal that has push permissions to the ACR and set the following `secrets` in your GitHub repo:
-
-- Azure Login Information
-  - TENANT
-  - SERVICE_PRINCIPAL
-  - SERVICE_PRINCIPAL_SECRET
-
-- ACR Information
-  - ACR_REG
-  - ACR_REPO
-  - ACR_IMAGE
-
-### Pushing to DockerHub
-
-In order to push to DockerHub, you must set the following `secrets` in your GitHub repo:
-
-- DOCKER_REPO
-- DOCKER_USER
-- DOCKER_PAT
-  - Personal Access Token
 
 ## Contributing
 
