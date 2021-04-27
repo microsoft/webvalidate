@@ -219,9 +219,6 @@ namespace CSE.WebValidate
                     Test = this,
                     RequestList = requestList,
 
-                    // current hour
-                    CurrentLogTime = new DateTime(DateTime.UtcNow.Year, DateTime.UtcNow.Month, DateTime.UtcNow.Day, DateTime.UtcNow.Hour, 0, 0),
-
                     Token = token,
                 };
 
@@ -232,27 +229,8 @@ namespace CSE.WebValidate
 
                 states.Add(state);
 
-                // todo - remove in v2.0
-                state.Run(config.Sleep, config.MaxConcurrent);
-            }
-
-            int frequency = int.MaxValue;
-            int initialDelay = int.MaxValue;
-
-            // todo - remove in v2.0
-            if (config.SummaryMinutes > 0)
-            {
-                foreach (TimerRequestState trs in states)
-                {
-                    // get current summary
-                    int cMin = DateTime.UtcNow.Minute / config.SummaryMinutes * config.SummaryMinutes;
-                    trs.CurrentLogTime = trs.CurrentLogTime.AddMinutes(cMin);
-                    initialDelay = (int)trs.CurrentLogTime.AddMinutes(config.SummaryMinutes).Subtract(DateTime.UtcNow).TotalMilliseconds;
-                    frequency = config.SummaryMinutes * 60 * 1000;
-
-                    // start the summary log timer
-                    using Timer logTimer = new Timer(new TimerCallback(SummaryLogTask), trs, initialDelay, frequency);
-                }
+                // run the timer proc
+                state.Run(config.Sleep);
             }
 
             try
@@ -461,7 +439,7 @@ namespace CSE.WebValidate
         private static void DisplayStartupMessage(Config config)
         {
             // don't display if json logging is on
-            if (config.LogFormat == LogFormat.Json || config.SummaryMinutes > 0)
+            if (config.LogFormat == LogFormat.Json)
             {
                 return;
             }
@@ -482,7 +460,6 @@ namespace CSE.WebValidate
 
             msg += $"\n\t\tFiles: {string.Join(' ', config.Files)}";
             msg += $"\n\t\tSleep: {config.Sleep}";
-            msg += $"\n\t\tMaxConcurrent: {config.MaxConcurrent}";
 
             if (config.Duration > 0)
             {
@@ -525,47 +502,6 @@ namespace CSE.WebValidate
             client.DefaultRequestHeaders.Add("User-Agent", $"webv/{Version.ShortVersion}");
 
             return client;
-        }
-
-        // Summarize the requests for the hour
-        private void SummaryLogTask(object timerState)
-        {
-            // todo - remove in v2.0
-            if (config.SummaryMinutes < 1)
-            {
-                return;
-            }
-
-            if (timerState is TimerRequestState state)
-            {
-                // exit if cancelled
-                if (state.Token.IsCancellationRequested)
-                {
-                    return;
-                }
-
-                // build the log entry
-                string log = "{ \"logType\": \"summary\", " + $"\"logDate\": \"{state.CurrentLogTime.ToString("o", CultureInfo.InvariantCulture)}Z\", \"tag\": \"{config.Tag}\", ";
-
-                // get the summary values
-                lock (state.Lock)
-                {
-                    log += $"\"requestCount\": {state.Count}, ";
-                    log += $"\"averageDuration\": {(state.Count > 0 ? Math.Round(state.Duration / state.Count, 2) : 0)}, ";
-                    log += $"\"errorCount\": {state.ErrorCount} " + "}";
-
-                    // reset counters
-                    state.Count = 0;
-                    state.Duration = 0;
-                    state.ErrorCount = 0;
-
-                    // set next log time
-                    state.CurrentLogTime = state.CurrentLogTime.AddMinutes(config.SummaryMinutes);
-                }
-
-                // log the summary
-                Console.WriteLine(log);
-            }
         }
 
         // Log the test

@@ -59,11 +59,6 @@ namespace CSE.WebValidate
             root.AddOption(new Option<bool>(new string[] { "--dry-run", "-d" }, "Validates configuration"));
             root.AddOption(new Option<bool>(new string[] { "--version" }, "Displays version and exits"));
 
-            // todo - remove deprecated options in v2.0
-            root.AddOption(EnvVarOption(new string[] { "--json-log" }, "Deprecated - Use '--log-format json'", false));
-            root.AddOption(EnvVarOption<int>(new string[] { "--max-concurrent" }, "Deprecated", 100, 1));
-            root.AddOption(EnvVarOption<int>(new string[] { "--summary-minutes" }, "Deprecated", 0, 0));
-
             // these require access to --run-loop so are added at the root level
             root.AddValidator(ValidateRunLoopDependencies);
 

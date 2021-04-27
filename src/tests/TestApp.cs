@@ -37,7 +37,6 @@ namespace CSE.WebValidate.Tests.Unit
             {
                 Server = new List<string> { "http://localhost" },
                 Timeout = 30,
-                MaxConcurrent = 100
             };
 
             cfg.Files.Add("msft.json");
@@ -72,12 +71,12 @@ namespace CSE.WebValidate.Tests.Unit
             // test env vars
             parse = App.BuildRootCommand().Parse(string.Empty);
             Assert.Equal(0, parse.Errors.Count);
-            Assert.Equal(24, parse.CommandResult.Children.Count);
+            Assert.Equal(21, parse.CommandResult.Children.Count);
 
             // override the files env var
             parse = App.BuildRootCommand().Parse("-f file1 file2");
             Assert.Equal(0, parse.Errors.Count);
-            Assert.Equal(24, parse.CommandResult.Children.Count);
+            Assert.Equal(21, parse.CommandResult.Children.Count);
             Assert.Equal(2, parse.CommandResult.Children.First(c => c.Symbol.Name == "files").Tokens.Count);
 
             // test run-loop
@@ -150,7 +149,7 @@ namespace CSE.WebValidate.Tests.Unit
             Assert.Equal(1, parse.Errors.Count);
         }
 
-        private Config BuildConfig(string server)
+        private static Config BuildConfig(string server)
         {
             App.JsonSerializerOptions = new JsonSerializerOptions
             {
@@ -164,7 +163,6 @@ namespace CSE.WebValidate.Tests.Unit
             {
                 Server = new List<string> { server },
                 Timeout = 10,
-                MaxConcurrent = 100,
                 MaxErrors = 10,
             };
         }

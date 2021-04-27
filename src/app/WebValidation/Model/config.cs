@@ -76,19 +76,9 @@ namespace CSE.WebValidate
         public bool Verbose { get; set; }
 
         /// <summary>
-        /// Gets or sets a value indicating whether logs should be written in json vs. tab delimited
-        /// </summary>
-        public bool JsonLog { get; set; }
-
-        /// <summary>
         /// gets or sets the the request time out in seconds
         /// </summary>
         public int Timeout { get; set; }
-
-        /// <summary>
-        /// gets or sets the max concurrent requests
-        /// </summary>
-        public int MaxConcurrent { get; set; }
 
         /// <summary>
         /// gets or sets the max errors before the test exits with a non-zero response
@@ -104,11 +94,6 @@ namespace CSE.WebValidate
         /// gets or sets the base url for test files
         /// </summary>
         public string BaseUrl { get; set; }
-
-        /// <summary>
-        /// gets or sets the summary generation time in minutes
-        /// </summary>
-        public int SummaryMinutes { get; set; }
 
         /// <summary>
         /// Gets or sets a value indicating whether we should display verbose errors or just the count
@@ -181,14 +166,6 @@ namespace CSE.WebValidate
                     Sleep = RunLoop ? 1000 : 0;
                 }
 
-                // todo - remove in v2.0
-                if (parseResult.CommandResult.Children.FirstOrDefault(c => c.Symbol.Name == "json-log") is OptionResult jsonLogRes && !jsonLogRes.IsImplicit)
-                {
-                    Console.ForegroundColor = ConsoleColor.Yellow;
-                    Console.Error.WriteLine("--json-log is deprecated in v2.0 - Use '--log-format json'");
-                    Console.ResetColor();
-                }
-
                 if (parseResult.CommandResult.Children.FirstOrDefault(c => c.Symbol.Name == "summary-minutes") is OptionResult summaryRes && !summaryRes.IsImplicit)
                 {
                     Console.ForegroundColor = ConsoleColor.Yellow;
@@ -209,12 +186,6 @@ namespace CSE.WebValidate
                     Console.Error.WriteLine("--prometheus not implemented");
                     Console.ResetColor();
                 }
-            }
-
-            // todo - remove this in v2.0
-            if (JsonLog)
-            {
-                LogFormat = LogFormat.Json;
             }
 
             // min sleep is 1ms in --run-loop

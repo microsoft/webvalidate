@@ -185,23 +185,8 @@ namespace CSE.WebValidate
                 InputJson data = null;
                 List<Request> l2 = new List<Request>();
 
-                try
-                {
-                    // try to parse the json
-                    data = JsonSerializer.Deserialize<InputJson>(json, App.JsonSerializerOptions);
-                }
-                catch
-                {
-                    // todo - remove in v2.0
-                    // try to read the array of Requests style document
-                    // this is being deprecated in v2.0
-                    list = JsonSerializer.Deserialize<List<Request>>(json, App.JsonSerializerOptions);
-
-                    // display deprecation error
-                    Console.ForegroundColor = ConsoleColor.Yellow;
-                    Console.Error.WriteLine("This file format is deprecated in v2.0. Please check readme.md");
-                    Console.ResetColor();
-                }
+                // parse the json
+                data = JsonSerializer.Deserialize<InputJson>(json, App.JsonSerializerOptions);
 
                 // replace placedholders with environment variables
                 if (data != null && data.Requests.Count > 0)
