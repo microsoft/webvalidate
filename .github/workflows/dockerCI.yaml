@@ -47,12 +47,11 @@ jobs:
         # check that all Docker secrets are set
         if [[ "${{ secrets.DOCKER_PAT }}" != "" && "${{ secrets.DOCKER_REPO }}" != "" && "${{ secrets.DOCKER_USER }}" != "" ]];
         then
-          echo "::set-env name=DOCKER_SET::true"
+          echo "DOCKER_SET=true" >> $GITHUB_ENV
         fi
 
     - name: PR Closed
       if: ${{ github.event_name == 'pull_request' && github.event.action == 'closed' && ! github.event.pull_request.merged }}
-
       run: |
 
         # handle PR Closed event by building / pushing main branch
@@ -65,11 +64,10 @@ jobs:
 
     - name: PR Merged
       if: ${{ github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged }}
-
       run: |
 
         # Do not build on PR Merged
-        echo "::set-env name=DOCKER_SET::false"
+          echo "DOCKER_SET=false" >> $GITHUB_ENV
 
     - name: Docker Login
       if: ${{ env.DOCKER_SET == 'true' }}
