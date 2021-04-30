@@ -530,78 +530,17 @@ namespace CSE.WebValidate
                     Console.WriteLine(perfLog.ToJson(config.VerboseErrors));
                     break;
                 case LogFormat.Tsv:
-                    LogToTsv(request, valid, perfLog);
+                    if (config.LogFormat == LogFormat.Tsv &&
+                       (!config.XmlSummary || (config.XmlSummary && config.Verbose)))
+                    {
+                        Console.WriteLine(perfLog.ToTsv(config.VerboseErrors));
+                    }
+
                     break;
                 case LogFormat.None:
                     break;
                 default:
                     break;
-            }
-        }
-
-        // Log the test result to TSV
-        private void LogToTsv(Request request, ValidationResult valid, PerfLog perfLog)
-        {
-            if (request == null)
-            {
-                throw new ArgumentNullException(nameof(request));
-            }
-
-            if (valid == null)
-            {
-                throw new ArgumentNullException(nameof(valid));
-            }
-
-            if (perfLog == null)
-            {
-                throw new ArgumentNullException(nameof(perfLog));
-            }
-
-            if (config.LogFormat == LogFormat.Tsv)
-            {
-                // check XmlSummary
-                if (!config.XmlSummary || (config.XmlSummary && config.Verbose))
-                {
-                    // only log 4XX and 5XX status codes unless verbose is true or there were validation errors
-                    if (config.Verbose || perfLog.StatusCode > 399 || valid.Failed || valid.ValidationErrors.Count > 0)
-                    {
-                        // log tag if set
-                        if (string.IsNullOrWhiteSpace(perfLog.Tag))
-                        {
-                            perfLog.Tag = "-";
-                        }
-
-                        // default quartile to -
-                        string quartile = "-";
-
-                        if (string.IsNullOrWhiteSpace(perfLog.Category))
-                        {
-                            perfLog.Category = "-";
-                        }
-
-                        if (perfLog.Quartile != null && perfLog.Quartile > 0 && perfLog.Quartile <= 4)
-                        {
-                            quartile = perfLog.Quartile.ToString();
-                        }
-
-                        perfLog.Region = string.IsNullOrWhiteSpace(perfLog.Region) ? "-" : perfLog.Region;
-                        perfLog.Zone = string.IsNullOrWhiteSpace(perfLog.Zone) ? "-" : perfLog.Zone;
-
-                        // log tab delimited
-                        string log = $"{perfLog.Date.ToString("o", CultureInfo.InvariantCulture)}\t{perfLog.Server}\t{perfLog.StatusCode}\t";
-                        log += $"{valid.ValidationErrors.Count}\t{perfLog.Duration}\t{perfLog.ContentLength}\t";
-                        log += $"{perfLog.Region}\t{perfLog.Zone}\t{perfLog.CorrelationVector}\t";
-                        log += $"{perfLog.Tag}\t{quartile}\t{perfLog.Category}\t{request.Verb}\t{perfLog.Path}";
-
-                        // log error details
-                        if (config.VerboseErrors && valid.ValidationErrors.Count > 0)
-                        {
-                            log += "\n  " + string.Join("\n  ", perfLog.Errors);
-                        }
-
-                        Console.WriteLine(log);
-                    }
-                }
             }
         }
     }
