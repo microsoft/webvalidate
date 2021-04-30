@@ -96,6 +96,10 @@ namespace CSE.WebValidate.Model
         /// </summary>
         public string Path { get; set; }
 
+        public string Region { get; set; }
+
+        public string Zone { get; set; }
+
         /// <summary>
         /// Gets the validation errors
         /// </summary>
