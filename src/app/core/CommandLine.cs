@@ -51,9 +51,7 @@ namespace CSE.WebValidate
             root.AddOption(EnvVarOption(new string[] { "--webv-prefix" }, "Server address prefix", "https://"));
             root.AddOption(EnvVarOption(new string[] { "--webv-suffix" }, "Server address suffix", ".azurewebsites.net"));
 
-            // todo - remove not fully implemented once complete
-            // root.AddOption(EnvVarOption(new string[] { "--xml-summary" }, "Display test summary in XML", false));
-            root.AddOption(EnvVarOption(new string[] { "--xml-summary" }, "Display test summary in XML (not fully implemented)", false));
+            //root.AddOption(EnvVarOption(new string[] { "--xml-summary" }, "Display test summary in XML (not fully implemented)", false));
 
             root.AddOption(EnvVarOption(new string[] { "--zone" }, "Zone deployed to (user defined)", string.Empty));
             root.AddOption(new Option<bool>(new string[] { "--dry-run", "-d" }, "Validates configuration"));
@@ -85,7 +83,7 @@ namespace CSE.WebValidate
             bool random = randomRes.GetValueOrDefault<bool>();
             bool prom = promRes.GetValueOrDefault<bool>();
             bool verbose = verboseRes.GetValueOrDefault<bool>();
-            bool xml = xmlRes.GetValueOrDefault<bool>();
+            bool xml = xmlRes != null && xmlRes.GetValueOrDefault<bool>();
             LogFormat logFormat = formatRes.GetValueOrDefault<LogFormat>();
 
             string errors = string.Empty;

@@ -19,6 +19,7 @@
     <Description>Web Validate (WebV) is a web request validation tool to run integration tests and long-running smoke tests.</Description>
     <PackageDescription>Web Validate (WebV) is a web request validation tool to run integration tests and long-running smoke tests. </PackageDescription>
     <Title>Web Validate</Title>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
   </PropertyGroup>
 
   <ItemGroup>

@@ -145,7 +145,8 @@ namespace CSE.WebValidate
                 // write test summary in xml
                 if (config.XmlSummary)
                 {
-                    // todo - implement standard xml
+                    // todo - implement correctly
+                    // uncomment command line argument
                     TestSummary res = new TestSummary
                     {
                         ValidationErrorCount = validationFailureCount,
@@ -530,8 +531,8 @@ namespace CSE.WebValidate
                     Console.WriteLine(perfLog.ToJson(config.VerboseErrors));
                     break;
                 case LogFormat.Tsv:
-                    if (config.LogFormat == LogFormat.Tsv &&
-                       (!config.XmlSummary || (config.XmlSummary && config.Verbose)))
+                    // always log on error
+                    if (config.Verbose || perfLog.StatusCode >= 400 || perfLog.Failed || perfLog.ErrorCount > 0)
                     {
                         Console.WriteLine(perfLog.ToTsv(config.VerboseErrors));
                     }

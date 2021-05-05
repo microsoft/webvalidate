@@ -151,46 +151,20 @@ namespace CSE.WebValidate.Model
         /// <returns>string</returns>
         public string ToTsv(bool verboseErrors)
         {
-            string log = string.Empty;
+            // set missing values
+            string quartile = (Quartile != null && Quartile > 0 && Quartile <= 4) ? Quartile.ToString() : "-";
+            Tag = string.IsNullOrWhiteSpace(Tag) ? "-" : Tag.Trim();
+            Category = string.IsNullOrWhiteSpace(Category) ? "-" : Category.Trim();
+            Region = string.IsNullOrWhiteSpace(Region) ? "-" : Region;
+            Zone = string.IsNullOrWhiteSpace(Zone) ? "-" : Zone;
 
-            // only log 4XX and 5XX status codes unless verbose is true or there were validation errors
-            if (verboseErrors || StatusCode > 399 || Failed || ErrorCount > 0)
+            // log tab delimited
+            string log = $"{Date.ToString("o", CultureInfo.InvariantCulture)}\t{Server}\t{StatusCode}\t{ErrorCount}\t{Duration}\t{ContentLength}\t{Region}\t{Zone}\t{CorrelationVector}\t{Tag}\t{quartile}\t{Category}\t{Verb}\t{Path}";
+
+            // log error details
+            if (verboseErrors && ErrorCount > 0)
             {
-                // log tag if set
-                if (string.IsNullOrWhiteSpace(Tag))
-                {
-                    Tag = "-";
-                }
-
-                // default quartile to -
-                string quartile = "-";
-
-                if (string.IsNullOrWhiteSpace(Category))
-                {
-                    Category = "-";
-                }
-
-                if (Quartile != null && Quartile > 0 && Quartile <= 4)
-                {
-                    quartile = Quartile.ToString();
-                }
-
-                Region = string.IsNullOrWhiteSpace(Region) ? "-" : Region;
-                Zone = string.IsNullOrWhiteSpace(Zone) ? "-" : Zone;
-
-                // log tab delimited
-                log = $"{Date.ToString("o", CultureInfo.InvariantCulture)}\t{Server}\t{StatusCode}\t";
-                log += $"{ErrorCount}\t{Duration}\t{ContentLength}\t";
-                log += $"{Region}\t{Zone}\t{CorrelationVector}\t";
-                log += $"{Tag}\t{quartile}\t{Category}\t{Verb}\t{Path}";
-
-                // log error details
-                if (verboseErrors && ErrorCount > 0)
-                {
-                    log += "\n  " + string.Join("\n  ", Errors);
-                }
-
-                return log;
+                log += "\n  " + string.Join("\n  ", Errors);
             }
 
             return log;
