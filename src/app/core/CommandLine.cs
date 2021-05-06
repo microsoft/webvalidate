@@ -51,8 +51,7 @@ namespace CSE.WebValidate
             root.AddOption(EnvVarOption(new string[] { "--webv-prefix" }, "Server address prefix", "https://"));
             root.AddOption(EnvVarOption(new string[] { "--webv-suffix" }, "Server address suffix", ".azurewebsites.net"));
 
-            //root.AddOption(EnvVarOption(new string[] { "--xml-summary" }, "Display test summary in XML (not fully implemented)", false));
-
+            // root.AddOption(EnvVarOption(new string[] { "--xml-summary" }, "Display test summary in XML (not fully implemented)", false));
             root.AddOption(EnvVarOption(new string[] { "--zone" }, "Zone deployed to (user defined)", string.Empty));
             root.AddOption(new Option<bool>(new string[] { "--dry-run", "-d" }, "Validates configuration"));
             root.AddOption(new Option<bool>(new string[] { "--version" }, "Displays version and exits"));
@@ -66,27 +65,34 @@ namespace CSE.WebValidate
         // validate --duration and --random based on --run-loop
         private static string ValidateRunLoopDependencies(CommandResult result)
         {
-            OptionResult runLoopRes = result.Children.FirstOrDefault(c => c.Symbol.Name == "run-loop") as OptionResult;
-            OptionResult durationRes = result.Children.FirstOrDefault(c => c.Symbol.Name == "duration") as OptionResult;
-            OptionResult randomRes = result.Children.FirstOrDefault(c => c.Symbol.Name == "random") as OptionResult;
-            OptionResult verboseRes = result.Children.FirstOrDefault(c => c.Symbol.Name == "verbose") as OptionResult;
-            OptionResult promRes = result.Children.FirstOrDefault(c => c.Symbol.Name == "prometheus") as OptionResult;
+            string errors = string.Empty;
+
             OptionResult serverRes = result.Children.FirstOrDefault(c => c.Symbol.Name == "server") as OptionResult;
             OptionResult filesRes = result.Children.FirstOrDefault(c => c.Symbol.Name == "files") as OptionResult;
-            OptionResult xmlRes = result.Children.FirstOrDefault(c => c.Symbol.Name == "xml-summary") as OptionResult;
+            OptionResult durationRes = result.Children.FirstOrDefault(c => c.Symbol.Name == "duration") as OptionResult;
             OptionResult formatRes = result.Children.FirstOrDefault(c => c.Symbol.Name == "log-format") as OptionResult;
+
+            bool runLoop = result.Children.FirstOrDefault(c => c.Symbol.Name == "run-loop") is OptionResult runLoopRes && runLoopRes.GetValueOrDefault<bool>();
+            bool random = result.Children.FirstOrDefault(c => c.Symbol.Name == "random") is OptionResult randomRes && randomRes.GetValueOrDefault<bool>();
+            bool prom = result.Children.FirstOrDefault(c => c.Symbol.Name == "prometheus") is OptionResult promRes && promRes.GetValueOrDefault<bool>();
+            bool verbose = result.Children.FirstOrDefault(c => c.Symbol.Name == "verbose") is OptionResult verboseRes && verboseRes.GetValueOrDefault<bool>();
+            bool xml = result.Children.FirstOrDefault(c => c.Symbol.Name == "xml-summary") is OptionResult xmlRes && xmlRes.GetValueOrDefault<bool>();
 
             List<string> servers = serverRes.GetValueOrDefault<List<string>>();
             List<string> files = serverRes.GetValueOrDefault<List<string>>();
-            bool runLoop = runLoopRes.GetValueOrDefault<bool>();
-            int duration = durationRes.GetValueOrDefault<int>();
-            bool random = randomRes.GetValueOrDefault<bool>();
-            bool prom = promRes.GetValueOrDefault<bool>();
-            bool verbose = verboseRes.GetValueOrDefault<bool>();
-            bool xml = xmlRes != null && xmlRes.GetValueOrDefault<bool>();
-            LogFormat logFormat = formatRes.GetValueOrDefault<LogFormat>();
 
-            string errors = string.Empty;
+            int duration = 0;
+            LogFormat logFormat = LogFormat.Tsv;
+
+            try
+            {
+                duration = durationRes.GetValueOrDefault<int>();
+                logFormat = formatRes.GetValueOrDefault<LogFormat>();
+            }
+            catch
+            {
+                // let system.commandline.parser handle the error
+            }
 
             if (servers == null || servers.Count == 0)
             {

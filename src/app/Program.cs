@@ -2,11 +2,13 @@
 // Licensed under the MIT License. See LICENSE in the project root for license information.
 
 using System;
+using System.Collections.Generic;
 using System.CommandLine;
 using System.CommandLine.Invocation;
 using System.CommandLine.Parsing;
 using System.Linq;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -20,7 +22,7 @@ namespace CSE.WebValidate
         /// <summary>
         /// Gets or sets json serialization options
         /// </summary>
-        public static JsonSerializerOptions JsonSerializerOptions { get; set; } = new JsonSerializerOptions
+        public static JsonSerializerOptions JsonOptions { get; set; } = new JsonSerializerOptions
         {
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
         };
@@ -81,14 +83,25 @@ namespace CSE.WebValidate
                 return DoDryRun(config);
             }
 
-            // set json options based on --strict-json
-            JsonSerializerOptions = new JsonSerializerOptions
+            // set json options
+            if (config.LogFormat == LogFormat.Json || config.LogFormat == LogFormat.JsonCamel)
             {
-                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-                PropertyNameCaseInsensitive = !config.StrictJson,
-                AllowTrailingCommas = !config.StrictJson,
-                ReadCommentHandling = config.StrictJson ? JsonCommentHandling.Disallow : JsonCommentHandling.Skip,
-            };
+                // set json options based on --strict-json
+                JsonOptions = new JsonSerializerOptions
+                {
+                    DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingDefault,
+                    PropertyNameCaseInsensitive = !config.StrictJson,
+                    AllowTrailingCommas = !config.StrictJson,
+                    ReadCommentHandling = config.StrictJson ? JsonCommentHandling.Disallow : JsonCommentHandling.Skip,
+                };
+
+                // set based on json or json pascal
+                if (config.LogFormat == LogFormat.JsonCamel)
+                {
+                    JsonOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+                    JsonOptions.DictionaryKeyPolicy = JsonNamingPolicy.CamelCase;
+                }
+            }
 
             // create the test
             try
@@ -106,16 +119,32 @@ namespace CSE.WebValidate
                     await Task.Delay(config.DelayStart * 1000, TokenSource.Token).ConfigureAwait(false);
                 }
 
+                int ret;
+
                 if (config.RunLoop)
                 {
                     // run in a loop
-                    return webv.RunLoop(config, TokenSource.Token);
+                    ret = webv.RunLoop(config, TokenSource.Token);
+
+                    // write the stop message
+                    if (config.LogFormat == LogFormat.Json || config.LogFormat == LogFormat.JsonCamel)
+                    {
+                        Console.WriteLine(JsonSerializer.Serialize(
+                            new Dictionary<string, object>
+                            {
+                            { "Date", DateTime.UtcNow },
+                            { "EventType", "Shutdown" },
+                            },
+                            JsonOptions));
+                    }
                 }
                 else
                 {
                     // run one iteration
-                    return await webv.RunOnce(config, TokenSource.Token).ConfigureAwait(false);
+                    ret = await webv.RunOnce(config, TokenSource.Token).ConfigureAwait(false);
                 }
+
+                return ret;
             }
             catch (TaskCanceledException tce)
             {

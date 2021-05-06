@@ -165,7 +165,7 @@ namespace CSE.WebValidate
 
             if (!string.IsNullOrWhiteSpace(content))
             {
-                return JsonSerializer.Deserialize<Dictionary<string, PerfTarget>>(content, App.JsonSerializerOptions);
+                return JsonSerializer.Deserialize<Dictionary<string, PerfTarget>>(content, App.JsonOptions);
             }
 
             // return empty dictionary - perf targets are not required
@@ -186,7 +186,7 @@ namespace CSE.WebValidate
                 List<Request> l2 = new List<Request>();
 
                 // parse the json
-                data = JsonSerializer.Deserialize<InputJson>(json, App.JsonSerializerOptions);
+                data = JsonSerializer.Deserialize<InputJson>(json, App.JsonOptions);
 
                 // replace placedholders with environment variables
                 if (data != null && data.Requests.Count > 0)
@@ -199,7 +199,7 @@ namespace CSE.WebValidate
                         }
 
                         // reload from json
-                        data = JsonSerializer.Deserialize<InputJson>(json, App.JsonSerializerOptions);
+                        data = JsonSerializer.Deserialize<InputJson>(json, App.JsonOptions);
                     }
 
                     list = data.Requests;

@@ -151,7 +151,7 @@ namespace CSE.WebValidate.Tests.Unit
 
         private static Config BuildConfig(string server)
         {
-            App.JsonSerializerOptions = new JsonSerializerOptions
+            App.JsonOptions = new JsonSerializerOptions
             {
                 PropertyNameCaseInsensitive = true,
                 PropertyNamingPolicy = JsonNamingPolicy.CamelCase,

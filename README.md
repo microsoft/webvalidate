@@ -219,9 +219,9 @@ We use the `--log-format json` command line option to integrate Docker container
   - default `0`
 - --log-format
   - LOG_FORMAT
-  - format of log items (TSV (default), JSON, None)
-  - LogFormat.None conflicts with --verbose and will throw an error
-  - LogFormat.Json implies --verbose true
+  - format of log items (TSV (default), Json, JsonCamel, None)
+  - LogFormat.None conflicts with --verbose and will throw a parse error
+  - LogFormat.Json* implies --verbose
 - --max-errors int
   - MAX_ERRORS
   - end test after max-errors
@@ -288,7 +288,7 @@ We use the `--log-format json` command line option to integrate Docker container
   - default `0 (run until OS signal)`
 - --prometheus
   - PROMETHEUS
-  - `not implemented`
+  - `false`
   - expose the :8080/metrics end point for Prometheus
   - default: `false`
 - --random

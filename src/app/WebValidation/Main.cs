@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Net.Http;
 using System.Text;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using CSE.WebValidate.Model;
@@ -442,8 +443,43 @@ namespace CSE.WebValidate
         private static void DisplayStartupMessage(Config config)
         {
             // don't display if json logging is on
-            if (config.LogFormat == LogFormat.Json)
+            if (config.LogFormat == LogFormat.Json || config.LogFormat == LogFormat.JsonCamel)
             {
+                Dictionary<string, object> startupDict = new Dictionary<string, object>
+                {
+                    { "Date", DateTime.UtcNow },
+                    { "EventType", "Startup" },
+                    { "Version", Version.AssemblyVersion },
+                    { "Host", string.Join(' ', config.Server) },
+                    { "Files", string.Join(' ', config.Files) },
+                    { "Sleep", config.Sleep },
+                    { "Duration", config.Duration },
+                    { "Random", config.Random },
+                    { "Verbose", config.Verbose },
+                };
+
+                if (!string.IsNullOrWhiteSpace(config.BaseUrl))
+                {
+                    startupDict.Add("Tag", config.BaseUrl);
+                }
+
+                if (!string.IsNullOrWhiteSpace(config.Tag))
+                {
+                    startupDict.Add("Tag", config.Tag);
+                }
+
+                if (!string.IsNullOrWhiteSpace(config.Region))
+                {
+                    startupDict.Add("Tag", config.Region);
+                }
+
+                if (!string.IsNullOrWhiteSpace(config.Zone))
+                {
+                    startupDict.Add("Tag", config.Zone);
+                }
+
+                Console.WriteLine(JsonSerializer.Serialize(startupDict, App.JsonOptions));
+
                 return;
             }
 
@@ -528,7 +564,8 @@ namespace CSE.WebValidate
             switch (config.LogFormat)
             {
                 case LogFormat.Json:
-                    Console.WriteLine(perfLog.ToJson(config.VerboseErrors));
+                case LogFormat.JsonCamel:
+                    Console.WriteLine(perfLog.ToJson(config.VerboseErrors, App.JsonOptions));
                     break;
                 case LogFormat.Tsv:
                     // always log on error

@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.CommandLine.Parsing;
 using System.Linq;
+using System.Text.Json;
 
 namespace CSE.WebValidate
 {
@@ -22,6 +23,11 @@ namespace CSE.WebValidate
         /// json
         /// </summary>
         Json,
+
+        /// <summary>
+        /// camelCase json
+        /// </summary>
+        JsonCamel,
 
         /// <summary>
         /// Don't log
@@ -156,6 +162,11 @@ namespace CSE.WebValidate
             // default values are different based on --run-loop
             if (parseResult != null)
             {
+                if (parseResult.CommandResult.Children.FirstOrDefault(c => c.Symbol.Name == "log-format") is OptionResult lfRes && lfRes.IsImplicit)
+                {
+                    LogFormat = RunLoop ? LogFormat.Json : LogFormat.Tsv;
+                }
+
                 if (parseResult.CommandResult.Children.FirstOrDefault(c => c.Symbol.Name == "verbose") is OptionResult vRes && vRes.IsImplicit)
                 {
                     Verbose = !RunLoop && !XmlSummary;
@@ -196,6 +207,12 @@ namespace CSE.WebValidate
             {
                 BaseUrl += "/";
             }
+
+            // set to null so they don't serialize to json
+            BaseUrl = string.IsNullOrWhiteSpace(BaseUrl) ? null : BaseUrl;
+            Region = string.IsNullOrWhiteSpace(Region) ? null : Region;
+            Tag = string.IsNullOrWhiteSpace(Tag) ? null : Tag;
+            Zone = string.IsNullOrWhiteSpace(Zone) ? null : Zone;
 
             if (Server != null && Server.Count > 0)
             {

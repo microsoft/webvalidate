@@ -108,40 +108,27 @@ namespace CSE.WebValidate.Model
         public string Zone { get; set; }
 
         /// <summary>
-        /// Gets the validation errors
+        /// Gets or sets the validation errors
         /// </summary>
-        public List<string> Errors { get; }
+        public List<string> Errors { get; set; }
 
         /// <summary>
         /// Gets the json representation of the object
         /// </summary>
         /// <param name="verboseErrors">include verbose errors</param>
+        /// <param name="jsonOptions">json serialization options</param>
         /// <returns>json string</returns>
-        public string ToJson(bool verboseErrors)
+        public string ToJson(bool verboseErrors, JsonSerializerOptions jsonOptions)
         {
-            JsonSerializerOptions options = new JsonSerializerOptions
+            if (verboseErrors)
             {
-                IgnoreNullValues = true,
-                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-            };
-
-            if (verboseErrors || Errors == null)
-            {
-                return JsonSerializer.Serialize(this, options);
+                return JsonSerializer.Serialize(this, jsonOptions);
             }
 
-            // don't serialize the errors
-            string json = JsonSerializer.Serialize(this, options);
+            // don't serialize errors
+            Errors = null;
 
-            int i = json.IndexOf(",\"errors\":", StringComparison.Ordinal);
-
-            // remove the error messages
-            if (i > -1)
-            {
-                json = json.Substring(0, i) + "}";
-            }
-
-            return json;
+            return JsonSerializer.Serialize(this, jsonOptions);
         }
 
         /// <summary>
