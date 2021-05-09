@@ -5,7 +5,6 @@ using System;
 using System.Collections.Generic;
 using System.CommandLine.Parsing;
 using System.Linq;
-using System.Text.Json;
 
 namespace CSE.WebValidate
 {
@@ -169,33 +168,19 @@ namespace CSE.WebValidate
 
                 if (parseResult.CommandResult.Children.FirstOrDefault(c => c.Symbol.Name == "verbose") is OptionResult vRes && vRes.IsImplicit)
                 {
-                    Verbose = !RunLoop && !XmlSummary;
+                    if (RunLoop)
+                    {
+                        Verbose = LogFormat == LogFormat.Json || LogFormat == LogFormat.JsonCamel;
+                    }
+                    else
+                    {
+                        Verbose = !XmlSummary;
+                    }
                 }
 
                 if (parseResult.CommandResult.Children.FirstOrDefault(c => c.Symbol.Name == "sleep") is OptionResult sleepRes && sleepRes.IsImplicit)
                 {
                     Sleep = RunLoop ? 1000 : 0;
-                }
-
-                if (parseResult.CommandResult.Children.FirstOrDefault(c => c.Symbol.Name == "summary-minutes") is OptionResult summaryRes && !summaryRes.IsImplicit)
-                {
-                    Console.ForegroundColor = ConsoleColor.Yellow;
-                    Console.Error.WriteLine("--summary-minutes is deprecated in v2.0");
-                    Console.ResetColor();
-                }
-
-                if (parseResult.CommandResult.Children.FirstOrDefault(c => c.Symbol.Name == "max-concurrent") is OptionResult concurrentRes && !concurrentRes.IsImplicit)
-                {
-                    Console.ForegroundColor = ConsoleColor.Yellow;
-                    Console.Error.WriteLine("--max-concurrent is deprecated in v2.0");
-                    Console.ResetColor();
-                }
-
-                if (parseResult.CommandResult.Children.FirstOrDefault(c => c.Symbol.Name == "prometheus") is OptionResult promRes && !promRes.IsImplicit)
-                {
-                    Console.ForegroundColor = ConsoleColor.Yellow;
-                    Console.Error.WriteLine("--prometheus not implemented");
-                    Console.ResetColor();
                 }
             }
 
@@ -214,6 +199,7 @@ namespace CSE.WebValidate
             Tag = string.IsNullOrWhiteSpace(Tag) ? null : Tag;
             Zone = string.IsNullOrWhiteSpace(Zone) ? null : Zone;
 
+            // make it easier to pass server value
             if (Server != null && Server.Count > 0)
             {
                 string s;
@@ -222,7 +208,6 @@ namespace CSE.WebValidate
                 {
                     s = Server[i];
 
-                    // make it easier to pass server value
                     if (!s.StartsWith("http", StringComparison.OrdinalIgnoreCase))
                     {
                         if (s.StartsWith("localhost", StringComparison.OrdinalIgnoreCase) ||

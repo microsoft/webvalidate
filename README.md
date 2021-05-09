@@ -10,7 +10,7 @@ Web Validate (WebV) is a web request validation tool that we use to run end-to-e
 - The Docker repo is `ghcr.io/retaildevcrews/webvalidate`
 - This release `dotnet 5.0`
 - `--json-log` was removed
-  - use `--log-format json` instead (starting with this release)
+  - use `--log-format json` or `--log-format jsonCamel` instead (starting with this release)
 - `--summary-minutes` was removed
   - use some type of log to store and summarize the results
 - `--max-concurrent` was removed
@@ -219,7 +219,10 @@ We use the `--log-format json` command line option to integrate Docker container
   - default `0`
 - --log-format
   - LOG_FORMAT
-  - format of log items (TSV (default), Json, JsonCamel, None)
+  - format of log items (TSV, Json, JsonCamel, None)
+  - default
+    - TSV
+    - Json (if --run-loop)
   - LogFormat.None conflicts with --verbose and will throw a parse error
   - LogFormat.Json* implies --verbose
 - --max-errors int
@@ -271,8 +274,6 @@ We use the `--log-format json` command line option to integrate Docker container
   - ZONE
   - deployment Zone for logging (user defined)
   - default: `null`
-- --json-log
-  - `DEPRECATED - use --log-format json`
 
 ### RunLoop Mode Parameters
 
@@ -286,6 +287,13 @@ We use the `--log-format json` command line option to integrate Docker container
   - DURATION
   - run test for duration seconds then exit
   - default `0 (run until OS signal)`
+- --log-format
+  - LOG_FORMAT
+  - format of log items (TSV, Json, JsonCamel, None)
+  - default
+    - Json (if --run-loop)
+  - LogFormat.None conflicts with --verbose and will throw a parse error
+  - LogFormat.Json* implies --verbose
 - --prometheus
   - PROMETHEUS
   - `false`
@@ -304,10 +312,6 @@ We use the `--log-format json` command line option to integrate Docker container
   - log 200 and 300 results as well as errors
   - default `false`
     - LogFormat.Json default: `true`
-- --max-concurrent int
-  - `Deprecated in 2.0`
-- --summary-minutes
-  - `Deprecated in 2.0`
 
 ## Running as part of an CI-CD pipeline
 

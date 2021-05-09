@@ -62,7 +62,7 @@ namespace CSE.WebValidate
             return root;
         }
 
-        // validate --duration and --random based on --run-loop
+        // validate based on --run-loop
         private static string ValidateRunLoopDependencies(CommandResult result)
         {
             string errors = string.Empty;
@@ -117,11 +117,6 @@ namespace CSE.WebValidate
             if (xml && runLoop)
             {
                 errors += "--xml-summary conflicts with --run-loop\n";
-            }
-
-            if (xml && logFormat == LogFormat.None)
-            {
-                errors += "--xml-summary conflicts with --log-format None\n";
             }
 
             if (verbose && logFormat == LogFormat.None)
