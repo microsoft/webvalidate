@@ -51,6 +51,11 @@ namespace CSE.WebValidate
         public List<string> Files { get; set; } = new List<string>();
 
         /// <summary>
+        /// gets or sets the port for RunLoop to listen on
+        /// </summary>
+        public int Port { get; set; } = 8080;
+
+        /// <summary>
         /// gets or sets the tag to log
         /// </summary>
         public string Tag { get; set; }

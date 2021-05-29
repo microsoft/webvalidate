@@ -11,6 +11,8 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Hosting;
 
 namespace CSE.WebValidate
 {
@@ -123,8 +125,17 @@ namespace CSE.WebValidate
 
                 if (config.RunLoop)
                 {
+                    // build and run the web host
+                    IHost host = BuildWebHost(config.Port);
+                    _ = host.StartAsync(TokenSource.Token);
+
                     // run in a loop
                     ret = webv.RunLoop(config, TokenSource.Token);
+
+                    // stop and dispose the web host
+                    await host.StopAsync(TimeSpan.FromMilliseconds(100)).ConfigureAwait(false);
+                    host.Dispose();
+                    host = null;
 
                     // write the stop message
                     if (config.LogFormat == LogFormat.Json || config.LogFormat == LogFormat.JsonCamel)
@@ -185,6 +196,20 @@ namespace CSE.WebValidate
                 e.Cancel = true;
                 TokenSource.Cancel();
             };
+        }
+
+        // build the web host
+        private static IHost BuildWebHost(int port)
+        {
+            // configure the web host builder
+            return Host.CreateDefaultBuilder()
+                        .ConfigureWebHostDefaults(webBuilder =>
+                        {
+                            webBuilder.UseStartup<Startup>();
+                            webBuilder.UseUrls($"http://*:{port}/");
+                        })
+                        .UseConsoleLifetime()
+                        .Build();
         }
     }
 }

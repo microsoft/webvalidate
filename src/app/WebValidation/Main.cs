@@ -12,6 +12,7 @@ using System.Threading.Tasks;
 using CSE.WebValidate.Model;
 using CSE.WebValidate.Validators;
 using Microsoft.CorrelationVector;
+using Prometheus;
 
 namespace CSE.WebValidate
 {
@@ -20,7 +21,10 @@ namespace CSE.WebValidate
     /// </summary>
     public partial class WebV
     {
+        private static Histogram requestDuration = null;
+        private static Summary requestSummary = null;
         private static List<Request> requestList;
+
         private readonly Dictionary<string, PerfTarget> targets = new Dictionary<string, PerfTarget>();
         private Config config;
 
@@ -53,6 +57,72 @@ namespace CSE.WebValidate
         /// Gets UtcNow as an ISO formatted date string
         /// </summary>
         public static string Now => DateTime.UtcNow.ToString("o", CultureInfo.InvariantCulture);
+
+        public Histogram RequestDuration
+        {
+            get
+            {
+                if (config.Prometheus && requestDuration == null)
+                {
+                    List<string> labels = new List<string> { "status", "server", "failed" };
+
+                    if (!string.IsNullOrEmpty(config.Region))
+                    {
+                        labels.Add("region");
+                    }
+
+                    if (!string.IsNullOrEmpty(config.Zone))
+                    {
+                        labels.Add("zone");
+                    }
+
+                    requestDuration = Metrics.CreateHistogram(
+                    "WebVDuration",
+                    "Histogram of WebV request duration",
+                    new HistogramConfiguration
+                    {
+                        Buckets = Histogram.ExponentialBuckets(1, 2, 10),
+                        LabelNames = labels.ToArray(),
+                    });
+                }
+
+                return requestDuration;
+            }
+        }
+
+        public Summary RequestSummary
+        {
+            get
+            {
+                if (config.Prometheus && requestSummary == null)
+                {
+                    List<string> labels = new List<string> { "status", "server", "failed" };
+
+                    if (!string.IsNullOrEmpty(config.Region))
+                    {
+                        labels.Add("region");
+                    }
+
+                    if (!string.IsNullOrEmpty(config.Zone))
+                    {
+                        labels.Add("zone");
+                    }
+
+                    requestSummary = Metrics.CreateSummary(
+                        "WebVSummary",
+                        "Summary of WebV request duration",
+                        new SummaryConfiguration
+                        {
+                            SuppressInitialValue = true,
+                            MaxAge = TimeSpan.FromMinutes(5),
+                            Objectives = new List<QuantileEpsilonPair> { new QuantileEpsilonPair(.9, .0), new QuantileEpsilonPair(.95, .0), new QuantileEpsilonPair(.99, .0), new QuantileEpsilonPair(1.0, .0) },
+                            LabelNames = labels.ToArray(),
+                        });
+                }
+
+                return requestSummary;
+            }
+        }
 
         /// <summary>
         /// Run the validation test one time
@@ -371,6 +441,32 @@ namespace CSE.WebValidate
             // log the test
             LogToConsole(request, valid, perfLog);
 
+            if (config.Prometheus)
+            {
+                // map status code to reduce histogram size
+                string status = GetPrometheusCode(perfLog.StatusCode);
+
+                List<string> labels = new List<string>
+                {
+                    status,
+                    perfLog.Server,
+                    perfLog.Failed.ToString(),
+                };
+
+                if (!string.IsNullOrEmpty(config.Region))
+                {
+                    labels.Add(config.Region);
+                }
+
+                if (!string.IsNullOrEmpty(config.Zone))
+                {
+                    labels.Add(config.Zone);
+                }
+
+                RequestDuration.WithLabels(labels.ToArray()).Observe(perfLog.Duration);
+                RequestSummary.WithLabels(labels.ToArray()).Observe(perfLog.Duration);
+            }
+
             return perfLog;
         }
 
@@ -439,6 +535,31 @@ namespace CSE.WebValidate
             return log;
         }
 
+        // convert http status code
+        private static string GetPrometheusCode(int statusCode)
+        {
+            if (statusCode >= 500)
+            {
+                return "Error";
+            }
+            else if (statusCode == 429)
+            {
+                return "Retry";
+            }
+            else if (statusCode >= 400)
+            {
+                return "Warn";
+            }
+            else if (statusCode >= 300)
+            {
+                return "Redirect";
+            }
+            else
+            {
+                return "OK";
+            }
+        }
+
         // Display the startup message for RunLoop
         private static void DisplayStartupMessage(Config config)
         {
@@ -470,12 +591,12 @@ namespace CSE.WebValidate
 
                 if (!string.IsNullOrWhiteSpace(config.Region))
                 {
-                    startupDict.Add("Tag", config.Region);
+                    startupDict.Add("Region", config.Region);
                 }
 
                 if (!string.IsNullOrWhiteSpace(config.Zone))
                 {
-                    startupDict.Add("Tag", config.Zone);
+                    startupDict.Add("Zone", config.Zone);
                 }
 
                 Console.WriteLine(JsonSerializer.Serialize(startupDict, App.JsonOptions));
