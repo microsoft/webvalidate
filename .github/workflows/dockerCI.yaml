@@ -30,6 +30,11 @@ jobs:
     steps:
     - uses: actions/checkout@v2
 
+    - name: Docker Pull
+      run: |
+        docker pull mcr.microsoft.com/dotnet/sdk:5.0
+        docker pull mcr.microsoft.com/dotnet/aspnet:5.0-alpine
+
     - name: Build Container
       run: |
         # Build base container
@@ -41,11 +46,6 @@ jobs:
         registry: ghcr.io
         username: ${{ secrets.GHCR_ID }}
         password: ${{ secrets.GHCR_PAT }}
-
-    - name: Docker Pull
-      run: |
-        docker pull mcr.microsoft.com/dotnet/sdk:5.0
-        docker pull mcr.microsoft.com/dotnet/aspnet:5.0-alpine
 
     - name: Docker Push
       run: |
