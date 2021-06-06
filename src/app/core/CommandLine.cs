@@ -33,6 +33,7 @@ namespace CSE.WebValidate
 
             root.AddOption(EnvVarOption<List<string>>(new string[] { "--files", "-f" }, "List of files to test (required)", null));
             root.AddOption(EnvVarOption<List<string>>(new string[] { "--server", "-s" }, "Server(s) to test (required)", null));
+            root.AddOption(EnvVarOption<int>(new string[] { "--port", "-p" }, "Port for web listener  (requires --run-loop)", 8080));
             root.AddOption(EnvVarOption(new string[] { "--base-url", "-u" }, "Base url for files", string.Empty));
             root.AddOption(EnvVarOption<int>(new string[] { "--delay-start" }, "Delay test start (seconds)", 0, 0));
             root.AddOption(EnvVarOption<int>(new string[] { "--duration" }, "Test duration (seconds)  (requires --run-loop)", 0, 0));
@@ -71,6 +72,7 @@ namespace CSE.WebValidate
             OptionResult filesRes = result.Children.FirstOrDefault(c => c.Symbol.Name == "files") as OptionResult;
             OptionResult durationRes = result.Children.FirstOrDefault(c => c.Symbol.Name == "duration") as OptionResult;
             OptionResult formatRes = result.Children.FirstOrDefault(c => c.Symbol.Name == "log-format") as OptionResult;
+            OptionResult portRes = result.Children.FirstOrDefault(c => c.Symbol.Name == "port") as OptionResult;
 
             bool runLoop = result.Children.FirstOrDefault(c => c.Symbol.Name == "run-loop") is OptionResult runLoopRes && runLoopRes.GetValueOrDefault<bool>();
             bool random = result.Children.FirstOrDefault(c => c.Symbol.Name == "random") is OptionResult randomRes && randomRes.GetValueOrDefault<bool>();
@@ -82,11 +84,13 @@ namespace CSE.WebValidate
             List<string> files = serverRes.GetValueOrDefault<List<string>>();
 
             int duration = 0;
+            int port = 8080;
             LogFormat logFormat = LogFormat.Tsv;
 
             try
             {
                 duration = durationRes.GetValueOrDefault<int>();
+                port = portRes.GetValueOrDefault<int>();
                 logFormat = formatRes.GetValueOrDefault<LogFormat>();
             }
             catch
@@ -102,6 +106,21 @@ namespace CSE.WebValidate
             if (files == null || files.Count == 0)
             {
                 errors += "--files must be provided\n";
+            }
+
+            if (portRes != null)
+            {
+                if (!runLoop)
+                {
+                    errors += "--run-loop must be true to use --port\n";
+                }
+                else
+                {
+                    if (port < 1 || port >= 64 * 1024)
+                    {
+                        errors += $"--port must be > 0 and < {64 * 1024}";
+                    }
+                }
             }
 
             if (duration > 0 && !runLoop)
@@ -295,11 +314,8 @@ namespace CSE.WebValidate
 
             if (config.RunLoop)
             {
+                Console.WriteLine($"   Port            {config.Port}");
                 Console.WriteLine($"   Prometheus      {config.Prometheus}");
-            }
-
-            if (config.RunLoop)
-            {
                 Console.WriteLine($"   Random          {config.Random}");
             }
 
