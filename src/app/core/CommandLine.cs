@@ -108,7 +108,7 @@ namespace CSE.WebValidate
                 errors += "--files must be provided\n";
             }
 
-            if (portRes != null)
+            if (portRes != null && !portRes.IsImplicit)
             {
                 if (!runLoop)
                 {
