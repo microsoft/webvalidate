@@ -21,7 +21,7 @@ on:
 
 jobs:
 
-  docker-build-push:
+  docker-build:
 
     runs-on: ubuntu-latest
     env:
@@ -42,8 +42,12 @@ jobs:
         username: ${{ secrets.GHCR_ID }}
         password: ${{ secrets.GHCR_PAT }}
 
+    - name: Docker Pull
+      run: |
+        docker pull mcr.microsoft.com/dotnet/sdk:5.0
+        docker pull mcr.microsoft.com/dotnet/aspnet:5.0-alpine
+
     - name: Docker Push
-      if: ${{ env.DOCKER_SET == 'true' }}
       run: |
         # tag the base image with :beta
         docker tag webv ${DOCKER_REPO}:beta
