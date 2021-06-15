@@ -26,6 +26,11 @@ namespace CSE.WebValidate
     public enum LogFormat
     {
         /// <summary>
+        /// Tab Separated Values (minimum log)
+        /// </summary>
+        TsvMin,
+
+        /// <summary>
         /// Tab Separated Values
         /// </summary>
         Tsv,
@@ -179,7 +184,7 @@ namespace CSE.WebValidate
             {
                 if (parseResult.CommandResult.Children.FirstOrDefault(c => c.Symbol.Name == "log-format") is OptionResult lfRes && lfRes.IsImplicit)
                 {
-                    LogFormat = RunLoop ? LogFormat.Json : LogFormat.Tsv;
+                    LogFormat = RunLoop ? LogFormat.Json : LogFormat.TsvMin;
                 }
 
                 if (parseResult.CommandResult.Children.FirstOrDefault(c => c.Symbol.Name == "verbose") is OptionResult vRes && vRes.IsImplicit)

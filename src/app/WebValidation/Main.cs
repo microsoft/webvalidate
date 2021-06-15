@@ -461,6 +461,7 @@ namespace CSE.WebValidate
                 Path = request?.Path ?? string.Empty,
                 StatusCode = statusCode,
                 Category = request?.PerfTarget?.Category ?? string.Empty,
+                TestName = request.TestName,
                 Validated = !validationResult.Failed && validationResult.ValidationErrors.Count == 0,
                 Duration = duration,
                 ContentLength = contentLength,
@@ -605,8 +606,9 @@ namespace CSE.WebValidate
             switch (config.Summary)
             {
                 case SummaryFormat.Tsv:
-                    Console.Write($"{status}\tErrors\t{errorCount}\tValidationErrorCount\t{validationFailureCount}\tMaxErrors\t{config.MaxErrors}");
+                    Console.WriteLine($"{status}\tErrors\t{errorCount}\tValidationErrorCount\t{validationFailureCount}\tMaxErrors\t{config.MaxErrors}");
                     break;
+
                 case SummaryFormat.Json:
                 case SummaryFormat.JsonCamel:
                     // todo - example pending design review
@@ -621,6 +623,7 @@ namespace CSE.WebValidate
 
                     Console.WriteLine(JsonSerializer.Serialize(summary, App.JsonOptions));
                     break;
+
                 case SummaryFormat.Xml:
                     // todo - example pending design review
                     // uncomment command line argument
@@ -633,7 +636,15 @@ namespace CSE.WebValidate
 
                     res.WriteXmlToConsole();
                     break;
+
                 case SummaryFormat.None:
+                    if (config.LogFormat == LogFormat.TsvMin)
+                    {
+                        Console.WriteLine($"{status}\tErrors\t{errorCount}\tValidationErrorCount\t{validationFailureCount}\tMaxErrors\t{config.MaxErrors}");
+                    }
+
+                    break;
+
                 default:
                     break;
             }
@@ -682,6 +693,9 @@ namespace CSE.WebValidate
                         break;
                     case LogFormat.Tsv:
                         Console.WriteLine(perfLog.ToTsv(config.VerboseErrors));
+                        break;
+                    case LogFormat.TsvMin:
+                        Console.WriteLine(perfLog.ToTsvMin());
                         break;
                     case LogFormat.None:
                         break;

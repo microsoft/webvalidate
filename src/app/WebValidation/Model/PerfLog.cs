@@ -48,6 +48,11 @@ namespace CSE.WebValidate.Model
         public int StatusCode { get; set; }
 
         /// <summary>
+        /// Gets or sets name of test for grouping
+        /// </summary>
+        public string TestName { get; set; }
+
+        /// <summary>
         /// Gets or sets a value indicating whether the failed flag
         /// </summary>
         public bool Failed { get; set; }
@@ -146,13 +151,25 @@ namespace CSE.WebValidate.Model
             Zone = string.IsNullOrWhiteSpace(Zone) ? "-" : Zone;
 
             // log tab delimited
-            string log = $"{Date.ToString("o", CultureInfo.InvariantCulture)}\t{Server}\t{StatusCode}\t{ErrorCount}\t{Duration}\t{ContentLength}\t{Region}\t{Zone}\t{CorrelationVector}\t{Tag}\t{quartile}\t{Category}\t{Verb}\t{Path}";
+            string log = $"{Date:o}\t{TestName}\t{Server}\t{StatusCode}\t{ErrorCount}\t{Duration}\t{ContentLength}\t{Region}\t{Zone}\t{CorrelationVector}\t{Tag}\t{quartile}\t{Category}\t{Verb}\t{Path}";
 
             // log error details
             if (verboseErrors && ErrorCount > 0)
             {
                 log += "\n  " + string.Join("\n  ", Errors);
             }
+
+            return log;
+        }
+
+        /// <summary>
+        /// Gets the tab separated representation of the object (minimum fields)
+        /// </summary>
+        /// <returns>string</returns>
+        public string ToTsvMin()
+        {
+            // log tab delimited
+            string log = $"{Date:s}\t{StatusCode}\t{ErrorCount}\t{Duration}\t{ContentLength}\t{Verb}\t{Path}";
 
             return log;
         }

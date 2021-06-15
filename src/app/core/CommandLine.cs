@@ -37,7 +37,7 @@ namespace CSE.WebValidate
             root.AddOption(EnvVarOption(new string[] { "--base-url", "-u" }, "Base url for files", string.Empty));
             root.AddOption(EnvVarOption<int>(new string[] { "--delay-start" }, "Delay test start (seconds)", 0, 0));
             root.AddOption(EnvVarOption<int>(new string[] { "--duration" }, "Test duration (seconds)  (requires --run-loop)", 0, 0));
-            root.AddOption(EnvVarOption(new string[] { "--log-format", "-g" }, "Log format", LogFormat.Tsv));
+            root.AddOption(EnvVarOption(new string[] { "--log-format", "-g" }, "Log format", LogFormat.TsvMin));
             root.AddOption(EnvVarOption<int>(new string[] { "--max-errors" }, "Max validation errors", 10, 0));
             root.AddOption(EnvVarOption(new string[] { "--prometheus" }, "Send metrics to Prometheus (Not Implemented) (requires --run-loop)", false));
             root.AddOption(EnvVarOption(new string[] { "--random" }, "Run requests randomly (requires --run-loop)", false));
@@ -84,7 +84,7 @@ namespace CSE.WebValidate
 
             int duration = 0;
             int port = 8080;
-            LogFormat logFormat = LogFormat.Tsv;
+            LogFormat logFormat = LogFormat.TsvMin;
 
             try
             {

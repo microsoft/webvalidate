@@ -112,7 +112,7 @@ namespace CSE.WebValidate
 
                 if (config.DelayStart > 0)
                 {
-                    if (config.LogFormat == LogFormat.Tsv)
+                    if (config.LogFormat == LogFormat.Tsv || config.LogFormat == LogFormat.TsvMin)
                     {
                         Console.WriteLine($"Waiting {config.DelayStart} seconds to start test ...\n");
                     }
