@@ -21,11 +21,14 @@ namespace CSE.WebValidate
     /// </summary>
     public partial class WebV
     {
+        // Prometheus objects
+        private static readonly List<string> PrometheusLabels = new () { "status", "server", "failed" };
         private static Histogram requestDuration = null;
         private static Summary requestSummary = null;
+
         private static List<Request> requestList;
 
-        private readonly Dictionary<string, PerfTarget> targets = new Dictionary<string, PerfTarget>();
+        private readonly Dictionary<string, PerfTarget> targets = new ();
         private Config config;
 
         /// <summary>
@@ -58,22 +61,23 @@ namespace CSE.WebValidate
         /// </summary>
         public static string Now => DateTime.UtcNow.ToString("o", CultureInfo.InvariantCulture);
 
+        /// <summary>
+        /// Gets the Prometheus Histogram object
+        /// </summary>
         public Histogram RequestDuration
         {
             get
             {
                 if (config.Prometheus && requestDuration == null)
                 {
-                    List<string> labels = new List<string> { "status", "server", "failed" };
-
-                    if (!string.IsNullOrEmpty(config.Region))
+                    if (!string.IsNullOrWhiteSpace(config.Region))
                     {
-                        labels.Add("region");
+                        PrometheusLabels.Add("region");
                     }
 
-                    if (!string.IsNullOrEmpty(config.Zone))
+                    if (!string.IsNullOrWhiteSpace(config.Zone))
                     {
-                        labels.Add("zone");
+                        PrometheusLabels.Add("zone");
                     }
 
                     requestDuration = Metrics.CreateHistogram(
@@ -82,7 +86,7 @@ namespace CSE.WebValidate
                     new HistogramConfiguration
                     {
                         Buckets = Histogram.ExponentialBuckets(1, 2, 10),
-                        LabelNames = labels.ToArray(),
+                        LabelNames = PrometheusLabels.ToArray(),
                     });
                 }
 
@@ -90,22 +94,23 @@ namespace CSE.WebValidate
             }
         }
 
+        /// <summary>
+        /// Gets the Prometheus Summary object
+        /// </summary>
         public Summary RequestSummary
         {
             get
             {
                 if (config.Prometheus && requestSummary == null)
                 {
-                    List<string> labels = new List<string> { "status", "server", "failed" };
-
-                    if (!string.IsNullOrEmpty(config.Region))
+                    if (!string.IsNullOrWhiteSpace(config.Region))
                     {
-                        labels.Add("region");
+                        PrometheusLabels.Add("region");
                     }
 
-                    if (!string.IsNullOrEmpty(config.Zone))
+                    if (!string.IsNullOrWhiteSpace(config.Zone))
                     {
-                        labels.Add("zone");
+                        PrometheusLabels.Add("zone");
                     }
 
                     requestSummary = Metrics.CreateSummary(
@@ -116,7 +121,7 @@ namespace CSE.WebValidate
                             SuppressInitialValue = true,
                             MaxAge = TimeSpan.FromMinutes(5),
                             Objectives = new List<QuantileEpsilonPair> { new QuantileEpsilonPair(.9, .0), new QuantileEpsilonPair(.95, .0), new QuantileEpsilonPair(.99, .0), new QuantileEpsilonPair(1.0, .0) },
-                            LabelNames = labels.ToArray(),
+                            LabelNames = PrometheusLabels.ToArray(),
                         });
                 }
 
@@ -157,24 +162,19 @@ namespace CSE.WebValidate
                     }
                 }
 
-                using HttpClient client = OpenClient(ndx);
+                using HttpClient client = OpenHttpClient(config.Server[ndx]);
 
                 // send each request
                 foreach (Request r in requestList)
                 {
+                    // stop on signal or after MaxErrors
+                    if (token.IsCancellationRequested || (errorCount + validationFailureCount) >= config.MaxErrors)
+                    {
+                        break;
+                    }
+
                     try
                     {
-                        if (token.IsCancellationRequested)
-                        {
-                            break;
-                        }
-
-                        // stop after MaxErrors errors
-                        if ((errorCount + validationFailureCount) >= config.MaxErrors)
-                        {
-                            break;
-                        }
-
                         // execute the request
                         pl = await ExecuteRequest(client, config.Server[ndx], r).ConfigureAwait(false);
 
@@ -182,8 +182,7 @@ namespace CSE.WebValidate
                         {
                             errorCount++;
                         }
-
-                        if (!pl.Failed && !pl.Validated)
+                        else if (!pl.Validated)
                         {
                             validationFailureCount++;
                         }
@@ -213,44 +212,11 @@ namespace CSE.WebValidate
                     }
                 }
 
-                // write test summary in xml
-                if (config.XmlSummary)
-                {
-                    // todo - implement correctly
-                    // uncomment command line argument
-                    TestSummary res = new TestSummary
-                    {
-                        ValidationErrorCount = validationFailureCount,
-                        ErrorCount = errorCount,
-                        MaxErrors = config.MaxErrors,
-                    };
-
-                    res.WriteXmlToConsole();
-                }
-                else if (config.LogFormat == LogFormat.Tsv)
-                {
-                    // log validation failure count
-                    if (validationFailureCount > 0)
-                    {
-                        Console.WriteLine($"Validation Errors: {validationFailureCount}");
-                    }
-
-                    // log error count
-                    if (errorCount > 0)
-                    {
-                        Console.WriteLine($"Failed: {errorCount} Errors");
-                    }
-
-                    // log MaxErrors exceeded
-                    if (errorCount + validationFailureCount >= config.MaxErrors)
-                    {
-                        Console.Write($"Failed: Errors: {errorCount + validationFailureCount} >= MaxErrors: {config.MaxErrors}");
-                    }
-                }
+                DisplaySummary(validationFailureCount, errorCount);
             }
 
             // return non-zero exit code on failure
-            return errorCount > 0 || validationFailureCount >= config.MaxErrors ? errorCount + validationFailureCount : 0;
+            return (errorCount > 0 || validationFailureCount >= config.MaxErrors) ? errorCount + validationFailureCount : 0;
         }
 
         /// <summary>
@@ -278,19 +244,18 @@ namespace CSE.WebValidate
 
             DisplayStartupMessage(config);
 
-            List<TimerRequestState> states = new List<TimerRequestState>();
+            List<TimerRequestState> states = new ();
 
             foreach (string svr in config.Server)
             {
                 // create the shared state
-                TimerRequestState state = new TimerRequestState
+                TimerRequestState state = new ()
                 {
                     Server = svr,
                     Client = OpenHttpClient(svr),
                     MaxIndex = requestList.Count,
                     Test = this,
                     RequestList = requestList,
-
                     Token = token,
                 };
 
@@ -385,7 +350,7 @@ namespace CSE.WebValidate
             ValidationResult valid;
 
             // send the request
-            using (HttpRequestMessage req = new HttpRequestMessage(new HttpMethod(request.Verb), request.Path))
+            using (HttpRequestMessage req = new (new HttpMethod(request.Verb), request.Path))
             {
                 DateTime dt = DateTime.UtcNow;
 
@@ -399,13 +364,13 @@ namespace CSE.WebValidate
                 }
 
                 // create correlation vector and add to headers
-                CorrelationVector cv = new CorrelationVector(CorrelationVectorVersion.V2);
+                CorrelationVector cv = new (CorrelationVectorVersion.V2);
                 req.Headers.Add(CorrelationVector.HeaderName, cv.Value);
 
                 // add the body to the http request
-                if (!string.IsNullOrEmpty(request.Body))
+                if (!string.IsNullOrWhiteSpace(request.Body))
                 {
-                    if (!string.IsNullOrEmpty(request.ContentMediaType))
+                    if (!string.IsNullOrWhiteSpace(request.ContentMediaType))
                     {
                         req.Content = new StringContent(request.Body, Encoding.UTF8, request.ContentMediaType);
                     }
@@ -446,19 +411,19 @@ namespace CSE.WebValidate
                 // map status code to reduce histogram size
                 string status = GetPrometheusCode(perfLog.StatusCode);
 
-                List<string> labels = new List<string>
+                List<string> labels = new ()
                 {
                     status,
                     perfLog.Server,
                     perfLog.Failed.ToString(),
                 };
 
-                if (!string.IsNullOrEmpty(config.Region))
+                if (!string.IsNullOrWhiteSpace(config.Region))
                 {
                     labels.Add(config.Region);
                 }
 
-                if (!string.IsNullOrEmpty(config.Zone))
+                if (!string.IsNullOrWhiteSpace(config.Zone))
                 {
                     labels.Add(config.Zone);
                 }
@@ -489,7 +454,7 @@ namespace CSE.WebValidate
             }
 
             // map the parameters
-            PerfLog log = new PerfLog(validationResult.ValidationErrors)
+            PerfLog log = new (validationResult.ValidationErrors)
             {
                 Server = server,
                 Tag = string.IsNullOrWhiteSpace(request.Tag) ? config.Tag : request.Tag,
@@ -513,7 +478,7 @@ namespace CSE.WebValidate
                 PerfTarget target = targets[log.Category];
 
                 if (target != null &&
-                    !string.IsNullOrEmpty(target.Category) &&
+                    !string.IsNullOrWhiteSpace(target.Category) &&
                     target.Quartiles != null &&
                     target.Quartiles.Count == 3)
                 {
@@ -566,7 +531,7 @@ namespace CSE.WebValidate
             // don't display if json logging is on
             if (config.LogFormat == LogFormat.Json || config.LogFormat == LogFormat.JsonCamel)
             {
-                Dictionary<string, object> startupDict = new Dictionary<string, object>
+                Dictionary<string, object> startupDict = new ()
                 {
                     { "Date", DateTime.UtcNow },
                     { "EventType", "Startup" },
@@ -608,12 +573,12 @@ namespace CSE.WebValidate
             msg += $"\n\t\tVersion: {Version.AssemblyVersion}";
             msg += $"\n\t\tHost: {string.Join(' ', config.Server)}";
 
-            if (!string.IsNullOrEmpty(config.Tag))
+            if (!string.IsNullOrWhiteSpace(config.Tag))
             {
                 msg += $"\n\t\tTag: {config.Tag}";
             }
 
-            if (!string.IsNullOrEmpty(config.BaseUrl))
+            if (!string.IsNullOrWhiteSpace(config.BaseUrl))
             {
                 msg += $"\n\t\tBaseUrl: {config.BaseUrl}";
             }
@@ -632,33 +597,57 @@ namespace CSE.WebValidate
             Console.WriteLine(msg + "\n");
         }
 
-        /// <summary>
-        /// Open an http client
-        /// </summary>
-        /// <param name="index">index of base URL</param>
-        private HttpClient OpenClient(int index)
+        // display summary results
+        private void DisplaySummary(int validationFailureCount, int errorCount)
         {
-            if (index < 0 || index >= config.Server.Count)
-            {
-                throw new ArgumentException($"Index out of range: {index}", nameof(index));
-            }
+            string status = (errorCount + validationFailureCount >= config.MaxErrors) ? "Test Failed" : "Test Completed";
 
-            return OpenHttpClient(config.Server[index]);
+            switch (config.Summary)
+            {
+                case SummaryFormat.Tsv:
+                    Console.Write($"{status}\tErrors\t{errorCount}\tValidationErrorCount\t{validationFailureCount}\tMaxErrors\t{config.MaxErrors}");
+                    break;
+                case SummaryFormat.Json:
+                case SummaryFormat.JsonCamel:
+                    // todo - example pending design review
+                    Dictionary<string, object> summary = new ()
+                    {
+                        { "Date", DateTime.Now },
+                        { "Status", status },
+                        { "ValidationErrorCount", validationFailureCount },
+                        { "ErrorCount", errorCount },
+                        { "MaxErrors", config.MaxErrors },
+                    };
+
+                    Console.WriteLine(JsonSerializer.Serialize(summary, App.JsonOptions));
+                    break;
+                case SummaryFormat.Xml:
+                    // todo - example pending design review
+                    // uncomment command line argument
+                    TestSummary res = new ()
+                    {
+                        ValidationErrorCount = validationFailureCount,
+                        ErrorCount = errorCount,
+                        MaxErrors = config.MaxErrors,
+                    };
+
+                    res.WriteXmlToConsole();
+                    break;
+                case SummaryFormat.None:
+                default:
+                    break;
+            }
         }
 
-        /// <summary>
-        /// Opens and configures the shared HttpClient
-        ///
-        /// Disposed in IDispose
-        /// </summary>
-        /// <returns>HttpClient</returns>
+        // Opens and configures an HttpClient
         private HttpClient OpenHttpClient(string host)
         {
-            HttpClient client = new HttpClient(new HttpClientHandler { AllowAutoRedirect = false })
+            HttpClient client = new (new HttpClientHandler { AllowAutoRedirect = false })
             {
                 Timeout = new TimeSpan(0, 0, config.Timeout),
                 BaseAddress = new Uri(host),
             };
+
             client.DefaultRequestHeaders.Add("User-Agent", $"webv/{Version.ShortVersion}");
 
             return client;
@@ -682,24 +671,23 @@ namespace CSE.WebValidate
                 throw new ArgumentNullException(nameof(perfLog));
             }
 
-            switch (config.LogFormat)
+            // always log on error
+            if (config.Verbose || perfLog.StatusCode >= 400 || perfLog.Failed || perfLog.ErrorCount > 0)
             {
-                case LogFormat.Json:
-                case LogFormat.JsonCamel:
-                    Console.WriteLine(perfLog.ToJson(config.VerboseErrors, App.JsonOptions));
-                    break;
-                case LogFormat.Tsv:
-                    // always log on error
-                    if (config.Verbose || perfLog.StatusCode >= 400 || perfLog.Failed || perfLog.ErrorCount > 0)
-                    {
+                switch (config.LogFormat)
+                {
+                    case LogFormat.Json:
+                    case LogFormat.JsonCamel:
+                        Console.WriteLine(perfLog.ToJson(config.VerboseErrors, App.JsonOptions));
+                        break;
+                    case LogFormat.Tsv:
                         Console.WriteLine(perfLog.ToTsv(config.VerboseErrors));
-                    }
-
-                    break;
-                case LogFormat.None:
-                    break;
-                default:
-                    break;
+                        break;
+                    case LogFormat.None:
+                        break;
+                    default:
+                        break;
+                }
             }
         }
     }

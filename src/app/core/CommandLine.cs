@@ -16,7 +16,7 @@ namespace CSE.WebValidate
     public sealed partial class App
     {
         // capture parse errors from env vars
-        private static readonly List<string> EnvVarErrors = new List<string>();
+        private static readonly List<string> EnvVarErrors = new ();
 
         /// <summary>
         /// Build the RootCommand for parsing
@@ -24,7 +24,7 @@ namespace CSE.WebValidate
         /// <returns>RootCommand</returns>
         public static RootCommand BuildRootCommand()
         {
-            RootCommand root = new RootCommand
+            RootCommand root = new ()
             {
                 Name = "WebValidate",
                 Description = "Validate API responses",
@@ -51,8 +51,7 @@ namespace CSE.WebValidate
             root.AddOption(EnvVarOption(new string[] { "--verbose-errors" }, "Log verbose error messages", false));
             root.AddOption(EnvVarOption(new string[] { "--webv-prefix" }, "Server address prefix", "https://"));
             root.AddOption(EnvVarOption(new string[] { "--webv-suffix" }, "Server address suffix", ".azurewebsites.net"));
-
-            // root.AddOption(EnvVarOption(new string[] { "--xml-summary" }, "Display test summary in XML (not fully implemented)", false));
+            root.AddOption(EnvVarOption(new string[] { "--summary" }, "Display test summary (invalid with --run-loop)", SummaryFormat.None));
             root.AddOption(EnvVarOption(new string[] { "--zone" }, "Zone deployed to (user defined)", string.Empty));
             root.AddOption(new Option<bool>(new string[] { "--dry-run", "-d" }, "Validates configuration"));
             root.AddOption(new Option<bool>(new string[] { "--version" }, "Displays version and exits"));
@@ -239,7 +238,7 @@ namespace CSE.WebValidate
                 }
             }
 
-            Option<int> opt = new Option<int>(names, () => value, description);
+            Option<int> opt = new (names, () => value, description);
 
             opt.AddValidator((res) =>
             {
@@ -338,7 +337,7 @@ namespace CSE.WebValidate
             Console.WriteLine($"   Verbose Errors  {config.VerboseErrors}");
             Console.WriteLine($"   WebV Prefix     {config.WebvPrefix}");
             Console.WriteLine($"   WebV Suffix     {config.WebvSuffix}");
-            Console.WriteLine($"   XML Summary     {config.XmlSummary}");
+            Console.WriteLine($"   XML Summary     {config.Summary}");
 
             if (!string.IsNullOrEmpty(config.Zone))
             {

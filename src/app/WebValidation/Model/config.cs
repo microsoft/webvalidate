@@ -9,6 +9,18 @@ using System.Linq;
 namespace CSE.WebValidate
 {
     /// <summary>
+    /// Summary log format enum
+    /// </summary>
+    public enum SummaryFormat
+    {
+        None,
+        Tsv,
+        Json,
+        JsonCamel,
+        Xml,
+    }
+
+    /// <summary>
     /// Log Format enum
     /// </summary>
     public enum LogFormat
@@ -30,7 +42,6 @@ namespace CSE.WebValidate
 
         /// <summary>
         /// Don't log
-        /// --xml-summary and exceptions will still be written to stdout / stderr
         /// </summary>
         None,
     }
@@ -133,9 +144,9 @@ namespace CSE.WebValidate
         public string WebvSuffix { get; set; }
 
         /// <summary>
-        /// Gets or sets a value indicating whether the test summary should be written in xml
+        /// Gets or sets a value indicating whether the test summary should be written to the log
         /// </summary>
-        public bool XmlSummary { get; set; }
+        public SummaryFormat Summary { get; set; }
 
         /// <summary>
         /// Gets or sets Log Format
@@ -179,7 +190,7 @@ namespace CSE.WebValidate
                     }
                     else
                     {
-                        Verbose = !XmlSummary;
+                        Verbose = false;
                     }
                 }
 

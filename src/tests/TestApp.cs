@@ -33,7 +33,7 @@ namespace CSE.WebValidate.Tests.Unit
         public async Task ValidateAllJsonFilesTest()
         {
             // test all files
-            Config cfg = new Config
+            Config cfg = new ()
             {
                 Server = new List<string> { "http://localhost" },
                 Timeout = 30,
@@ -42,7 +42,7 @@ namespace CSE.WebValidate.Tests.Unit
             cfg.Files.Add("msft.json");
 
             // load and validate all of our test files
-            WebV wv = new WebV(cfg);
+            WebV wv = new (cfg);
 
             // file not found test
             Assert.Null(wv.ReadJson("test"));
@@ -71,12 +71,12 @@ namespace CSE.WebValidate.Tests.Unit
             // test env vars
             parse = App.BuildRootCommand().Parse(string.Empty);
             Assert.Equal(0, parse.Errors.Count);
-            Assert.Equal(21, parse.CommandResult.Children.Count);
+            Assert.Equal(22, parse.CommandResult.Children.Count);
 
             // override the files env var
             parse = App.BuildRootCommand().Parse("-f file1 file2");
             Assert.Equal(0, parse.Errors.Count);
-            Assert.Equal(21, parse.CommandResult.Children.Count);
+            Assert.Equal(22, parse.CommandResult.Children.Count);
             Assert.Equal(2, parse.CommandResult.Children.First(c => c.Symbol.Name == "files").Tokens.Count);
 
             // test run-loop
@@ -174,7 +174,7 @@ namespace CSE.WebValidate.Tests.Unit
             cfg.Files.Add("msft.json");
 
             // load and validate all of our test files
-            WebV wv = new WebV(cfg);
+            WebV wv = new (cfg);
             Assert.Equal(0, await wv.RunOnce(cfg, new System.Threading.CancellationToken()).ConfigureAwait(false));
         }
 
@@ -185,7 +185,7 @@ namespace CSE.WebValidate.Tests.Unit
             cfg.Files.Add("github.json");
 
             // load and validate all of our test files
-            WebV wv = new WebV(cfg);
+            WebV wv = new (cfg);
             Assert.Equal(0, await wv.RunOnce(cfg, new System.Threading.CancellationToken()).ConfigureAwait(false));
         }
     }
