@@ -20,7 +20,7 @@ namespace CSE.WebValidate.Validators
         /// <returns>ValidationResult</returns>
         public static ValidationResult Validate(Request r)
         {
-            ValidationResult result = new ValidationResult();
+            ValidationResult result = new ();
 
             if (r == null)
             {
@@ -48,7 +48,7 @@ namespace CSE.WebValidate.Validators
         /// <returns>ValidationResult</returns>
         public static ValidationResult Validate(Validation v)
         {
-            ValidationResult res = new ValidationResult();
+            ValidationResult res = new ();
 
             // nothing to validate
             if (v == null)
@@ -109,7 +109,7 @@ namespace CSE.WebValidate.Validators
         /// <returns>ValidationResult</returns>
         public static ValidationResult Validate(PerfTarget target)
         {
-            ValidationResult res = new ValidationResult();
+            ValidationResult res = new ();
 
             // null check
             if (target == null)
@@ -143,7 +143,7 @@ namespace CSE.WebValidate.Validators
         /// <returns>ValidationResult</returns>
         public static ValidationResult Validate(JsonArray a)
         {
-            ValidationResult res = new ValidationResult();
+            ValidationResult res = new ();
 
             // null check
             if (a == null)
@@ -190,7 +190,7 @@ namespace CSE.WebValidate.Validators
         /// <returns>ValidationResult</returns>
         public static ValidationResult Validate(List<JsonItem> jsonobject)
         {
-            ValidationResult res = new ValidationResult();
+            ValidationResult res = new ();
 
             // null check
             if (jsonobject == null)
@@ -220,7 +220,7 @@ namespace CSE.WebValidate.Validators
         /// <returns>ValidationResult</returns>
         public static ValidationResult Validate(List<JsonPropertyByIndex> byIndexList)
         {
-            ValidationResult res = new ValidationResult();
+            ValidationResult res = new ();
 
             // null check
             if (byIndexList == null || byIndexList.Count == 0)
@@ -259,7 +259,7 @@ namespace CSE.WebValidate.Validators
         /// <returns>ValidationResult</returns>
         public static ValidationResult Validate(List<Validation> list)
         {
-            ValidationResult res = new ValidationResult();
+            ValidationResult res = new ();
 
             if (list == null || list.Count == 0)
             {
@@ -282,7 +282,7 @@ namespace CSE.WebValidate.Validators
         /// <returns>ValidationResult</returns>
         public static ValidationResult ValidateLength(Validation v)
         {
-            ValidationResult res = new ValidationResult();
+            ValidationResult res = new ();
 
             // nothing to validate
             if (v == null)
@@ -326,7 +326,7 @@ namespace CSE.WebValidate.Validators
         /// <returns>ValidationResult</returns>
         public static ValidationResult ValidateVerb(string verb)
         {
-            ValidationResult res = new ValidationResult();
+            ValidationResult res = new ();
 
             if (!string.IsNullOrEmpty(verb))
             {
@@ -349,7 +349,7 @@ namespace CSE.WebValidate.Validators
         /// <returns>ValidationResult</returns>
         public static ValidationResult ValidateContains(List<string> contains)
         {
-            ValidationResult res = new ValidationResult();
+            ValidationResult res = new ();
 
             // null check
             if (contains == null || contains.Count == 0)
@@ -376,7 +376,7 @@ namespace CSE.WebValidate.Validators
         /// <returns>ValidationResult</returns>
         public static ValidationResult ValidatePath(string path)
         {
-            ValidationResult res = new ValidationResult();
+            ValidationResult res = new ();
 
             // path is required
             if (string.IsNullOrWhiteSpace(path))
@@ -402,7 +402,7 @@ namespace CSE.WebValidate.Validators
         /// <returns>ValidationResult</returns>
         public static ValidationResult ValidateNotContains(List<string> notcontains)
         {
-            ValidationResult res = new ValidationResult();
+            ValidationResult res = new ();
 
             // null check
             if (notcontains == null || notcontains.Count == 0)

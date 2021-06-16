@@ -611,7 +611,6 @@ namespace CSE.WebValidate
 
                 case SummaryFormat.Json:
                 case SummaryFormat.JsonCamel:
-                    // todo - example pending design review
                     Dictionary<string, object> summary = new ()
                     {
                         { "Date", DateTime.Now },
@@ -625,8 +624,6 @@ namespace CSE.WebValidate
                     break;
 
                 case SummaryFormat.Xml:
-                    // todo - example pending design review
-                    // uncomment command line argument
                     TestSummary res = new ()
                     {
                         ValidationErrorCount = validationFailureCount,

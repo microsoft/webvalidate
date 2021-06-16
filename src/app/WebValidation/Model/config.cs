@@ -13,10 +13,29 @@ namespace CSE.WebValidate
     /// </summary>
     public enum SummaryFormat
     {
+        /// <summary>
+        /// Don't display summary
+        /// </summary>
         None,
+
+        /// <summary>
+        /// Tab Separated Values
+        /// </summary>
         Tsv,
+
+        /// <summary>
+        /// Json
+        /// </summary>
         Json,
+
+        /// <summary>
+        /// Camel cased Json
+        /// </summary>
         JsonCamel,
+
+        /// <summary>
+        /// XML
+        /// </summary>
         Xml,
     }
 
@@ -26,7 +45,7 @@ namespace CSE.WebValidate
     public enum LogFormat
     {
         /// <summary>
-        /// Tab Separated Values (minimum log)
+        /// Tab Separated Values (minimum log) - default
         /// </summary>
         TsvMin,
 
@@ -179,26 +198,9 @@ namespace CSE.WebValidate
         /// <param name="parseResult">system.commandline parse result</param>
         public void SetDefaultValues(ParseResult parseResult = null)
         {
-            // default values are different based on --run-loop
+            // --sleep is different based on --run-loop
             if (parseResult != null)
             {
-                if (parseResult.CommandResult.Children.FirstOrDefault(c => c.Symbol.Name == "log-format") is OptionResult lfRes && lfRes.IsImplicit)
-                {
-                    LogFormat = RunLoop ? LogFormat.Json : LogFormat.TsvMin;
-                }
-
-                if (parseResult.CommandResult.Children.FirstOrDefault(c => c.Symbol.Name == "verbose") is OptionResult vRes && vRes.IsImplicit)
-                {
-                    if (RunLoop)
-                    {
-                        Verbose = LogFormat == LogFormat.Json || LogFormat == LogFormat.JsonCamel;
-                    }
-                    else
-                    {
-                        Verbose = false;
-                    }
-                }
-
                 if (parseResult.CommandResult.Children.FirstOrDefault(c => c.Symbol.Name == "sleep") is OptionResult sleepRes && sleepRes.IsImplicit)
                 {
                     Sleep = RunLoop ? 1000 : 0;

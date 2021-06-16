@@ -53,7 +53,7 @@ namespace CSE.WebValidate
             {
                 string path = config.BaseUrl + file;
 
-                using HttpClient client = new HttpClient();
+                using HttpClient client = new ();
 
                 try
                 {
@@ -129,7 +129,7 @@ namespace CSE.WebValidate
         private List<Request> LoadValidateRequests(List<string> fileList)
         {
             List<Request> list;
-            List<Request> fullList = new List<Request>();
+            List<Request> fullList = new ();
 
             // read each json file
             foreach (string inputFile in fileList)
@@ -183,7 +183,7 @@ namespace CSE.WebValidate
             {
                 List<Request> list = null;
                 InputJson data = null;
-                List<Request> l2 = new List<Request>();
+                List<Request> l2 = new ();
 
                 // parse the json
                 data = JsonSerializer.Deserialize<InputJson>(json, App.JsonOptions);
