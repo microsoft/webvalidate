@@ -53,7 +53,7 @@ namespace CSE.WebValidate
             {
                 string path = config.BaseUrl + file;
 
-                using HttpClient client = new HttpClient();
+                using HttpClient client = new ();
 
                 try
                 {
@@ -129,7 +129,7 @@ namespace CSE.WebValidate
         private List<Request> LoadValidateRequests(List<string> fileList)
         {
             List<Request> list;
-            List<Request> fullList = new List<Request>();
+            List<Request> fullList = new ();
 
             // read each json file
             foreach (string inputFile in fileList)
@@ -165,7 +165,7 @@ namespace CSE.WebValidate
 
             if (!string.IsNullOrWhiteSpace(content))
             {
-                return JsonSerializer.Deserialize<Dictionary<string, PerfTarget>>(content, App.JsonSerializerOptions);
+                return JsonSerializer.Deserialize<Dictionary<string, PerfTarget>>(content, App.JsonOptions);
             }
 
             // return empty dictionary - perf targets are not required
@@ -183,24 +183,10 @@ namespace CSE.WebValidate
             {
                 List<Request> list = null;
                 InputJson data = null;
-                List<Request> l2 = new List<Request>();
+                List<Request> l2 = new ();
 
-                try
-                {
-                    // try to parse the json
-                    data = JsonSerializer.Deserialize<InputJson>(json, App.JsonSerializerOptions);
-                }
-                catch
-                {
-                    // try to read the array of Requests style document
-                    // this is being deprecated in v2.0
-                    list = JsonSerializer.Deserialize<List<Request>>(json, App.JsonSerializerOptions);
-
-                    // display deprecation error
-                    Console.ForegroundColor = ConsoleColor.Yellow;
-                    Console.Error.WriteLine("This file format is deprecated in v2.0. Please check readme.md");
-                    Console.ResetColor();
-                }
+                // parse the json
+                data = JsonSerializer.Deserialize<InputJson>(json, App.JsonOptions);
 
                 // replace placedholders with environment variables
                 if (data != null && data.Requests.Count > 0)
@@ -213,7 +199,7 @@ namespace CSE.WebValidate
                         }
 
                         // reload from json
-                        data = JsonSerializer.Deserialize<InputJson>(json, App.JsonSerializerOptions);
+                        data = JsonSerializer.Deserialize<InputJson>(json, App.JsonOptions);
                     }
 
                     list = data.Requests;

@@ -5,41 +5,9 @@
 
 Web Validate (WebV) is a web request validation tool that we use to run end-to-end tests and long-running smoke tests.
 
-## Deprecation Warnings
-
-- This release and future releases are published to `ghcr.io/retaildevcrews/webvalidate`
-
-- This release is the last release supporting `dotnet 3.1`
-  - The 2.0 release will require `dotnet 5.0`
-  - You can continue to use this release by specifying the version
-
-- `--json-log` is deprecated in v2.0
-  - use `--log-format json` instead (starting with this release)
-
-- `--summary-minutes` is deprecated in v2.0
-  - use some type of log to store and summarize the results
-
-- `--max-concurrent` is deprecated in v2.0
-  - use `--sleep` and `--timeout` to control connections
-
-- Test files must migrate to the new `json format`
-  - This is a breaking change in the 2.0 release
-
-```json
-
-{
-  "requests":
-  [
-    {"path": ...}
-    {"path": ...}
-  ]
-}
-
-```
-
 ## WebV Quick Start
 
-WebV is published as a dotnet package and can be installed as a dotnet global tool. WebV can also be run as a docker container from docker hub. If you have dotnet core sdk installed, running as a dotnet global tool is the simplest and fastest way to run WebV.
+WebV is published as a dotnet package and can be installed as a dotnet global tool. WebV can also be run as a docker container. If you have dotnet core sdk installed, running as a dotnet global tool is the simplest and fastest way to run WebV.
 
 ## Running as a dotnet global tool
 
@@ -88,12 +56,7 @@ Experiment with WebV
 # get help
 webv --help
 
-```
-
-Make sure to change back to the root of the repo
-
-```bash
-
+# change back to the root of the repo
 popd
 
 ```
@@ -150,17 +113,17 @@ docker run -it --rm -v MyTestFiles:/app/TestFiles --net=host  ghcr.io/retaildevc
 
 Web Validate uses both environment variables as well as command line options for configuration. Command flags take precedence over environment variables.
 
-Web Validate works in two distinct modes. The default mode processes the input file(s) in sequential order one time and exits. The "run loop" mode runs in a continuous loop until stopped or for the specified duration. Some environment variables and command flags are only valid if run loop is specified and the application will exit and display usage information. Some parameters have different default values depending on the mode of execution.
+Web Validate works in two distinct modes. The default mode processes the input file(s) in sequential order one time and exits. The "run loop" mode runs in a continuous loop until stopped or for the specified duration. Some environment variables and command flags are only valid if run loop is specified and WebV will exit and display usage information. Some parameters have different default values depending on the mode of execution.
 
 ## Integration with Application Monitoring
 
-We use `WebV` and [Azure Container Instances](https://azure.microsoft.com/en-us/services/container-instances/) to run geo-distributed, smoke tests against our Web APIs. These tests run 24 x 7 from multiple Azure regions and provide insight into network latency / health as well as service status.
+We use `WebV` and [Azure Container Instances](https://azure.microsoft.com/en-us/services/container-instances/) to run geo-distributed, tests against our Web APIs. These tests run 24 x 7 from multiple Azure regions and provide insight into network latency / health as well as service status.
 
 By doing this, not only can we ensure against a [large cloud bill](https://hackernoon.com/how-we-spent-30k-usd-in-firebase-in-less-than-72-hours-307490bd24d), but we can track how cloud usage changes over time and ensure application functionality and performance through integration and load testing.
 
 `Azure Container Instances` integrate with [Azure Monitor](https://azure.microsoft.com/en-us/services/monitor/) to provide out-of-the-box monitoring, dashboards and alerts. Setup instructions, sample queries and sample dashboards are available [here](https://github.com/retaildevcrews/helium/blob/main/docs/AppService.md#smoke-test-setup).
 
-We use the `--log-format json` command line option to integrate Docker container logs with `Log Analytics`. The integration is automatic using `Azure Container Instances`.
+We use the `--log-format json` command line option to integrate Docker container logs with `Azure Log Analytics`. The integration is automatic using `Azure Container Instances`.
 
 ### Example Arguments for Long Running Tests
 
@@ -177,17 +140,17 @@ We use the `--log-format json` command line option to integrate Docker container
 ```bash
 
 # continuously run testing for 60 seconds
-# write all results to console (tab delimited)
+# write all results to console as json
 
---run-loop --duration 60 --verbose
+--run-loop --verbose --duration 60
 
 # continuously run twice as many tests against microsoft.com
 # run testing for 60 seconds
---server https://www.microsoft.com https://www.microsoft.com --run-loop --duration 60
+--run-loop --verbose --duration 60 --sleep 500
 
 ```
 
-> Example Dashboard
+### Example Dashboard
 
 ![alt text](./images/dashboard.jpg "WebV Example Dashboard")
 
@@ -204,117 +167,123 @@ We use the `--log-format json` command line option to integrate Docker container
   - -h
   - other parameters are ignored
   - environment variables are ignored
-- --dry-run
+- --dry-run bool
   - -d
-  - validate parameters but do not execute tests
+    - validate parameters but do not execute tests
 - --server string1 [string2 string3]
-  - -s SERVER
-  - server Url (i.e. `https://www.microsoft.com`)
-  - `required`
+  - -s
+  - SERVER
+    - server Url (i.e. `https://www.microsoft.com`)
+    - `required`
 - --files file1 [file2 file3 ...]
-  - -f FILES
-  - one or more json test files
-  - default location current directory
-  - `required`
-- --base-url
-  - -u BASE_URL
-  - base URL and optional path to the test files (http or https)
-    - ex: `https://raw.githubusercontent.com/microsoft/webvalidate/main/TestFiles/`
+  - -f
+  - FILES
+    - one or more json test files
+    - default location current directory
+    - `required`
+- --base-url string
+  - -u
+  - BASE_URL
+    - base URL and optional path to the test files (http or https)
+      - ex: `https://raw.githubusercontent.com/microsoft/webvalidate/main/TestFiles/`
 - --delay-start int
   - DELAY_START
-  - delay starting the validation test for int seconds
-  - default `0`
-- --log-format
+    - delay starting the validation test for int seconds
+    - default `0`
+- --log-format enum
   - LOG_FORMAT
-  - format of log items (TSV (default), JSON, None)
-  - LogFormat.None conflicts with --verbose and will throw an error
-  - LogFormat.Json implies --verbose true
+    - format of log items (TsvMin, Tsv, Json, JsonCamel, None)
+    - default `TsvMin`
+    - LogFormat.None conflicts with --verbose and will throw a parse error
 - --max-errors int
   - MAX_ERRORS
-  - end test after max-errors
-  - if --max-errors is exceeded, WebV will exit with non-zero exit code
-  - default `10`
-- --region
+    - end test after max-errors
+    - if --max-errors is exceeded, WebV will exit with non-zero exit code
+    - default `10`
+- --region string
   - REGION
-  - deployment Region for logging (user defined)
-  - default: `null`
+    - deployment Region for logging (user defined)
+    - default: `null`
 - --sleep int
-  - -l SLEEP
-  - number of milliseconds to sleep between requests
-  - default `0`
-- --strict-json
-  - -j STRICT_JSON
-  - use strict RFC rules when parsing the json
-  - json property names are case sensitive
-  - exceptions will occur for
-    - trailing commas in json arrays
-    - comments in json
-  - default `false`
-- --tag
+  - -l
+  - SLEEP
+    - number of milliseconds to sleep between requests
+    - default `0`
+- --strict-json bool
+  - -j
+  - STRICT_JSON
+    - use strict RFC rules when parsing json
+    - json property names are case sensitive
+    - exceptions will occur for
+      - trailing commas in json arrays
+      - comments in json
+    - default `false`
+- --summary
+  - SUMMARY
+    - Display test summary (None, Tsv, Json, JsonCamel, XML)
+    - default `None`
+- --tag string
   - TAG
-  - user defined tag to include in logs and App Insights
-    - can be used to identify location, instance, etc.
+    - user defined tag to include in logs and App Insights
+      - can be used to identify location, instance, etc.
 - --timeout int
-  - -T TIMEOUT
-  - HTTP request timeout in seconds
-  - default `30 sec`
-- --verbose
+  - -t
+  - TIMEOUT
+    - HTTP request timeout in seconds
+    - default `30 sec`
+- --verbose bool
   - VERBOSE
-  - log 200 and 300 results as well as errors
-  - default `true`
-- --verbose-errors
+    - log 200 and 300 results as well as errors
+    - default `false`
+- --verbose-errors bool
   - VERBOSE_ERRORS
-  - display validation error messages
-  - default `false`
+    - display validation error messages
+    - default `false`
 - --webv-prefix string
   - WEBV_PREFIX
-  - prefix to add to server values that don't begin with http
-  - default `https://`
+    - prefix to add to server values that don't begin with http
+    - default `https://`
 - --webv-suffix string
   - WEBV_SUFFIX
-  - suffix to add to server values that don't begin with http
-  - default `.azurewebsites.net`
-- --zone
+    - suffix to add to server values that don't begin with http
+    - default `.azurewebsites.net`
+- --zone string
   - ZONE
-  - deployment Zone for logging (user defined)
-  - default: `null`
-- --json-log
-  - `DEPRECATED - use --log-format json`
+    - deployment Zone for logging (user defined)
+    - default: `null`
 
 ### RunLoop Mode Parameters
 
 - Some parameters are only valid if `--run-loop` is specified
 - Some parameters have different defaults if `--run-loop` is specified
 
-- --run-loop
-  - -r RUN_LOOP
-  - runs the test in a continuous loop
+- --run-loop bool
+  - -r
+  - RUN_LOOP
+    - runs the test in a continuous loop
 - --duration int
   - DURATION
-  - run test for duration seconds then exit
-  - default `0 (run until OS signal)`
-- --prometheus
+    - run test for duration seconds then exit
+    - default `0 (run until OS signal)`
+- --port int
+  - -p
+  - PORT
+    - Port to use for web endpoints
+    - valid: `0 < port < 64K`
+    - default: `8080`
+- --prometheus bool
   - PROMETHEUS
-  - `not implemented`
-  - expose the :8080/metrics end point for Prometheus
-  - default: `false`
-- --random
+    - expose the /metrics end point for Prometheus
+    - default: `false`
+- --random bool
   - RANDOM
-  - randomize requests
-  - default `false`
+    - randomize requests
+    - default `false`
 - --sleep int
-  -l SLEEP
-  - number of milliseconds to sleep between requests
-  - default `1000`
-- --verbose
-  - VERBOSE
-  - log 200 and 300 results as well as errors
-  - default `false`
-    - LogFormat.Json default: `true`
-- --max-concurrent int
-  - `Deprecated in 2.0`
-- --summary-minutes
-  - `Deprecated in 2.0`
+  - -l
+  - SLEEP
+    - number of milliseconds to sleep between requests
+    - default `1000`
 
 ## Running as part of an CI-CD pipeline
 
@@ -672,6 +641,33 @@ The msft.json file contains sample validation tests that will will successfully 
 
 ```
 
+## Deprecation Warnings
+
+> Breaking changes in v2.0
+
+- The Docker repo is `ghcr.io/retaildevcrews/webvalidate`
+- This release requires `dotnet 5.0`
+- `--json-log` was removed
+  - use `--log-format json` or `--log-format jsonCamel` instead
+- `--summary-minutes` was removed
+  - use some type of log to store and summarize the results
+- `--max-concurrent` was removed
+  - use `--sleep` and `--timeout` to control connections
+- `--verbose` always defaults to `false`
+- Test files require the current `json format`
+
+  ```json
+
+  {
+    "requests":
+    [
+      {"path": ...}
+      {"path": ...}
+    ]
+  }
+
+  ```
+
 ## Contributing
 
 This project welcomes contributions and suggestions. Most contributions require you to agree to a
@@ -685,3 +681,13 @@ provided by the bot. You will only need to do this once across all repos using o
 This project has adopted the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/).
 For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or
 contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional questions or comments.
+
+## Trademarks
+
+This project may contain trademarks or logos for projects, products, or services.
+
+Authorized use of Microsoft trademarks or logos is subject to and must follow [Microsoft's Trademark & Brand Guidelines](https://www.microsoft.com/en-us/legal/intellectualproperty/trademarks/usage/general).
+
+Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.
+
+Any use of third-party trademarks or logos are subject to those third-party's policies.

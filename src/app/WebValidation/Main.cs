@@ -6,11 +6,13 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Net.Http;
 using System.Text;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using CSE.WebValidate.Model;
 using CSE.WebValidate.Validators;
 using Microsoft.CorrelationVector;
+using Prometheus;
 
 namespace CSE.WebValidate
 {
@@ -19,8 +21,14 @@ namespace CSE.WebValidate
     /// </summary>
     public partial class WebV
     {
+        // Prometheus objects
+        private static readonly List<string> PrometheusLabels = new () { "status", "server", "failed" };
+        private static Histogram requestDuration = null;
+        private static Summary requestSummary = null;
+
         private static List<Request> requestList;
-        private readonly Dictionary<string, PerfTarget> targets = new Dictionary<string, PerfTarget>();
+
+        private readonly Dictionary<string, PerfTarget> targets = new ();
         private Config config;
 
         /// <summary>
@@ -52,6 +60,74 @@ namespace CSE.WebValidate
         /// Gets UtcNow as an ISO formatted date string
         /// </summary>
         public static string Now => DateTime.UtcNow.ToString("o", CultureInfo.InvariantCulture);
+
+        /// <summary>
+        /// Gets the Prometheus Histogram object
+        /// </summary>
+        public Histogram RequestDuration
+        {
+            get
+            {
+                if (config.Prometheus && requestDuration == null)
+                {
+                    if (!string.IsNullOrWhiteSpace(config.Region))
+                    {
+                        PrometheusLabels.Add("region");
+                    }
+
+                    if (!string.IsNullOrWhiteSpace(config.Zone))
+                    {
+                        PrometheusLabels.Add("zone");
+                    }
+
+                    requestDuration = Metrics.CreateHistogram(
+                    "WebVDuration",
+                    "Histogram of WebV request duration",
+                    new HistogramConfiguration
+                    {
+                        Buckets = Histogram.ExponentialBuckets(1, 2, 10),
+                        LabelNames = PrometheusLabels.ToArray(),
+                    });
+                }
+
+                return requestDuration;
+            }
+        }
+
+        /// <summary>
+        /// Gets the Prometheus Summary object
+        /// </summary>
+        public Summary RequestSummary
+        {
+            get
+            {
+                if (config.Prometheus && requestSummary == null)
+                {
+                    if (!string.IsNullOrWhiteSpace(config.Region))
+                    {
+                        PrometheusLabels.Add("region");
+                    }
+
+                    if (!string.IsNullOrWhiteSpace(config.Zone))
+                    {
+                        PrometheusLabels.Add("zone");
+                    }
+
+                    requestSummary = Metrics.CreateSummary(
+                        "WebVSummary",
+                        "Summary of WebV request duration",
+                        new SummaryConfiguration
+                        {
+                            SuppressInitialValue = true,
+                            MaxAge = TimeSpan.FromMinutes(5),
+                            Objectives = new List<QuantileEpsilonPair> { new QuantileEpsilonPair(.9, .0), new QuantileEpsilonPair(.95, .0), new QuantileEpsilonPair(.99, .0), new QuantileEpsilonPair(1.0, .0) },
+                            LabelNames = PrometheusLabels.ToArray(),
+                        });
+                }
+
+                return requestSummary;
+            }
+        }
 
         /// <summary>
         /// Run the validation test one time
@@ -86,24 +162,19 @@ namespace CSE.WebValidate
                     }
                 }
 
-                using HttpClient client = OpenClient(ndx);
+                using HttpClient client = OpenHttpClient(config.Server[ndx]);
 
                 // send each request
                 foreach (Request r in requestList)
                 {
+                    // stop on signal or after MaxErrors
+                    if (token.IsCancellationRequested || (errorCount + validationFailureCount) >= config.MaxErrors)
+                    {
+                        break;
+                    }
+
                     try
                     {
-                        if (token.IsCancellationRequested)
-                        {
-                            break;
-                        }
-
-                        // stop after MaxErrors errors
-                        if ((errorCount + validationFailureCount) >= config.MaxErrors)
-                        {
-                            break;
-                        }
-
                         // execute the request
                         pl = await ExecuteRequest(client, config.Server[ndx], r).ConfigureAwait(false);
 
@@ -111,8 +182,7 @@ namespace CSE.WebValidate
                         {
                             errorCount++;
                         }
-
-                        if (!pl.Failed && !pl.Validated)
+                        else if (!pl.Validated)
                         {
                             validationFailureCount++;
                         }
@@ -142,30 +212,11 @@ namespace CSE.WebValidate
                     }
                 }
 
-                if (config.LogFormat == LogFormat.Tsv)
-                {
-                    // log validation failure count
-                    if (validationFailureCount > 0)
-                    {
-                        Console.WriteLine($"Validation Errors: {validationFailureCount}");
-                    }
-
-                    // log error count
-                    if (errorCount > 0)
-                    {
-                        Console.WriteLine($"Failed: {errorCount} Errors");
-                    }
-
-                    // log MaxErrors exceeded
-                    if (errorCount + validationFailureCount >= config.MaxErrors)
-                    {
-                        Console.Write($"Failed: Errors: {errorCount + validationFailureCount} >= MaxErrors: {config.MaxErrors}");
-                    }
-                }
+                DisplaySummary(validationFailureCount, errorCount);
             }
 
             // return non-zero exit code on failure
-            return errorCount > 0 || validationFailureCount >= config.MaxErrors ? errorCount + validationFailureCount : 0;
+            return (errorCount > 0 || validationFailureCount >= config.MaxErrors) ? errorCount + validationFailureCount : 0;
         }
 
         /// <summary>
@@ -177,11 +228,6 @@ namespace CSE.WebValidate
         public int RunLoop(Config config, CancellationToken token)
         {
             this.config = config ?? throw new ArgumentNullException(nameof(config));
-
-            if (token == null)
-            {
-                throw new ArgumentNullException(nameof(token));
-            }
 
             DateTime dtMax = DateTime.MaxValue;
 
@@ -198,22 +244,18 @@ namespace CSE.WebValidate
 
             DisplayStartupMessage(config);
 
-            List<TimerRequestState> states = new List<TimerRequestState>();
+            List<TimerRequestState> states = new ();
 
             foreach (string svr in config.Server)
             {
                 // create the shared state
-                TimerRequestState state = new TimerRequestState
+                TimerRequestState state = new ()
                 {
                     Server = svr,
                     Client = OpenHttpClient(svr),
                     MaxIndex = requestList.Count,
                     Test = this,
                     RequestList = requestList,
-
-                    // current hour
-                    CurrentLogTime = new DateTime(DateTime.UtcNow.Year, DateTime.UtcNow.Month, DateTime.UtcNow.Day, DateTime.UtcNow.Hour, 0, 0),
-
                     Token = token,
                 };
 
@@ -224,25 +266,8 @@ namespace CSE.WebValidate
 
                 states.Add(state);
 
-                state.Run(config.Sleep, config.MaxConcurrent);
-            }
-
-            int frequency = int.MaxValue;
-            int initialDelay = int.MaxValue;
-
-            if (config.SummaryMinutes > 0)
-            {
-                foreach (TimerRequestState trs in states)
-                {
-                    // get current summary
-                    int cMin = DateTime.UtcNow.Minute / config.SummaryMinutes * config.SummaryMinutes;
-                    trs.CurrentLogTime = trs.CurrentLogTime.AddMinutes(cMin);
-                    initialDelay = (int)trs.CurrentLogTime.AddMinutes(config.SummaryMinutes).Subtract(DateTime.UtcNow).TotalMilliseconds;
-                    frequency = config.SummaryMinutes * 60 * 1000;
-
-                    // start the summary log timer
-                    using Timer logTimer = new Timer(new TimerCallback(SummaryLogTask), trs, initialDelay, frequency);
-                }
+                // run the timer proc
+                state.Run(config.Sleep);
             }
 
             try
@@ -325,7 +350,7 @@ namespace CSE.WebValidate
             ValidationResult valid;
 
             // send the request
-            using (HttpRequestMessage req = new HttpRequestMessage(new HttpMethod(request.Verb), request.Path))
+            using (HttpRequestMessage req = new (new HttpMethod(request.Verb), request.Path))
             {
                 DateTime dt = DateTime.UtcNow;
 
@@ -339,13 +364,13 @@ namespace CSE.WebValidate
                 }
 
                 // create correlation vector and add to headers
-                CorrelationVector cv = new CorrelationVector(CorrelationVectorVersion.V2);
+                CorrelationVector cv = new (CorrelationVectorVersion.V2);
                 req.Headers.Add(CorrelationVector.HeaderName, cv.Value);
 
                 // add the body to the http request
-                if (!string.IsNullOrEmpty(request.Body))
+                if (!string.IsNullOrWhiteSpace(request.Body))
                 {
-                    if (!string.IsNullOrEmpty(request.ContentMediaType))
+                    if (!string.IsNullOrWhiteSpace(request.ContentMediaType))
                     {
                         req.Content = new StringContent(request.Body, Encoding.UTF8, request.ContentMediaType);
                     }
@@ -381,6 +406,32 @@ namespace CSE.WebValidate
             // log the test
             LogToConsole(request, valid, perfLog);
 
+            if (config.Prometheus)
+            {
+                // map status code to reduce histogram size
+                string status = GetPrometheusCode(perfLog.StatusCode);
+
+                List<string> labels = new ()
+                {
+                    status,
+                    perfLog.Server,
+                    perfLog.Failed.ToString(),
+                };
+
+                if (!string.IsNullOrWhiteSpace(config.Region))
+                {
+                    labels.Add(config.Region);
+                }
+
+                if (!string.IsNullOrWhiteSpace(config.Zone))
+                {
+                    labels.Add(config.Zone);
+                }
+
+                RequestDuration.WithLabels(labels.ToArray()).Observe(perfLog.Duration);
+                RequestSummary.WithLabels(labels.ToArray()).Observe(perfLog.Duration);
+            }
+
             return perfLog;
         }
 
@@ -403,19 +454,22 @@ namespace CSE.WebValidate
             }
 
             // map the parameters
-            PerfLog log = new PerfLog(validationResult.ValidationErrors)
+            PerfLog log = new (validationResult.ValidationErrors)
             {
                 Server = server,
                 Tag = string.IsNullOrWhiteSpace(request.Tag) ? config.Tag : request.Tag,
                 Path = request?.Path ?? string.Empty,
                 StatusCode = statusCode,
                 Category = request?.PerfTarget?.Category ?? string.Empty,
+                TestName = request.TestName,
                 Validated = !validationResult.Failed && validationResult.ValidationErrors.Count == 0,
                 Duration = duration,
                 ContentLength = contentLength,
                 Failed = validationResult.Failed,
                 Verb = request.Verb,
                 CorrelationVector = correlationVector,
+                Region = config.Region,
+                Zone = config.Zone,
             };
 
             // determine the Performance Level based on category
@@ -425,7 +479,7 @@ namespace CSE.WebValidate
                 PerfTarget target = targets[log.Category];
 
                 if (target != null &&
-                    !string.IsNullOrEmpty(target.Category) &&
+                    !string.IsNullOrWhiteSpace(target.Category) &&
                     target.Quartiles != null &&
                     target.Quartiles.Count == 3)
                 {
@@ -447,12 +501,72 @@ namespace CSE.WebValidate
             return log;
         }
 
+        // convert http status code
+        private static string GetPrometheusCode(int statusCode)
+        {
+            if (statusCode >= 500)
+            {
+                return "Error";
+            }
+            else if (statusCode == 429)
+            {
+                return "Retry";
+            }
+            else if (statusCode >= 400)
+            {
+                return "Warn";
+            }
+            else if (statusCode >= 300)
+            {
+                return "Redirect";
+            }
+            else
+            {
+                return "OK";
+            }
+        }
+
         // Display the startup message for RunLoop
         private static void DisplayStartupMessage(Config config)
         {
             // don't display if json logging is on
-            if (config.LogFormat == LogFormat.Json || config.SummaryMinutes > 0)
+            if (config.LogFormat == LogFormat.Json || config.LogFormat == LogFormat.JsonCamel)
             {
+                Dictionary<string, object> startupDict = new ()
+                {
+                    { "Date", DateTime.UtcNow },
+                    { "EventType", "Startup" },
+                    { "Version", Version.AssemblyVersion },
+                    { "Host", string.Join(' ', config.Server) },
+                    { "Files", string.Join(' ', config.Files) },
+                    { "Sleep", config.Sleep },
+                    { "Duration", config.Duration },
+                    { "Random", config.Random },
+                    { "Verbose", config.Verbose },
+                };
+
+                if (!string.IsNullOrWhiteSpace(config.BaseUrl))
+                {
+                    startupDict.Add("Tag", config.BaseUrl);
+                }
+
+                if (!string.IsNullOrWhiteSpace(config.Tag))
+                {
+                    startupDict.Add("Tag", config.Tag);
+                }
+
+                if (!string.IsNullOrWhiteSpace(config.Region))
+                {
+                    startupDict.Add("Region", config.Region);
+                }
+
+                if (!string.IsNullOrWhiteSpace(config.Zone))
+                {
+                    startupDict.Add("Zone", config.Zone);
+                }
+
+                Console.WriteLine(JsonSerializer.Serialize(startupDict, App.JsonOptions));
+
                 return;
             }
 
@@ -460,19 +574,18 @@ namespace CSE.WebValidate
             msg += $"\n\t\tVersion: {Version.AssemblyVersion}";
             msg += $"\n\t\tHost: {string.Join(' ', config.Server)}";
 
-            if (!string.IsNullOrEmpty(config.Tag))
+            if (!string.IsNullOrWhiteSpace(config.Tag))
             {
                 msg += $"\n\t\tTag: {config.Tag}";
             }
 
-            if (!string.IsNullOrEmpty(config.BaseUrl))
+            if (!string.IsNullOrWhiteSpace(config.BaseUrl))
             {
                 msg += $"\n\t\tBaseUrl: {config.BaseUrl}";
             }
 
             msg += $"\n\t\tFiles: {string.Join(' ', config.Files)}";
             msg += $"\n\t\tSleep: {config.Sleep}";
-            msg += $"\n\t\tMaxConcurrent: {config.MaxConcurrent}";
 
             if (config.Duration > 0)
             {
@@ -485,76 +598,67 @@ namespace CSE.WebValidate
             Console.WriteLine(msg + "\n");
         }
 
-        /// <summary>
-        /// Open an http client
-        /// </summary>
-        /// <param name="index">index of base URL</param>
-        private HttpClient OpenClient(int index)
+        // display summary results
+        private void DisplaySummary(int validationFailureCount, int errorCount)
         {
-            if (index < 0 || index >= config.Server.Count)
-            {
-                throw new ArgumentException($"Index out of range: {index}", nameof(index));
-            }
+            string status = (errorCount + validationFailureCount >= config.MaxErrors) ? "Test Failed" : "Test Completed";
 
-            return OpenHttpClient(config.Server[index]);
+            switch (config.Summary)
+            {
+                case SummaryFormat.Tsv:
+                    Console.WriteLine($"{status}\tErrors\t{errorCount}\tValidationErrorCount\t{validationFailureCount}\tMaxErrors\t{config.MaxErrors}");
+                    break;
+
+                case SummaryFormat.Json:
+                case SummaryFormat.JsonCamel:
+                    Dictionary<string, object> summary = new ()
+                    {
+                        { "Date", DateTime.Now },
+                        { "Status", status },
+                        { "ValidationErrorCount", validationFailureCount },
+                        { "ErrorCount", errorCount },
+                        { "MaxErrors", config.MaxErrors },
+                    };
+
+                    Console.WriteLine(JsonSerializer.Serialize(summary, App.JsonOptions));
+                    break;
+
+                case SummaryFormat.Xml:
+                    TestSummary res = new ()
+                    {
+                        ValidationErrorCount = validationFailureCount,
+                        ErrorCount = errorCount,
+                        MaxErrors = config.MaxErrors,
+                    };
+
+                    res.WriteXmlToConsole();
+                    break;
+
+                case SummaryFormat.None:
+                    if (config.LogFormat == LogFormat.TsvMin)
+                    {
+                        Console.WriteLine($"{status}\tErrors\t{errorCount}\tValidationErrorCount\t{validationFailureCount}\tMaxErrors\t{config.MaxErrors}");
+                    }
+
+                    break;
+
+                default:
+                    break;
+            }
         }
 
-        /// <summary>
-        /// Opens and configures the shared HttpClient
-        ///
-        /// Disposed in IDispose
-        /// </summary>
-        /// <returns>HttpClient</returns>
+        // Opens and configures an HttpClient
         private HttpClient OpenHttpClient(string host)
         {
-            HttpClient client = new HttpClient(new HttpClientHandler { AllowAutoRedirect = false })
+            HttpClient client = new (new HttpClientHandler { AllowAutoRedirect = false })
             {
                 Timeout = new TimeSpan(0, 0, config.Timeout),
                 BaseAddress = new Uri(host),
             };
+
             client.DefaultRequestHeaders.Add("User-Agent", $"webv/{Version.ShortVersion}");
 
             return client;
-        }
-
-        // Summarize the requests for the hour
-        private void SummaryLogTask(object timerState)
-        {
-            if (config.SummaryMinutes < 1)
-            {
-                return;
-            }
-
-            if (timerState is TimerRequestState state)
-            {
-                // exit if cancelled
-                if (state.Token.IsCancellationRequested)
-                {
-                    return;
-                }
-
-                // build the log entry
-                string log = "{ \"logType\": \"summary\", " + $"\"logDate\": \"{state.CurrentLogTime.ToString("o", CultureInfo.InvariantCulture)}Z\", \"tag\": \"{config.Tag}\", ";
-
-                // get the summary values
-                lock (state.Lock)
-                {
-                    log += $"\"requestCount\": {state.Count}, ";
-                    log += $"\"averageDuration\": {(state.Count > 0 ? Math.Round(state.Duration / state.Count, 2) : 0)}, ";
-                    log += $"\"errorCount\": {state.ErrorCount} " + "}";
-
-                    // reset counters
-                    state.Count = 0;
-                    state.Duration = 0;
-                    state.ErrorCount = 0;
-
-                    // set next log time
-                    state.CurrentLogTime = state.CurrentLogTime.AddMinutes(config.SummaryMinutes);
-                }
-
-                // log the summary
-                Console.WriteLine(log);
-            }
         }
 
         // Log the test
@@ -575,79 +679,25 @@ namespace CSE.WebValidate
                 throw new ArgumentNullException(nameof(perfLog));
             }
 
-            switch (config.LogFormat)
+            // always log on error
+            if (config.Verbose || perfLog.StatusCode >= 400 || perfLog.Failed || perfLog.ErrorCount > 0)
             {
-                case LogFormat.Json:
-                    Console.WriteLine(perfLog.ToJson(config.VerboseErrors));
-                    break;
-                case LogFormat.Tsv:
-                    LogToTsv(request, valid, perfLog);
-                    break;
-                case LogFormat.None:
-                    break;
-                default:
-                    break;
-            }
-        }
-
-        // Log the test result to TSV
-        private void LogToTsv(Request request, ValidationResult valid, PerfLog perfLog)
-        {
-            if (request == null)
-            {
-                throw new ArgumentNullException(nameof(request));
-            }
-
-            if (valid == null)
-            {
-                throw new ArgumentNullException(nameof(valid));
-            }
-
-            if (perfLog == null)
-            {
-                throw new ArgumentNullException(nameof(perfLog));
-            }
-
-            if (config.LogFormat == LogFormat.Tsv)
-            {
-                // check XmlSummary
-                if (!config.XmlSummary || (config.XmlSummary && config.Verbose))
+                switch (config.LogFormat)
                 {
-                    // only log 4XX and 5XX status codes unless verbose is true or there were validation errors
-                    if (config.Verbose || perfLog.StatusCode > 399 || valid.Failed || valid.ValidationErrors.Count > 0)
-                    {
-                        // log tab delimited
-                        string log = $"{perfLog.Date.ToString("o", CultureInfo.InvariantCulture)}\t{perfLog.Server}\t{perfLog.StatusCode}\t{valid.ValidationErrors.Count}\t{perfLog.Duration}\t{perfLog.ContentLength}\t{perfLog.CorrelationVector}\t";
-
-                        // log tag if set
-                        if (string.IsNullOrEmpty(perfLog.Tag))
-                        {
-                            perfLog.Tag = "-";
-                        }
-
-                        // default quartile to -
-                        string quartile = "-";
-
-                        if (string.IsNullOrEmpty(perfLog.Category))
-                        {
-                            perfLog.Category = "-";
-                        }
-
-                        if (perfLog.Quartile != null && perfLog.Quartile > 0 && perfLog.Quartile <= 4)
-                        {
-                            quartile = perfLog.Quartile.ToString();
-                        }
-
-                        log += $"{perfLog.Tag}\t{quartile}\t{perfLog.Category}\t{request.Verb}\t{perfLog.Path}";
-
-                        // log error details
-                        if (config.VerboseErrors && valid.ValidationErrors.Count > 0)
-                        {
-                            log += "\n  " + string.Join("\n  ", perfLog.Errors);
-                        }
-
-                        Console.WriteLine(log);
-                    }
+                    case LogFormat.Json:
+                    case LogFormat.JsonCamel:
+                        Console.WriteLine(perfLog.ToJson(config.VerboseErrors, App.JsonOptions));
+                        break;
+                    case LogFormat.Tsv:
+                        Console.WriteLine(perfLog.ToTsv(config.VerboseErrors));
+                        break;
+                    case LogFormat.TsvMin:
+                        Console.WriteLine(perfLog.ToTsvMin(config.VerboseErrors));
+                        break;
+                    case LogFormat.None:
+                        break;
+                    default:
+                        break;
                 }
             }
         }

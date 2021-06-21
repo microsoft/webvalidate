@@ -25,7 +25,7 @@ namespace CSE.WebValidate.Validators
         /// <returns>ValidationResult</returns>
         public static ValidationResult Validate(Request r, HttpResponseMessage response, string body)
         {
-            ValidationResult result = new ValidationResult();
+            ValidationResult result = new ();
 
             if (r == null || r.Validation == null)
             {
@@ -99,7 +99,7 @@ namespace CSE.WebValidate.Validators
         /// <returns>ValidationResult</returns>
         public static ValidationResult Validate(Validation v, string body)
         {
-            ValidationResult result = new ValidationResult();
+            ValidationResult result = new ();
 
             if (v != null)
             {
@@ -128,7 +128,7 @@ namespace CSE.WebValidate.Validators
         /// <returns>ValidationResult</returns>
         public static ValidationResult Validate(List<JsonItem> properties, string body)
         {
-            ValidationResult result = new ValidationResult();
+            ValidationResult result = new ();
 
             // nothing to check
             if (properties == null || properties.Count == 0)
@@ -145,7 +145,7 @@ namespace CSE.WebValidate.Validators
             try
             {
                 // deserialize the json into an IDictionary
-                IDictionary<string, object> dict = JsonSerializer.Deserialize<ExpandoObject>(body, App.JsonSerializerOptions);
+                IDictionary<string, object> dict = JsonSerializer.Deserialize<ExpandoObject>(body, App.JsonOptions);
 
                 // set to new so validation fails
                 if (dict == null)
@@ -209,7 +209,7 @@ namespace CSE.WebValidate.Validators
         /// <returns>ValidationResult</returns>
         public static ValidationResult Validate(JsonArray jArray, string body)
         {
-            ValidationResult result = new ValidationResult();
+            ValidationResult result = new ();
 
             if (jArray == null)
             {
@@ -225,7 +225,7 @@ namespace CSE.WebValidate.Validators
             try
             {
                 // deserialize the json
-                List<dynamic> resList = JsonSerializer.Deserialize<List<dynamic>>(body, App.JsonSerializerOptions);
+                List<dynamic> resList = JsonSerializer.Deserialize<List<dynamic>>(body, App.JsonOptions);
 
                 result.Add(ValidateJsonArrayLength(jArray, resList));
                 result.Add(ValidateForEach(jArray.ForEach, resList));
@@ -253,7 +253,7 @@ namespace CSE.WebValidate.Validators
         /// <returns>ValidationResult</returns>
         public static ValidationResult ValidateStatusCode(int actual, int expected)
         {
-            ValidationResult result = new ValidationResult();
+            ValidationResult result = new ();
 
             if (actual != expected)
             {
@@ -272,7 +272,7 @@ namespace CSE.WebValidate.Validators
         /// <returns>ValidationResult</returns>
         public static ValidationResult ValidateContentType(string actual, string expected)
         {
-            ValidationResult result = new ValidationResult();
+            ValidationResult result = new ();
 
             if (!string.IsNullOrEmpty(expected))
             {
@@ -294,7 +294,7 @@ namespace CSE.WebValidate.Validators
         /// <returns>ValidationResult</returns>
         public static ValidationResult ValidateLength(long actual, Validation v)
         {
-            ValidationResult result = new ValidationResult();
+            ValidationResult result = new ();
 
             // nothing to validate
             if (v == null || (v.Length == null && v.MinLength == null && v.MaxLength == null))
@@ -340,7 +340,7 @@ namespace CSE.WebValidate.Validators
         /// <returns>ValidationResult</returns>
         public static ValidationResult ValidateExactMatch(string exactMatch, string body)
         {
-            ValidationResult result = new ValidationResult();
+            ValidationResult result = new ();
 
             // nothing to validate
             if (exactMatch == null)
@@ -371,7 +371,7 @@ namespace CSE.WebValidate.Validators
         /// <returns>ValidationResult</returns>
         public static ValidationResult ValidateContains(List<string> containsList, string body)
         {
-            ValidationResult result = new ValidationResult();
+            ValidationResult result = new ();
 
             if (containsList == null || containsList.Count == 0)
             {
@@ -405,7 +405,7 @@ namespace CSE.WebValidate.Validators
         /// <returns>ValidationResult</returns>
         public static ValidationResult ValidateNotContains(List<string> notContainsList, string body)
         {
-            ValidationResult result = new ValidationResult();
+            ValidationResult result = new ();
 
             // nothing to validate
             if (notContainsList == null || notContainsList.Count == 0 || string.IsNullOrEmpty(body))
@@ -434,7 +434,7 @@ namespace CSE.WebValidate.Validators
         /// <returns>ValidationResult</returns>
         private static ValidationResult ValidateForEach(List<Validation> validationList, List<dynamic> documentList)
         {
-            ValidationResult result = new ValidationResult();
+            ValidationResult result = new ();
 
             // validate foreach items recursively
             if (validationList != null && validationList.Count > 0)
@@ -445,7 +445,7 @@ namespace CSE.WebValidate.Validators
                     foreach (Validation fe in validationList)
                     {
                         // call validate recursively
-                        result.Add(Validate(fe, JsonSerializer.Serialize(doc, App.JsonSerializerOptions)));
+                        result.Add(Validate(fe, JsonSerializer.Serialize(doc, App.JsonOptions)));
                     }
                 }
             }
@@ -462,8 +462,8 @@ namespace CSE.WebValidate.Validators
         private static ValidationResult ValidateForAny(List<Validation> validationList, List<dynamic> documentList)
         {
             bool isValid;
-            ValidationResult result = new ValidationResult();
-            ValidationResult vr = new ValidationResult();
+            ValidationResult result = new ();
+            ValidationResult vr = new ();
 
             // validate forAny items recursively
             if (validationList != null && validationList.Count > 0)
@@ -476,7 +476,7 @@ namespace CSE.WebValidate.Validators
                     foreach (dynamic doc in documentList)
                     {
                         // call validate recursively
-                        vr = Validate(fa, JsonSerializer.Serialize(doc, App.JsonSerializerOptions));
+                        vr = Validate(fa, JsonSerializer.Serialize(doc, App.JsonOptions));
 
                         // value was found
                         if (!vr.Failed && vr.ValidationErrors.Count == 0)
@@ -505,7 +505,7 @@ namespace CSE.WebValidate.Validators
                                 s = err.Replace("json:", "forAny:", StringComparison.OrdinalIgnoreCase);
                             }
 
-                            ValidationResult res = new ValidationResult();
+                            ValidationResult res = new ();
                             res.ValidationErrors.Add(s);
                             result.Add(res);
                         }
@@ -524,7 +524,7 @@ namespace CSE.WebValidate.Validators
         /// <returns>ValidationResult</returns>
         private static ValidationResult ValidateByIndex(List<JsonPropertyByIndex> byIndexList, List<dynamic> documentList)
         {
-            ValidationResult result = new ValidationResult();
+            ValidationResult result = new ();
 
             // validate array items by index
             if (byIndexList != null && byIndexList.Count > 0)
@@ -551,12 +551,12 @@ namespace CSE.WebValidate.Validators
                         if (property.Field == null)
                         {
                             // set the body to entire doc
-                            fieldBody = JsonSerializer.Serialize(element, App.JsonSerializerOptions);
+                            fieldBody = JsonSerializer.Serialize(element, App.JsonOptions);
                         }
                         else
                         {
                             // set the body to the field
-                            fieldBody = JsonSerializer.Serialize(element.GetProperty(property.Field), App.JsonSerializerOptions);
+                            fieldBody = JsonSerializer.Serialize(element.GetProperty(property.Field), App.JsonOptions);
                         }
 
                         // validate recursively
@@ -601,7 +601,7 @@ namespace CSE.WebValidate.Validators
         /// <returns>ValidationResult</returns>
         private static ValidationResult ValidateJsonArrayLength(JsonArray jArray, List<dynamic> documentList)
         {
-            ValidationResult result = new ValidationResult();
+            ValidationResult result = new ();
 
             // validate count
             if (jArray.Count != null && jArray.Count != documentList.Count)

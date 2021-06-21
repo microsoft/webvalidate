@@ -16,7 +16,7 @@ namespace CSE.WebValidate
     public sealed partial class App
     {
         // capture parse errors from env vars
-        private static readonly List<string> EnvVarErrors = new List<string>();
+        private static readonly List<string> EnvVarErrors = new ();
 
         /// <summary>
         /// Build the RootCommand for parsing
@@ -24,7 +24,7 @@ namespace CSE.WebValidate
         /// <returns>RootCommand</returns>
         public static RootCommand BuildRootCommand()
         {
-            RootCommand root = new RootCommand
+            RootCommand root = new ()
             {
                 Name = "WebValidate",
                 Description = "Validate API responses",
@@ -33,12 +33,15 @@ namespace CSE.WebValidate
 
             root.AddOption(EnvVarOption<List<string>>(new string[] { "--files", "-f" }, "List of files to test (required)", null));
             root.AddOption(EnvVarOption<List<string>>(new string[] { "--server", "-s" }, "Server(s) to test (required)", null));
+            root.AddOption(EnvVarOption<int>(new string[] { "--port", "-p" }, "Port for web listener  (requires --run-loop)", 8080));
             root.AddOption(EnvVarOption(new string[] { "--base-url", "-u" }, "Base url for files", string.Empty));
             root.AddOption(EnvVarOption<int>(new string[] { "--delay-start" }, "Delay test start (seconds)", 0, 0));
             root.AddOption(EnvVarOption<int>(new string[] { "--duration" }, "Test duration (seconds)  (requires --run-loop)", 0, 0));
-            root.AddOption(EnvVarOption(new string[] { "--log-format", "-g" }, "Log format", LogFormat.Tsv));
+            root.AddOption(EnvVarOption(new string[] { "--log-format", "-g" }, "Log format", LogFormat.TsvMin));
             root.AddOption(EnvVarOption<int>(new string[] { "--max-errors" }, "Max validation errors", 10, 0));
+            root.AddOption(EnvVarOption(new string[] { "--prometheus" }, "Send metrics to Prometheus (Not Implemented) (requires --run-loop)", false));
             root.AddOption(EnvVarOption(new string[] { "--random" }, "Run requests randomly (requires --run-loop)", false));
+            root.AddOption(EnvVarOption(new string[] { "--region" }, "Region deployed to (user defined)", string.Empty));
             root.AddOption(EnvVarOption(new string[] { "--run-loop", "-r" }, "Run test in an infinite loop", false));
             root.AddOption(EnvVarOption<int>(new string[] { "--sleep", "-l" }, "Sleep (ms) between each request", 0, 0));
             root.AddOption(EnvVarOption(new string[] { "--strict-json", "-j" }, "Use strict json when parsing", false));
@@ -48,13 +51,10 @@ namespace CSE.WebValidate
             root.AddOption(EnvVarOption(new string[] { "--verbose-errors" }, "Log verbose error messages", false));
             root.AddOption(EnvVarOption(new string[] { "--webv-prefix" }, "Server address prefix", "https://"));
             root.AddOption(EnvVarOption(new string[] { "--webv-suffix" }, "Server address suffix", ".azurewebsites.net"));
-
+            root.AddOption(EnvVarOption(new string[] { "--summary" }, "Display test summary (invalid with --run-loop)", SummaryFormat.None));
+            root.AddOption(EnvVarOption(new string[] { "--zone" }, "Zone deployed to (user defined)", string.Empty));
             root.AddOption(new Option<bool>(new string[] { "--dry-run", "-d" }, "Validates configuration"));
             root.AddOption(new Option<bool>(new string[] { "--version" }, "Displays version and exits"));
-
-            root.AddOption(EnvVarOption(new string[] { "--json-log" }, "Deprecated - Use '--log-format json'", false));
-            root.AddOption(EnvVarOption<int>(new string[] { "--max-concurrent" }, "Deprecated", 100, 1));
-            root.AddOption(EnvVarOption<int>(new string[] { "--summary-minutes" }, "Deprecated", 0, 0));
 
             // these require access to --run-loop so are added at the root level
             root.AddValidator(ValidateRunLoopDependencies);
@@ -62,30 +62,40 @@ namespace CSE.WebValidate
             return root;
         }
 
-        // validate --duration and --random based on --run-loop
+        // validate based on --run-loop
         private static string ValidateRunLoopDependencies(CommandResult result)
         {
-            OptionResult runLoopRes = result.Children.FirstOrDefault(c => c.Symbol.Name == "run-loop") as OptionResult;
-            OptionResult durationRes = result.Children.FirstOrDefault(c => c.Symbol.Name == "duration") as OptionResult;
-            OptionResult randomRes = result.Children.FirstOrDefault(c => c.Symbol.Name == "random") as OptionResult;
-            OptionResult verboseRes = result.Children.FirstOrDefault(c => c.Symbol.Name == "verbose") as OptionResult;
-            OptionResult promRes = result.Children.FirstOrDefault(c => c.Symbol.Name == "prometheus") as OptionResult;
+            string errors = string.Empty;
+
             OptionResult serverRes = result.Children.FirstOrDefault(c => c.Symbol.Name == "server") as OptionResult;
             OptionResult filesRes = result.Children.FirstOrDefault(c => c.Symbol.Name == "files") as OptionResult;
-            OptionResult xmlRes = result.Children.FirstOrDefault(c => c.Symbol.Name == "xml-summary") as OptionResult;
+            OptionResult durationRes = result.Children.FirstOrDefault(c => c.Symbol.Name == "duration") as OptionResult;
             OptionResult formatRes = result.Children.FirstOrDefault(c => c.Symbol.Name == "log-format") as OptionResult;
+            OptionResult portRes = result.Children.FirstOrDefault(c => c.Symbol.Name == "port") as OptionResult;
+
+            bool runLoop = result.Children.FirstOrDefault(c => c.Symbol.Name == "run-loop") is OptionResult runLoopRes && runLoopRes.GetValueOrDefault<bool>();
+            bool random = result.Children.FirstOrDefault(c => c.Symbol.Name == "random") is OptionResult randomRes && randomRes.GetValueOrDefault<bool>();
+            bool prom = result.Children.FirstOrDefault(c => c.Symbol.Name == "prometheus") is OptionResult promRes && promRes.GetValueOrDefault<bool>();
+            bool verbose = result.Children.FirstOrDefault(c => c.Symbol.Name == "verbose") is OptionResult verboseRes && verboseRes.GetValueOrDefault<bool>();
+            bool xml = result.Children.FirstOrDefault(c => c.Symbol.Name == "xml-summary") is OptionResult xmlRes && xmlRes.GetValueOrDefault<bool>();
 
             List<string> servers = serverRes.GetValueOrDefault<List<string>>();
             List<string> files = serverRes.GetValueOrDefault<List<string>>();
-            bool runLoop = runLoopRes.GetValueOrDefault<bool>();
-            int duration = durationRes.GetValueOrDefault<int>();
-            bool random = randomRes.GetValueOrDefault<bool>();
-            bool prom = false;
-            bool verbose = verboseRes.GetValueOrDefault<bool>();
-            bool xml = false;
-            LogFormat logFormat = formatRes.GetValueOrDefault<LogFormat>();
 
-            string errors = string.Empty;
+            int duration = 0;
+            int port = 8080;
+            LogFormat logFormat = LogFormat.TsvMin;
+
+            try
+            {
+                duration = durationRes.GetValueOrDefault<int>();
+                port = portRes.GetValueOrDefault<int>();
+                logFormat = formatRes.GetValueOrDefault<LogFormat>();
+            }
+            catch
+            {
+                // let system.commandline.parser handle the error
+            }
 
             if (servers == null || servers.Count == 0)
             {
@@ -95,6 +105,21 @@ namespace CSE.WebValidate
             if (files == null || files.Count == 0)
             {
                 errors += "--files must be provided\n";
+            }
+
+            if (portRes != null && !portRes.IsImplicit)
+            {
+                if (!runLoop)
+                {
+                    errors += "--run-loop must be true to use --port\n";
+                }
+                else
+                {
+                    if (port < 1 || port >= 64 * 1024)
+                    {
+                        errors += $"--port must be > 0 and < {64 * 1024}";
+                    }
+                }
             }
 
             if (duration > 0 && !runLoop)
@@ -110,11 +135,6 @@ namespace CSE.WebValidate
             if (xml && runLoop)
             {
                 errors += "--xml-summary conflicts with --run-loop\n";
-            }
-
-            if (xml && logFormat == LogFormat.None)
-            {
-                errors += "--xml-summary conflicts with --log-format None\n";
             }
 
             if (verbose && logFormat == LogFormat.None)
@@ -218,7 +238,7 @@ namespace CSE.WebValidate
                 }
             }
 
-            Option<int> opt = new Option<int>(names, () => value, description);
+            Option<int> opt = new (names, () => value, description);
 
             opt.AddValidator((res) =>
             {
@@ -293,11 +313,8 @@ namespace CSE.WebValidate
 
             if (config.RunLoop)
             {
+                Console.WriteLine($"   Port            {config.Port}");
                 Console.WriteLine($"   Prometheus      {config.Prometheus}");
-            }
-
-            if (config.RunLoop)
-            {
                 Console.WriteLine($"   Random          {config.Random}");
             }
 
@@ -320,7 +337,7 @@ namespace CSE.WebValidate
             Console.WriteLine($"   Verbose Errors  {config.VerboseErrors}");
             Console.WriteLine($"   WebV Prefix     {config.WebvPrefix}");
             Console.WriteLine($"   WebV Suffix     {config.WebvSuffix}");
-            Console.WriteLine($"   XML Summary     {config.XmlSummary}");
+            Console.WriteLine($"   XML Summary     {config.Summary}");
 
             if (!string.IsNullOrEmpty(config.Zone))
             {

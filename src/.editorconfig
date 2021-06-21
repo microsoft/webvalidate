@@ -239,6 +239,9 @@ dotnet_diagnostic.SA1600.severity = suggestion
 # SA1601: Partial elements should be documented
 dotnet_diagnostic.SA1601.severity = suggestion
 
+# SA1602: Enum items should be documented
+dotnet_diagnostic.SA1602.severity = suggestion
+
 # SA1629: Documentation text should end with a period
 dotnet_diagnostic.SA1629.severity = none
 

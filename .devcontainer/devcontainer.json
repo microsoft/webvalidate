@@ -1,8 +1,6 @@
 {
   "name": "web-validate",
-  "settings": {
-    "terminal.integrated.shell.linux": "/bin/bash"
-  },
+  "settings": {},
   // Install extensions
   "extensions": [
     "ms-dotnettools.csharp",
@@ -12,6 +10,7 @@
     "streetsidesoftware.code-s",
     "gruntfuggly.todo-tree"
   ],
+
   // Run Bash script in .devcontainer directory
   "postCreateCommand": "/bin/bash ./.devcontainer/post-install.sh"
 }

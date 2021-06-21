@@ -1,7 +1,8 @@
 {
   "requests":
   [
-    {"path":"/api/movies/tt0473188","perfTarget":{"category":"DirectRead"}},
-    {"tag":"tag2", "path":"/api/movies?genre=Animation","perfTarget":{"category":"SearchMovies"},"validation":{"jsonArray":{"count":49}}}
+    {"testName":"tag-test","path":"/api/movies/tt0473188","perfTarget":{"category":"DirectRead"}},
+    {"testName":"tag-test","tag":"tag2", "path":"/api/movies?genre=Animation","perfTarget":{"category":"SearchMovies"},"validation":{"jsonArray":{"count":49}}},
+    {"testName":"tag-test","path":"/foo","perfTarget":{"category":"static"},"validation":{"statusCode":200}}
   ]
 }

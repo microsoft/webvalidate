@@ -1,5 +1,14 @@
 # Change Log
 
+## v2.0.0 - June 2021
+
+- updated to dotnet core 5.0
+- added Prometheus support
+- removed --summary-minutes
+- removed --max-concurrent
+- Requires new json format for test files
+- --verbose always defaults to false
+
 ## v1.7.0 - April 2021
 
 - Docker image moved to `ghcr.io/retaildevcrews/webvalidate`
