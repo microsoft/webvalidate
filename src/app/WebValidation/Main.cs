@@ -692,7 +692,7 @@ namespace CSE.WebValidate
                         Console.WriteLine(perfLog.ToTsv(config.VerboseErrors));
                         break;
                     case LogFormat.TsvMin:
-                        Console.WriteLine(perfLog.ToTsvMin());
+                        Console.WriteLine(perfLog.ToTsvMin(config.VerboseErrors));
                         break;
                     case LogFormat.None:
                         break;

@@ -164,11 +164,18 @@ namespace CSE.WebValidate.Model
         /// <summary>
         /// Gets the tab separated representation of the object (minimum fields)
         /// </summary>
+        /// <param name="verboseErrors">include verbose errors</param>
         /// <returns>string</returns>
-        public string ToTsvMin()
+        public string ToTsvMin(bool verboseErrors)
         {
             // log tab delimited
             string log = $"{Date:s}\t{StatusCode}\t{ErrorCount}\t{Duration}\t{ContentLength}\t{Verb}\t{Path}";
+
+            // log error details
+            if (verboseErrors && ErrorCount > 0)
+            {
+                log += "\n  " + string.Join("\n  ", Errors);
+            }
 
             return log;
         }

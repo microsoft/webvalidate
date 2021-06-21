@@ -212,7 +212,7 @@ We use the `--log-format json` command line option to integrate Docker container
 - --strict-json bool
   - -j
   - STRICT_JSON
-    - use strict RFC rules when parsing the json
+    - use strict RFC rules when parsing json
     - json property names are case sensitive
     - exceptions will occur for
       - trailing commas in json arrays
@@ -654,20 +654,19 @@ The msft.json file contains sample validation tests that will will successfully 
 - `--max-concurrent` was removed
   - use `--sleep` and `--timeout` to control connections
 - `--verbose` always defaults to `false`
-
 - Test files require the current `json format`
 
-```json
+  ```json
 
-{
-  "requests":
-  [
-    {"path": ...}
-    {"path": ...}
-  ]
-}
+  {
+    "requests":
+    [
+      {"path": ...}
+      {"path": ...}
+    ]
+  }
 
-```
+  ```
 
 ## Contributing
 
