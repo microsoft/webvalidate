@@ -1,6 +1,11 @@
 {
   "name": "web-validate",
+  "remoteUser": "akdc",
+  "image": "ghcr.io/retaildevcrews/kind:latest",
+  "runArgs": [ "--init", "--privileged" ],
   "settings": {},
+  "overrideCommand": false,
+  
   // Install extensions
   "extensions": [
     "ms-dotnettools.csharp",
