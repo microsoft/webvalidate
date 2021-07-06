@@ -1,7 +1,7 @@
 {
   "name": "web-validate",
-  "remoteUser": "akdc",
-  "image": "ghcr.io/retaildevcrews/kind:latest",
+  "remoteUser": "vscode",
+  "image": "ghcr.io/retaildevcrews/dind:latest",
   "runArgs": [ "--init", "--privileged" ],
   "settings": {},
   "overrideCommand": false,
