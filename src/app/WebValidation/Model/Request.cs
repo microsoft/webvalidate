@@ -2,6 +2,7 @@
 // Licensed under the MIT License. See LICENSE in the project root for license information.
 
 using System.Collections.Generic;
+using Newtonsoft.Json.Linq;
 
 namespace CSE.WebValidate.Model
 {
@@ -39,7 +40,7 @@ namespace CSE.WebValidate.Model
         /// <summary>
         /// Gets or sets the request body
         /// </summary>
-        public string Body { get; set; }
+        public JObject Body { get; set; }
 
         /// <summary>
         /// Gets the request header dictionary

@@ -70,8 +70,8 @@ namespace CSE.WebValidate.Validators
                 res.ValidationErrors.Add("contentType: ContentType cannot be empty");
             }
 
-            // validate ExactMatch
-            if (v.ExactMatch != null && v.ExactMatch.Length == 0)
+            // validate ExactMatch of Json Object
+            if (v.ExactMatch == null)
             {
                 res.Failed = true;
                 res.ValidationErrors.Add("exactMatch: exactMatch cannot be empty string");

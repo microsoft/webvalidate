@@ -368,15 +368,15 @@ namespace CSE.WebValidate
                 req.Headers.Add(CorrelationVector.HeaderName, cv.Value);
 
                 // add the body to the http request
-                if (!string.IsNullOrWhiteSpace(request.Body))
+                if (request.Body != null)
                 {
                     if (!string.IsNullOrWhiteSpace(request.ContentMediaType))
                     {
-                        req.Content = new StringContent(request.Body, Encoding.UTF8, request.ContentMediaType);
+                        req.Content = new StringContent(request.Body.ToString(), Encoding.UTF8, request.ContentMediaType);
                     }
                     else
                     {
-                        req.Content = new StringContent(request.Body);
+                        req.Content = new StringContent(request.Body.ToString());
                     }
                 }
 

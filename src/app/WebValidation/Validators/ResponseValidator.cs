@@ -8,6 +8,7 @@ using System.Net.Http;
 using System.Runtime.Serialization;
 using System.Text.Json;
 using CSE.WebValidate.Model;
+using Newtonsoft.Json.Linq;
 
 namespace CSE.WebValidate.Validators
 {
@@ -338,7 +339,7 @@ namespace CSE.WebValidate.Validators
         /// <param name="exactMatch">value to match</param>
         /// <param name="body">response body</param>
         /// <returns>ValidationResult</returns>
-        public static ValidationResult ValidateExactMatch(string exactMatch, string body)
+        public static ValidationResult ValidateExactMatch(JObject exactMatch, string body)
         {
             ValidationResult result = new ();
 
@@ -355,9 +356,10 @@ namespace CSE.WebValidate.Validators
             }
 
             // compare values
-            if (body != exactMatch)
+            JObject responseBody = JObject.Parse(body);
+            if (responseBody.ToString() != exactMatch.ToString())
             {
-                result.ValidationErrors.Add($"ExactMatch: {body} : Expected: {exactMatch}");
+                result.ValidationErrors.Add($"ExactMatch: {responseBody.ToString()} : Expected: {exactMatch.ToString()}");
             }
 
             return result;

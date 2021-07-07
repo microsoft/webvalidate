@@ -2,6 +2,7 @@
 // Licensed under the MIT License. See LICENSE in the project root for license information.
 
 using System.Collections.Generic;
+using Newtonsoft.Json.Linq;
 
 namespace CSE.WebValidate.Model
 {
@@ -61,7 +62,7 @@ namespace CSE.WebValidate.Model
         /// <summary>
         /// gets or sets the string that must exactly match the response
         /// </summary>
-        public string ExactMatch { get; set; }
+        public JObject ExactMatch { get; set; }
 
         /// <summary>
         /// gets or sets the json array properties
