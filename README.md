@@ -220,7 +220,9 @@ We use the `--log-format json` command line option to integrate Docker container
     - default `false`
 - --summary
   - SUMMARY
-    - Display test summary (None, Tsv, Json, JsonCamel, XML)
+    - Display test summary (None, Tsv, Json, JsonCamel, Xml)
+    - Xml output is in [JUnit](https://llg.cubic.org/docs/junit/) format
+    - Xml format summary - Creates a temporary json file (temp.json) to keep the details of test runs which is deleted after each run of webv. Works for RunOnce only.
     - default `None`
 - --tag string
   - TAG
