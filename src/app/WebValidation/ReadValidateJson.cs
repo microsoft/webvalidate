@@ -188,7 +188,7 @@ namespace CSE.WebValidate
 
                 // parse the json
                 JObject jsonObject = JObject.Parse(json);
-                var requests = jsonObject["requests"];
+                JToken requests = jsonObject["requests"];
 
                 if (requests != null)
                 {
@@ -196,7 +196,7 @@ namespace CSE.WebValidate
 
                     for (int testCaseNumber = 0; testCaseNumber < length; testCaseNumber++)
                     {
-                        var req = requests[testCaseNumber];
+                        JToken req = requests[testCaseNumber];
                         if (req["contentMediaType"] != null &&
                             req["body"] != null &&
                             req["contentMediaType"].ToString().Contains("application/json") &&
@@ -218,7 +218,7 @@ namespace CSE.WebValidate
                     }
                 }
 
-                var finalBody = jsonObject.ToString();
+                string finalBody = jsonObject.ToString();
                 data = JsonSerializer.Deserialize<InputJson>(finalBody, App.JsonOptions);
 
                 // replace placeholders with environment variables
