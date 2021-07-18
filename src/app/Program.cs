@@ -131,7 +131,24 @@ namespace CSE.WebValidate
                     {
                         // build and run the web host
                         host = BuildWebHost(config.Port);
-                        _ = host.StartAsync(TokenSource.Token);
+                        var t = host.StartAsync(TokenSource.Token);
+
+                        if (t.IsFaulted)
+                        {
+                            // stop and dispose the web host
+                            await host.StopAsync(TimeSpan.FromMilliseconds(100)).ConfigureAwait(false);
+                            host.Dispose();
+                            host = null;
+
+                            Console.WriteLine("\n\nUnabled to start web server\n");
+
+                            if (t.Exception != null)
+                            {
+                                Console.WriteLine(t.Exception.Message);
+                            }
+
+                            return -1;
+                        }
                     }
 
                     // run in a loop
