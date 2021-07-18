@@ -26,6 +26,10 @@ namespace CSE.WebValidate
     {
         // Prometheus objects
         private static readonly List<string> PrometheusLabels = new () { "status", "server", "failed" };
+
+        // Temporary json file Path
+        private static readonly string TempJsonFilePath = "temp/" + Guid.NewGuid() + ".json";
+
         private static Histogram requestDuration = null;
         private static Summary requestSummary = null;
 
@@ -33,9 +37,6 @@ namespace CSE.WebValidate
 
         private readonly Dictionary<string, PerfTarget> targets = new ();
         private Config config;
-
-        // Temporary json file Path
-        private string tempJsonFilePath = "temp/" + Guid.NewGuid() + ".json";
 
         /// <summary>
         /// Initializes a new instance of the <see cref="WebV"/> class
@@ -76,12 +77,14 @@ namespace CSE.WebValidate
             {
                 if (config.Prometheus && requestDuration == null)
                 {
-                    if (!string.IsNullOrWhiteSpace(config.Region))
+                    if (!string.IsNullOrWhiteSpace(config.Region) &&
+                        !PrometheusLabels.Contains("region"))
                     {
                         PrometheusLabels.Add("region");
                     }
 
-                    if (!string.IsNullOrWhiteSpace(config.Zone))
+                    if (!string.IsNullOrWhiteSpace(config.Zone) &&
+                        !PrometheusLabels.Contains("zone"))
                     {
                         PrometheusLabels.Add("zone");
                     }
@@ -109,12 +112,14 @@ namespace CSE.WebValidate
             {
                 if (config.Prometheus && requestSummary == null)
                 {
-                    if (!string.IsNullOrWhiteSpace(config.Region))
+                    if (!string.IsNullOrWhiteSpace(config.Region) &&
+                        !PrometheusLabels.Contains("region"))
                     {
                         PrometheusLabels.Add("region");
                     }
 
-                    if (!string.IsNullOrWhiteSpace(config.Zone))
+                    if (!string.IsNullOrWhiteSpace(config.Zone) &&
+                        !PrometheusLabels.Contains("zone"))
                     {
                         PrometheusLabels.Add("zone");
                     }
@@ -154,7 +159,7 @@ namespace CSE.WebValidate
             int errorCount = 0;
             int validationFailureCount = 0;
 
-            //check if the temp directory exists for the XML summary case
+            // check if the temp directory exists for the XML summary case
             if (config.Summary == SummaryFormat.Xml)
             {
                 if (!Directory.Exists("temp"))
@@ -180,8 +185,9 @@ namespace CSE.WebValidate
                 using HttpClient client = OpenHttpClient(config.Server[ndx]);
 
                 // Start a stopwatch to calculate total time elapsed for a run
-                Stopwatch stopWatch = new Stopwatch();
+                Stopwatch stopWatch = new ();
                 stopWatch.Start();
+
                 // send each request
                 foreach (Request r in requestList)
                 {
@@ -369,6 +375,16 @@ namespace CSE.WebValidate
             PerfLog perfLog;
             ValidationResult valid;
 
+            if (requestDuration == null)
+            {
+                requestDuration = RequestDuration;
+            }
+
+            if (requestSummary == null)
+            {
+                requestSummary = RequestSummary;
+            }
+
             // send the request
             using (HttpRequestMessage req = new (new HttpMethod(request.Verb), request.Path))
             {
@@ -417,10 +433,8 @@ namespace CSE.WebValidate
                     if (config.Summary == SummaryFormat.Xml)
                     {
                         // append perflog to file
-                        using (StreamWriter sw = File.AppendText(tempJsonFilePath))
-                        {
-                            sw.WriteLine(JsonSerializer.Serialize(perfLog));
-                        }
+                        using StreamWriter sw = File.AppendText(TempJsonFilePath);
+                        sw.WriteLine(JsonSerializer.Serialize(perfLog));
                     }
                 }
                 catch (Exception ex)
@@ -429,13 +443,12 @@ namespace CSE.WebValidate
                     valid = new ValidationResult { Failed = true };
                     valid.ValidationErrors.Add($"Exception: {ex.Message}");
                     perfLog = CreatePerfLog(server, request, valid, duration, 0, 500, cv.Value);
+
                     if (config.Summary == SummaryFormat.Xml)
                     {
                         // append to file
-                        using (StreamWriter sw = File.AppendText(tempJsonFilePath))
-                        {
-                            sw.WriteLine(JsonSerializer.Serialize(perfLog));
-                        }
+                        using StreamWriter sw = File.AppendText(TempJsonFilePath);
+                        sw.WriteLine(JsonSerializer.Serialize(perfLog));
                     }
                 }
             }
@@ -662,47 +675,55 @@ namespace CSE.WebValidate
 
                 case SummaryFormat.Xml:
                     // Get all the perf logs from temp folder's guid.json, build the summary format xml and output it to console
-                    TestSuite testSuite = new TestSuite();
-                    testSuite.Failures = errorCount.ToString();
-                    testSuite.Name = "WebVToJUnit";
-                    testSuite.Skipped = "0";
-                    testSuite.Tests = requestList.Count.ToString();
-                    testSuite.Time = totalTestRunDuration.ToString();
-                    List<TestCase> testCaseList = new List<TestCase>();
-                    testSuite.TestCases = testCaseList;
-
-                    if (File.Exists(tempJsonFilePath))
+                    TestSuite testSuite = new ()
                     {
-                        using (StreamReader sr = new StreamReader(tempJsonFilePath))
-                        {
-                            string ln;
-                            while ((ln = sr.ReadLine()) != null)
-                            {
-                                PerfLog perf = JsonSerializer.Deserialize<PerfLog>(ln);
-                                TestCase testCase = new TestCase();
-                                testCase.Name = ((perf.Tag == null) ? string.Empty : (perf.Tag + ": ")) + perf.Verb + ": " + perf.Path;
-                                testCase.ClassName = testCase.Name;
-                                testCase.Time = TimeSpan.FromMilliseconds(perf.Duration).TotalSeconds.ToString();
-                                if (perf.ErrorCount >= 1)
-                                {
-                                    testCase.Failure = new Failure();
-                                    testCase.Failure.Message = string.Join("\n", perf.Errors);
-                                }
-                                else
-                                {
-                                    testCase.SystemOut = string.Empty;
-                                }
+                        Failures = errorCount.ToString(),
+                        Name = "WebVToJUnit",
+                        Skipped = "0",
+                        Tests = requestList.Count.ToString(),
+                        Time = totalTestRunDuration.ToString(),
+                        TestCases = new List<TestCase>(),
+                    };
 
-                                testCaseList.Add(testCase);
+                    if (File.Exists(TempJsonFilePath))
+                    {
+                        using StreamReader sr = new (TempJsonFilePath);
+                        string ln;
+
+                        while ((ln = sr.ReadLine()) != null)
+                        {
+                            PerfLog perf = JsonSerializer.Deserialize<PerfLog>(ln);
+
+                            TestCase testCase = new ()
+                            {
+                                Name = ((perf.Tag == null) ? string.Empty : (perf.Tag + ": ")) + perf.Verb + ": " + perf.Path,
+                                Time = TimeSpan.FromMilliseconds(perf.Duration).TotalSeconds.ToString(),
+                            };
+
+                            testCase.ClassName = testCase.Name;
+
+                            if (perf.ErrorCount >= 1)
+                            {
+                                testCase.Failure = new ()
+                                {
+                                    Message = string.Join("\n", perf.Errors),
+                                };
                             }
+                            else
+                            {
+                                testCase.SystemOut = string.Empty;
+                            }
+
+                            testSuite.TestCases.Add(testCase);
                         }
                     }
 
                     Console.WriteLine(testSuite.ToXml());
+
                     // Delete the temp.json file
-                    if (File.Exists(tempJsonFilePath))
+                    if (File.Exists(TempJsonFilePath))
                     {
-                        File.Delete(tempJsonFilePath);
+                        File.Delete(TempJsonFilePath);
                     }
 
                     break;
