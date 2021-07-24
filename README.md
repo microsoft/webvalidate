@@ -28,7 +28,7 @@ Run a sample validation test against `microsoft.com`
 pushd src/app
 
 # run a test
-webv --server https://www.microsoft.com --files msft.json
+webv --server https://www.microsoft.com --files msft.json --verbose
 
 ```
 
@@ -68,7 +68,7 @@ Run a sample validation test against `microsoft.com`
 ```bash
 
 # run the tests from Docker
-docker run -it --rm ghcr.io/retaildevcrews/webvalidate --server https://www.microsoft.com --files msft.json
+docker run -it --rm ghcr.io/retaildevcrews/webvalidate --server https://www.microsoft.com --files msft.json --verbose
 
 ```
 
