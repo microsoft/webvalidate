@@ -200,6 +200,10 @@ dotnet_naming_style.begins_with_i.capitalization = pascal_case
 # SA0001: XML comment analysis
 dotnet_diagnostic.SA0001.severity = none
 
+# SA1000: The keyword 'new' should be followed by a space
+# this breaks the new format for creating an object
+dotnet_diagnostic.SA1000.severity = none
+
 # SA1005: Single line comments should begin with a space
 dotnet_diagnostic.SA1005.severity = suggestion
 
