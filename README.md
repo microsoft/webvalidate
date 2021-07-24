@@ -37,7 +37,7 @@ Run more complex tests against the GitHub API by using:
 ```bash
 
 # github tests
-webv -s https://api.github.com -f github.json
+webv --server https://api.github.com --files github.json
 
 ```
 
@@ -45,7 +45,7 @@ Run a test that fails validation and causes a non-zero exit code
 
 ```bash
 
-webv -s https://www.microsoft.com -f failOnValidationError.json
+webv --server https://www.microsoft.com --files failOnValidationError.json --verbose-errors
 
 ```
 
@@ -77,7 +77,7 @@ Run more complex tests against the GitHub API by using:
 ```bash
 
 # github tests
-docker run -it --rm ghcr.io/retaildevcrews/webvalidate -s https://api.github.com -f github.json
+docker run -it --rm ghcr.io/retaildevcrews/webvalidate --server https://api.github.com --files github.json
 
 ```
 
@@ -85,7 +85,7 @@ Run a test that fails validation and causes a non-zero exit code
 
 ```bash
 
-docker run -it --rm ghcr.io/retaildevcrews/webvalidate -s https://www.microsoft.com -f failOnValidationError.json
+docker run -it --rm ghcr.io/retaildevcrews/webvalidate --server https://www.microsoft.com --files failOnValidationError.json
 
 ```
 
@@ -438,7 +438,7 @@ export ROBOTS=robots.txt
 export FAVICON=favicon.ico
 
 # run the test
-webv -s https://www.microsoft.com -f envvars.json
+webv -s https://www.microsoft.com --files envvars.json
 
 ```
 
