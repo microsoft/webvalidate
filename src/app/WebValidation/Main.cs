@@ -385,7 +385,7 @@ namespace CSE.WebValidate
             }
 
             // send the request
-            using (HttpRequestMessage req = new (new HttpMethod(request.Verb), request.Path))
+            using (HttpRequestMessage req = new(new HttpMethod(request.Verb), request.Path))
             {
                 DateTime dt = DateTime.UtcNow;
 
@@ -703,7 +703,7 @@ namespace CSE.WebValidate
 
                             if (perf.ErrorCount >= 1)
                             {
-                                testCase.Failure = new ()
+                                testCase.Failure = new()
                                 {
                                     Message = string.Join("\n", perf.Errors),
                                 };
