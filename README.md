@@ -85,7 +85,7 @@ Run a test that fails validation and causes a non-zero exit code
 
 ```bash
 
-docker run -it --rm ghcr.io/retaildevcrews/webvalidate --server https://www.microsoft.com --files failOnValidationError.json
+docker run -it --rm ghcr.io/retaildevcrews/webvalidate --server https://www.microsoft.com --files failOnValidationError.json --verbose-errors
 
 ```
 
