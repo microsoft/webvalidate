@@ -9,6 +9,15 @@ Web Validate (WebV) is a web request validation tool that we use to run end-to-e
 
 WebV is published as a dotnet package and can be installed as a dotnet global tool. WebV can also be run as a docker container. If you have dotnet core sdk installed, running as a dotnet global tool is the simplest and fastest way to run WebV.
 
+There are many web test tools available. The two main differences with WebV are:
+
+- Integrates into a `single pane of glass`
+  - WebV publishes json logs to stdout and stderr
+  - WebV publishes the /metrics endpoint for Prometheus
+  - This allows you to build a single pane of glass that compares `server errors` with `client errors`
+- Deep validation of arbitrary result graphs
+  - WebV is primarily designed for json API testing and can perform `deep validation` on arbitrary json graphs
+
 ## Running as a dotnet global tool
 
 Install WebV as a dotnet global tool
