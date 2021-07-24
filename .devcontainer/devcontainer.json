@@ -17,5 +17,5 @@
   ],
 
   // Run Bash script in .devcontainer directory
-  "postCreateCommand": "/bin/bash ./.devcontainer/post-install.sh"
+  "onCreateCommand": "/bin/bash ./.devcontainer/on-create.sh"
 }
