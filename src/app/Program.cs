@@ -131,7 +131,7 @@ namespace CSE.WebValidate
                     {
                         // build and run the web host
                         host = BuildWebHost(config.Port);
-                        var t = host.StartAsync(TokenSource.Token);
+                        Task t = host.StartAsync(TokenSource.Token);
 
                         if (t.IsFaulted)
                         {
