@@ -337,7 +337,7 @@ namespace CSE.WebValidate
             Console.WriteLine($"   Verbose Errors  {config.VerboseErrors}");
             Console.WriteLine($"   WebV Prefix     {config.WebvPrefix}");
             Console.WriteLine($"   WebV Suffix     {config.WebvSuffix}");
-            Console.WriteLine($"   XML Summary     {config.Summary}");
+            Console.WriteLine($"   Log Summary     {config.Summary}");
 
             if (!string.IsNullOrEmpty(config.Zone))
             {

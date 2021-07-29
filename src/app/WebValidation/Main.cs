@@ -728,13 +728,6 @@ namespace CSE.WebValidate
                     break;
 
                 case SummaryFormat.None:
-                    if (config.LogFormat == LogFormat.TsvMin)
-                    {
-                        Console.WriteLine($"{status}\tErrors\t{errorCount}\tValidationErrorCount\t{validationFailureCount}\tMaxErrors\t{config.MaxErrors}");
-                    }
-
-                    break;
-
                 default:
                     break;
             }
