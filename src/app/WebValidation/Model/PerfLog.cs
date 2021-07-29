@@ -21,6 +21,10 @@ namespace CSE.WebValidate.Model
             Errors = validationErrors;
         }
 
+        public PerfLog()
+        {
+        }
+
         /// <summary>
         /// Gets the Type (defaults to request)
         /// </summary>

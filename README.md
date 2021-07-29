@@ -9,6 +9,15 @@ Web Validate (WebV) is a web request validation tool that we use to run end-to-e
 
 WebV is published as a dotnet package and can be installed as a dotnet global tool. WebV can also be run as a docker container. If you have dotnet core sdk installed, running as a dotnet global tool is the simplest and fastest way to run WebV.
 
+There are many web test tools available. The two main differences with WebV are:
+
+- Integrates into a `single pane of glass`
+  - WebV publishes json logs to stdout and stderr
+  - WebV publishes the /metrics endpoint for Prometheus
+  - This allows you to build a single pane of glass that compares `server errors` with `client errors`
+- Deep validation of arbitrary result graphs
+  - WebV is primarily designed for json API testing and can perform `deep validation` on arbitrary json graphs
+
 ## Running as a dotnet global tool
 
 Install WebV as a dotnet global tool
@@ -28,7 +37,7 @@ Run a sample validation test against `microsoft.com`
 pushd src/app
 
 # run a test
-webv --server https://www.microsoft.com --files msft.json
+webv --server https://www.microsoft.com --files msft.json --verbose
 
 ```
 
@@ -37,7 +46,7 @@ Run more complex tests against the GitHub API by using:
 ```bash
 
 # github tests
-webv -s https://api.github.com -f github.json
+webv --server https://api.github.com --files github.json
 
 ```
 
@@ -45,7 +54,7 @@ Run a test that fails validation and causes a non-zero exit code
 
 ```bash
 
-webv -s https://www.microsoft.com -f failOnValidationError.json
+webv --server https://www.microsoft.com --files failOnValidationError.json --verbose-errors
 
 ```
 
@@ -68,7 +77,7 @@ Run a sample validation test against `microsoft.com`
 ```bash
 
 # run the tests from Docker
-docker run -it --rm ghcr.io/retaildevcrews/webvalidate --server https://www.microsoft.com --files msft.json
+docker run -it --rm ghcr.io/retaildevcrews/webvalidate --server https://www.microsoft.com --files msft.json --verbose
 
 ```
 
@@ -77,7 +86,7 @@ Run more complex tests against the GitHub API by using:
 ```bash
 
 # github tests
-docker run -it --rm ghcr.io/retaildevcrews/webvalidate -s https://api.github.com -f github.json
+docker run -it --rm ghcr.io/retaildevcrews/webvalidate --server https://api.github.com --files github.json
 
 ```
 
@@ -85,7 +94,7 @@ Run a test that fails validation and causes a non-zero exit code
 
 ```bash
 
-docker run -it --rm ghcr.io/retaildevcrews/webvalidate -s https://www.microsoft.com -f failOnValidationError.json
+docker run -it --rm ghcr.io/retaildevcrews/webvalidate --server https://www.microsoft.com --files failOnValidationError.json --verbose-errors
 
 ```
 
@@ -220,7 +229,9 @@ We use the `--log-format json` command line option to integrate Docker container
     - default `false`
 - --summary
   - SUMMARY
-    - Display test summary (None, Tsv, Json, JsonCamel, XML)
+    - Display test summary (None, Tsv, Json, JsonCamel, Xml)
+    - Xml output is in [JUnit](https://llg.cubic.org/docs/junit/) format
+    - Xml format summary - Creates a temporary json file (temp.json) to keep the details of test runs which is deleted after each run of webv. Works for RunOnce only.
     - default `None`
 - --tag string
   - TAG
@@ -436,7 +447,7 @@ export ROBOTS=robots.txt
 export FAVICON=favicon.ico
 
 # run the test
-webv -s https://www.microsoft.com -f envvars.json
+webv -s https://www.microsoft.com --files envvars.json
 
 ```
 

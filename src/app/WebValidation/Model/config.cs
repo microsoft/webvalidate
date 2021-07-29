@@ -36,7 +36,7 @@ namespace CSE.WebValidate
         /// <summary>
         /// XML
         /// </summary>
-        Xml,
+        Xml
     }
 
     /// <summary>

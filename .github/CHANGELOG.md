@@ -1,5 +1,12 @@
 # Change Log
 
+## v2.1.0 - July 2021
+
+- bug fixes
+- update nuget packages
+- add support for xunit test output
+- add support for json body and exact match
+
 ## v2.0.0 - June 2021
 
 - updated to dotnet core 5.0

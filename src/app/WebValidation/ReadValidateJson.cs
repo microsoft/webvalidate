@@ -8,6 +8,7 @@ using System.Net.Http;
 using System.Text.Json;
 using CSE.WebValidate.Model;
 using CSE.WebValidate.Validators;
+using Newtonsoft.Json.Linq;
 
 namespace CSE.WebValidate
 {
@@ -186,9 +187,41 @@ namespace CSE.WebValidate
                 List<Request> l2 = new ();
 
                 // parse the json
-                data = JsonSerializer.Deserialize<InputJson>(json, App.JsonOptions);
+                JObject jsonObject = JObject.Parse(json);
+                JToken requests = jsonObject["requests"];
 
-                // replace placedholders with environment variables
+                if (requests != null)
+                {
+                    int length = ((JArray)jsonObject["requests"]).Count;
+
+                    for (int testCaseNumber = 0; testCaseNumber < length; testCaseNumber++)
+                    {
+                        JToken req = requests[testCaseNumber];
+                        if (req["contentMediaType"] != null &&
+                            req["body"] != null &&
+                            req["contentMediaType"].ToString().Contains("application/json") &&
+                            (req.ToString().Contains("\"body\": {") ||
+                             req.ToString().Contains("\"body\": [")))
+                        {
+                            req["body"] = req["body"].ToString(Newtonsoft.Json.Formatting.None);
+                        }
+
+                        if ((req["validation"] != null) &&
+                            req["contentType"] != null &&
+                            req["validation"]["exactMatch"] != null &&
+                            req["validation"]["contentType"].ToString().Contains("application/json") &&
+                            (req["validation"].ToString().Contains("\"exactMatch\": {") ||
+                             req["validation"].ToString().Contains("\"exactMatch\": [")))
+                        {
+                            req["validation"]["exactMatch"] = req["validation"]["exactMatch"].ToString(Newtonsoft.Json.Formatting.None);
+                        }
+                    }
+                }
+
+                string finalBody = jsonObject.ToString();
+                data = JsonSerializer.Deserialize<InputJson>(finalBody, App.JsonOptions);
+
+                // replace placeholders with environment variables
                 if (data != null && data.Requests.Count > 0)
                 {
                     if (data.Variables != null && data.Variables.Count > 0)

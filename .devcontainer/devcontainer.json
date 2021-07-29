@@ -1,6 +1,11 @@
 {
   "name": "web-validate",
+  "remoteUser": "vscode",
+  "image": "ghcr.io/retaildevcrews/dind:latest",
+  "runArgs": [ "--init", "--privileged" ],
   "settings": {},
+  "overrideCommand": false,
+  
   // Install extensions
   "extensions": [
     "ms-dotnettools.csharp",
@@ -12,5 +17,5 @@
   ],
 
   // Run Bash script in .devcontainer directory
-  "postCreateCommand": "/bin/bash ./.devcontainer/post-install.sh"
+  "onCreateCommand": "/bin/bash ./.devcontainer/on-create.sh"
 }
