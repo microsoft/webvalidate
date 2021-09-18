@@ -22,6 +22,8 @@ There are many web test tools available. The two main differences with WebV are:
 
 Install WebV as a dotnet global tool
 
+> WebV is already installed in GitHub Codespaces
+
 ```bash
 
 # this allows you to execute WebV from the shell
@@ -46,7 +48,7 @@ Run more complex tests against the GitHub API by using:
 ```bash
 
 # github tests
-webv --server https://api.github.com --files github.json
+webv --server https://api.github.com --files github.json --verbose
 
 ```
 
@@ -86,7 +88,7 @@ Run more complex tests against the GitHub API by using:
 ```bash
 
 # github tests
-docker run -it --rm ghcr.io/cse-labs/webvalidate --server https://api.github.com --files github.json
+docker run -it --rm ghcr.io/cse-labs/webvalidate --server https://api.github.com --files github.json --verbose
 
 ```
 
@@ -653,6 +655,10 @@ The msft.json file contains sample validation tests that will will successfully 
 ```
 
 ## Deprecation Warnings
+
+> Breaking changes in v2.2
+
+- The Docker repo is `ghcr.io/cse-labs/webvalidate`
 
 > Breaking changes in v2.0
 
