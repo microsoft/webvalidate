@@ -1,5 +1,11 @@
 # Change Log
 
+## v2.1.1 - Sept 2021
+
+- upgraded packages
+- updated GitHub Codespaces
+- updated ci-cd
+
 ## v2.1.0 - July 2021
 
 - bug fixes
