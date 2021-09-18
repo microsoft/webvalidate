@@ -1,6 +1,6 @@
 ---
 name: Feature Request
-about: Suggest an idea for this project
+about: Suggest a feature for WebValidate
 title: ''
 labels: Design Review, Enhancement
 assignees: ''
@@ -18,13 +18,3 @@ assignees: ''
 ## Alternative Proposals
 
 -
-
-## Additional Context
-
--
-
-## Next Steps
-
-- [ ] Team consensus to proceed
-- [ ] Complete Design Review Template (if applicable)
-- [ ] Schedule Design Session
