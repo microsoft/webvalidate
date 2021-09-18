@@ -25,7 +25,7 @@ jobs:
 
     runs-on: ubuntu-latest
     env:
-      DOCKER_REPO: ghcr.io/retaildevcrews/webvalidate
+      DOCKER_REPO: ghcr.io/cse-labs/webvalidate
 
     steps:
     - uses: actions/checkout@v2
