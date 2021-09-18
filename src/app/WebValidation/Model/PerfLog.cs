@@ -21,6 +21,9 @@ namespace CSE.WebValidate.Model
             Errors = validationErrors;
         }
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="PerfLog"/> class.
+        /// </summary>
         public PerfLog()
         {
         }

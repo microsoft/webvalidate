@@ -12,37 +12,37 @@ namespace CSE.WebValidate.Model
     public class TestSuite
     {
         /// <summary>
-        /// Total number of failures in running the tests
+        /// Gets or sets Total number of failures in running the tests
         /// </summary>
         [XmlAttributeAttribute("failures")]
         public string Failures { get; set; }
 
         /// <summary>
-        /// Name of the test suite
+        /// Gets or sets Name of the test suite
         /// </summary>
         [XmlAttributeAttribute("name")]
         public string Name { get; set; }
 
         /// <summary>
-        /// Number of skipped tests, if the frameworks is capable to reporting
+        /// Gets or sets Number of skipped tests, if the frameworks is capable to reporting
         /// </summary>
         [XmlAttributeAttribute("skipped")]
         public string Skipped { get; set; }
 
         /// <summary>
-        /// Number of tests executed
+        /// Gets or sets Number of tests executed
         /// </summary>
         [XmlAttributeAttribute("tests")]
         public string Tests { get; set; }
 
         /// <summary>
-        /// Total time taken in seconds to run the tests
+        /// Gets or sets Total time taken in seconds to run the tests
         /// </summary>
         [XmlAttributeAttribute("time")]
         public string Time { get; set; }
 
         /// <summary>
-        /// List of testcase objects to report each test run related values
+        /// Gets or sets List of testcase objects to report each test run related values
         /// </summary>
         [XmlElementAttribute("testcase")]
         public List<TestCase> TestCases { get; set; }
@@ -53,13 +53,11 @@ namespace CSE.WebValidate.Model
         /// <returns>A XML string</returns>
         public string ToXml()
         {
-            string log = string.Empty;
-            System.IO.StringWriter stringWriter = new System.IO.StringWriter();
-            XmlSerializer serializer_name = new XmlSerializer(typeof(TestSuite));
+            System.IO.StringWriter stringWriter = new ();
+            XmlSerializer serializer_name = new (typeof(TestSuite));
             serializer_name.Serialize(stringWriter, this);
-            log = stringWriter.ToString();
 
-            return log;
+            return stringWriter.ToString();
         }
     }
 }

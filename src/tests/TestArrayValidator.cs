@@ -48,7 +48,7 @@ namespace CSE.WebValidate.Tests.Unit
         [Fact]
         public void ByIndexTest()
         {
-            List<JsonPropertyByIndex> list = new List<JsonPropertyByIndex>();
+            List<JsonPropertyByIndex> list = new ();
             JsonPropertyByIndex f;
 
             // empty list is valid
