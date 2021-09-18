@@ -3,7 +3,7 @@
   <PropertyGroup>
     <TargetFramework>net5.0</TargetFramework>
     <RootNamespace>CSE.WebValidate</RootNamespace>
-    <VersionPrefix>2.1.0</VersionPrefix>
+    <VersionPrefix>2.2.0</VersionPrefix>
     <VersionSuffix>$([System.DateTime]::UtcNow.ToString(`MMdd-HHmm`))</VersionSuffix>
     <Company>Microsoft Corporation</Company>
     <Copyright>Copyright (c) Microsoft Corporation. All rights reserved.</Copyright>
