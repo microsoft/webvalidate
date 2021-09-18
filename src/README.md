@@ -7,7 +7,7 @@ Web Validate (WebV) is a web request validation tool that we use to run end-to-e
 
 ## Deprecation Warnings
 
-- The Docker repo is `ghcr.io/retaildevcrews/webvalidate`
+- The Docker repo is `ghcr.io/cse-labs/webvalidate`
 - This release `dotnet 5.0`
 - `--json-log` was removed
   - use `--log-format json` instead (starting with this release)

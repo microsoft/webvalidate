@@ -77,7 +77,7 @@ Run a sample validation test against `microsoft.com`
 ```bash
 
 # run the tests from Docker
-docker run -it --rm ghcr.io/retaildevcrews/webvalidate --server https://www.microsoft.com --files msft.json --verbose
+docker run -it --rm ghcr.io/cse-labs/webvalidate --server https://www.microsoft.com --files msft.json --verbose
 
 ```
 
@@ -86,7 +86,7 @@ Run more complex tests against the GitHub API by using:
 ```bash
 
 # github tests
-docker run -it --rm ghcr.io/retaildevcrews/webvalidate --server https://api.github.com --files github.json
+docker run -it --rm ghcr.io/cse-labs/webvalidate --server https://api.github.com --files github.json
 
 ```
 
@@ -94,7 +94,7 @@ Run a test that fails validation and causes a non-zero exit code
 
 ```bash
 
-docker run -it --rm ghcr.io/retaildevcrews/webvalidate --server https://www.microsoft.com --files failOnValidationError.json --verbose-errors
+docker run -it --rm ghcr.io/cse-labs/webvalidate --server https://www.microsoft.com --files failOnValidationError.json --verbose-errors
 
 ```
 
@@ -103,7 +103,7 @@ Experiment with WebV
 ```bash
 
 # get help
-docker run -it --rm ghcr.io/retaildevcrews/webvalidate --help
+docker run -it --rm ghcr.io/cse-labs/webvalidate --help
 
 ```
 
@@ -113,10 +113,10 @@ Use your own test files
 
 # assuming you want to mount MyTestFiles to the containers /app/TestFiles
 # this will start bash so you can verify the mount worked correctly
-docker run -it --rm -v MyTestFiles:/app/TestFiles --entrypoint bash ghcr.io/retaildevcrews/webvalidate
+docker run -it --rm -v MyTestFiles:/app/TestFiles --entrypoint bash ghcr.io/cse-labs/webvalidate
 
 # run a test against a local web server running on port 8080 using ~/webv/myTest.json
-docker run -it --rm -v MyTestFiles:/app/TestFiles --net=host  ghcr.io/retaildevcrews/webvalidate --server localhost:8080 --files myTest.json
+docker run -it --rm -v MyTestFiles:/app/TestFiles --net=host  ghcr.io/cse-labs/webvalidate --server localhost:8080 --files myTest.json
 
 ```
 
@@ -656,7 +656,7 @@ The msft.json file contains sample validation tests that will will successfully 
 
 > Breaking changes in v2.0
 
-- The Docker repo is `ghcr.io/retaildevcrews/webvalidate`
+- The Docker repo is `ghcr.io/cse-labs/webvalidate`
 - This release requires `dotnet 5.0`
 - `--json-log` was removed
   - use `--log-format json` or `--log-format jsonCamel` instead
