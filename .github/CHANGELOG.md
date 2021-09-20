@@ -1,5 +1,12 @@
 # Change Log
 
+## v2.2.0 - Sept 2021
+
+- Docker image moved to `ghcr.io/cse-labs/webvalidate`
+- upgraded packages
+- updated GitHub Codespaces
+- updated ci-cd
+
 ## v2.1.0 - July 2021
 
 - bug fixes

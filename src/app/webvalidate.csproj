@@ -3,7 +3,7 @@
   <PropertyGroup>
     <TargetFramework>net5.0</TargetFramework>
     <RootNamespace>CSE.WebValidate</RootNamespace>
-    <VersionPrefix>2.1.0</VersionPrefix>
+    <VersionPrefix>2.2.0</VersionPrefix>
     <VersionSuffix>$([System.DateTime]::UtcNow.ToString(`MMdd-HHmm`))</VersionSuffix>
     <Company>Microsoft Corporation</Company>
     <Copyright>Copyright (c) Microsoft Corporation. All rights reserved.</Copyright>
@@ -29,7 +29,7 @@
     </PackageReference>
     <PackageReference Include="Microsoft.CorrelationVector" Version="1.0.42" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
-    <PackageReference Include="prometheus-net.AspNetCore" Version="4.2.0" />
+    <PackageReference Include="prometheus-net.AspNetCore" Version="5.0.1" />
     <PackageReference Include="StyleCop.Analyzers" Version="1.1.118">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>

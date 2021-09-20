@@ -1,7 +1,8 @@
 #!/bin/sh
 
+echo "on-create start" >> ~/status
+
 # run dotnet restore
 dotnet restore src/webvalidate.sln
 
-# copy vscode files
-mkdir -p .vscode && cp .vscode-template/* .vscode
+echo "on-create complete" >> ~/status

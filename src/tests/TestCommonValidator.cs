@@ -28,7 +28,7 @@ namespace CSE.WebValidate.Tests.Unit
 
             // verb must be GET POST PUT DELETE ...
             // path must start with /
-            Request r = new Request
+            Request r = new ()
             {
                 Verb = "badverb",
                 Path = "badpath",
@@ -37,7 +37,7 @@ namespace CSE.WebValidate.Tests.Unit
             res = ParameterValidator.Validate(r);
             Assert.True(res.Failed);
 
-            Validation v = new Validation();
+            Validation v = new ();
 
             // null is valid
             res = ParameterValidator.ValidateLength(null);
@@ -70,7 +70,7 @@ namespace CSE.WebValidate.Tests.Unit
         [Fact]
         public void PerfLogTest()
         {
-            PerfLog p = new PerfLog(new List<string> { "test" })
+            PerfLog p = new (new List<string> { "test" })
             {
                 Date = new System.DateTime(2020, 1, 1)
             };
@@ -87,7 +87,7 @@ namespace CSE.WebValidate.Tests.Unit
             ValidationResult res;
 
             // category can't be blank
-            PerfTarget t = new PerfTarget();
+            PerfTarget t = new ();
             res = ParameterValidator.Validate(t);
             Assert.True(res.Failed);
 
@@ -106,7 +106,7 @@ namespace CSE.WebValidate.Tests.Unit
         [Fact]
         public void ResponseNullTest()
         {
-            Request r = new Request();
+            Request r = new ();
 
             Assert.False(ResponseValidator.Validate(r, null, string.Empty).Failed);
 
@@ -114,7 +114,7 @@ namespace CSE.WebValidate.Tests.Unit
 
             Assert.True(ResponseValidator.Validate(r, null, "this is a test").Failed);
 
-            using System.Net.Http.HttpResponseMessage resp = new System.Net.Http.HttpResponseMessage(System.Net.HttpStatusCode.NotFound);
+            using System.Net.Http.HttpResponseMessage resp = new (System.Net.HttpStatusCode.NotFound);
             Assert.True(ResponseValidator.Validate(r, resp, "this is a test").Failed);
 
             Assert.True(ResponseValidator.ValidateStatusCode(400, 200).Failed);

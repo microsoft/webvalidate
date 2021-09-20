@@ -11,7 +11,7 @@ namespace CSE.WebValidate.Model
     public class Failure
     {
         /// <summary>
-        /// Message - rpeorting all errors rolled in as a single string
+        /// Gets or sets all errors rolled in as a single string
         /// </summary>
         [XmlAttributeAttribute("message")]
         public string Message { get; set; }
