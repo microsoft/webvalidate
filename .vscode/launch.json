@@ -13,7 +13,10 @@
                 "--server",
                 "https://api.github.com",
                 "--files",
-                "github.json"
+                "github.json",
+                "--verbose",
+                "--summary",
+                "Tsv"
             ],
             // If you have changed target frameworks, make sure to update the program path.
             "program": "${workspaceFolder}/src/app/bin/Debug/net6.0/webvalidate.dll",
