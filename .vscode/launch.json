@@ -16,7 +16,7 @@
                 "github.json"
             ],
             // If you have changed target frameworks, make sure to update the program path.
-            "program": "${workspaceFolder}/src/app/bin/Debug/net5.0/webvalidate.dll",
+            "program": "${workspaceFolder}/src/app/bin/Debug/net6.0/webvalidate.dll",
             "cwd": "${workspaceFolder}/src/app",
             "stopAtEntry": false,
             "env": {
