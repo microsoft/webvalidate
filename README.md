@@ -180,7 +180,7 @@ We use the `--log-format json` command line option to integrate Docker container
   - environment variables are ignored
 - --dry-run bool
   - -d
-    - validate parameters but do not execute tests
+    - validate and display parameters but do not execute tests
 - --server string1 [string2 string3]
   - -s
   - SERVER
@@ -196,6 +196,8 @@ We use the `--log-format json` command line option to integrate Docker container
   - -u
   - BASE_URL
     - base URL and optional path to the test files (http or https)
+      - The files are read at startup only
+      - If the URL isn't available, WebV will exit with a non-zero exit code
       - ex: `https://raw.githubusercontent.com/microsoft/webvalidate/main/TestFiles/`
 - --delay-start int
   - DELAY_START
@@ -233,12 +235,12 @@ We use the `--log-format json` command line option to integrate Docker container
   - SUMMARY
     - Display test summary (None, Tsv, Json, JsonCamel, Xml)
     - Xml output is in [JUnit](https://llg.cubic.org/docs/junit/) format
-    - Xml format summary - Creates a temporary json file (temp.json) to keep the details of test runs which is deleted after each run of webv. Works for RunOnce only.
     - default `None`
 - --tag string
   - TAG
     - user defined tag to include in logs and App Insights
       - can be used to identify location, instance, etc.
+    - default `null`
 - --timeout int
   - -t
   - TIMEOUT
@@ -274,6 +276,7 @@ We use the `--log-format json` command line option to integrate Docker container
   - -r
   - RUN_LOOP
     - runs the test in a continuous loop
+    - default: `false`
 - --duration int
   - DURATION
     - run test for duration seconds then exit
@@ -297,6 +300,7 @@ We use the `--log-format json` command line option to integrate Docker container
   - SLEEP
     - number of milliseconds to sleep between requests
     - default `1000`
+      - note this is different with `--run-loop`
 
 ## Running as part of an CI-CD pipeline
 
@@ -313,9 +317,9 @@ WebV will return a non-zero exit code (fail) under the following conditions
 
 ## Validation Files
 
-> Validations are often nested to test the JSON object
+> Validations are often nested to test JSON objects / trees
 >
-> We use a simple test file generator to build complex validations
+> We use a test file generator to build complex validations
 
 Validation files are located in the /app/TestFiles directory and are json files that control the validation tests.
 
@@ -324,108 +328,112 @@ You can mount a local volume into the Docker container at /app/TestFiles to test
 - HTTP redirects are not followed
 - All string comparisons are case sensitive
 
-- Path (required)
+- path (required)
   - path to resource (do not include http or dns name)
   - valid: must begin with /
-- Verb
+- verb
   - default: GET
   - valid: HTTP verbs
-- Tag
+- tag
   - default: string.empty
   - tag for the request
     - this will override the --tag value for that request
-- FailOnValidationError (optional)
+- failOnValidationError (optional)
   - If true, any validation error will cause that test to fail
   - default: false
-- Validation (optional)
+- validation (optional)
   - if not specified in test file, no validation checks will run
-  - StatusCode
+  - statusCode
     - required
     - http status code
     - a validation error will cause the test to fail and return a non-zero error code
     - no other validation checks are executed
     - default: 200
     - valid: 100-599
-  - ContentType
+  - contentType
     - required
-    - http Content-Type header
+    - http Content-Type
     - a validation error will cause the test to fail and return a non-zero error code
     - no other validation checks are executed
     - default: application/json
     - valid: valid MIME type
-  - Length
+  - length
     - length of content
-      - cannot be combined with MinLength or MaxLength
+      - cannot be combined with minLength or maxLength
     - valid: null or >= 0
-  - MinLength
+  - minLength
     - minimum content length
     - valid: null or >= 0
-  - MaxLength
+  - maxLength
     - maximum content length
     - valid: null or > MinLength
     - valid: if MinLength == null >= 0
-  - MaxMilliSeconds
+  - maxMilliSeconds
     - maximum duration in ms
     - valid: null or > 0
-  - ExactMatch
+  - exactMatch
     - Body exactly matches value
     - valid: non-empty string
-  - Contains[string]
+  - contains[string]
     - case sensitive string "contains"
-    - string
-      - valid: non-empty string
-  - JsonArray
+    - string array
+      - valid: non-empty string array
+  - notContains[string]
+    - case sensitive negated string "contains"
+    - string array
+      - valid: non-empty string array
+  - jsonArray
     - valid: parses into json array
-    - Count
+    - count
       - exact number of items
       - Valid: >= 0
       - valid: cannot be combined with MinCount or MaxCount
-    - MinCount
+    - minCount
       - minimum number of items
       - valid: >= 0
         - can be combined with MaxCount
-    - MaxCount
+    - maxCount
       - maximum number of items
       - valid: > MinCount
         - can be combined with MinCount
-    - ByIndex[JsonObject]
+    - byIndex[JsonObject]
       - checks a json object in the array by index
-      - JsonObject[]
+      - jsonObject[]
         - validates object[index]
-        - Index
-          - Index of object to check
+        - index
+          - index of object to check
           - valid: >= 0
-        - JsonObject
-          - JsonObject definition to check
+        - jsonObject
+          - jsonObject definition to check
           - valid: JsonObject rules
-    - ForAny[JsonObject]
+    - forAny[JsonObject]
       - checks each json object in the array until it finds a valid item
-      - JsonObject[]
-        - JsonObject
-          - JsonObject definition to check
-          - valid: JsonObject rules
-    - ForEach[JsonObject]
+      - jsonObject[]
+        - jsonObject
+          - jsonObject definition to check
+          - valid: jsonObject rules
+    - forEach[JsonObject]
       - checks each json object in the array
-      - JsonObject[]
-        - JsonObject
-          - JsonObject definition to check
-          - valid: JsonObject rules
-  - JsonObject[]
+      - jsonObject[]
+        - jsonObject
+          - jsonObject definition to check
+          - valid: jsonObject rules
+  - jsonObject[]
     - valid: parses into json object
-    - Field
+    - field
       - name of field
       - valid: non-empty string
-    - Value (optional)
+    - value (optional)
       - if not specified, verifies the Field exists in the json document
       - valid: null, number or string
-    - Validation (optional)
+    - validation (optional)
       - validation object to execute (for json objects within objects)
       - valid: null or valid json
-- PerfTarget (optional)
-  - Category
+- perfTarget (optional)
+  - category
     - used to group requests into categories for reporting
     - valid: non-empty string
-  - Targets[3]
+  - targets[3]
     - maximum quartile value in ascending order
     - example: [ 100, 200, 400 ]
       - Quartile 1 <= 100 ms
@@ -656,48 +664,24 @@ The msft.json file contains sample validation tests that will will successfully 
 
 ## Deprecation Warnings
 
-> Breaking changes in v2.2
+> Breaking changes in v2.3.0
 
 - The Docker repo is `ghcr.io/cse-labs/webvalidate`
+- This release requires `dotnet 6.0`
+  - Use WebV 2.2 for dotnet 5 support
 
 > Breaking changes in v2.0
 
 - The Docker repo is `ghcr.io/cse-labs/webvalidate`
 - This release requires `dotnet 5.0`
-- `--json-log` was removed
-  - use `--log-format json` or `--log-format jsonCamel` instead
-- `--summary-minutes` was removed
-  - use some type of log to store and summarize the results
-- `--max-concurrent` was removed
-  - use `--sleep` and `--timeout` to control connections
-- `--verbose` always defaults to `false`
-- Test files require the current `json format`
-
-  ```json
-
-  {
-    "requests":
-    [
-      {"path": ...}
-      {"path": ...}
-    ]
-  }
-
-  ```
 
 ## Contributing
 
-This project welcomes contributions and suggestions. Most contributions require you to agree to a
-Contributor License Agreement (CLA) declaring that you have the right to, and actually do, grant us
-the rights to use your contribution. For details, visit [Microsoft Contributor License Agreement](https://cla.opensource.microsoft.com).
+This project welcomes contributions and suggestions. Most contributions require you to agree to a Contributor License Agreement (CLA) declaring that you have the right to, and actually do, grant us the rights to use your contribution. For details, visit [Microsoft Contributor License Agreement](https://cla.opensource.microsoft.com).
 
-When you submit a pull request, a CLA bot will automatically determine whether you need to provide
-a CLA and decorate the PR appropriately (e.g., status check, comment). Simply follow the instructions
-provided by the bot. You will only need to do this once across all repos using our CLA.
+When you submit a pull request, a CLA bot will automatically determine whether you need to provide a CLA and decorate the PR appropriately (e.g., status check, comment). Simply follow the instructions provided by the bot. You will only need to do this once across all repos using our CLA.
 
-This project has adopted the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/).
-For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or
-contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional questions or comments.
+This project has adopted the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/). For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional questions or comments.
 
 ## Trademarks
 
