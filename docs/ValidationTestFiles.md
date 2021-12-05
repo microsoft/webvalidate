@@ -1,6 +1,6 @@
 # Validation Test Files
 
-> Validations are often nested to test JSON objects / trees
+> Validations are often nested to test JSON objects / arrays / trees
 >
 > We use a test file generator to build complex validations
 
@@ -17,10 +17,10 @@ You can mount a local volume into the Docker container at /app/TestFiles to test
 - verb
   - default: GET
   - valid: HTTP verbs
-- tag
+- tag (optional)
   - default: string.empty
   - tag for the request
-    - this will override the --tag value for that request
+    - this will override the --tag value for that request only
 - failOnValidationError (optional)
   - If true, any validation error will cause that test to fail
   - default: false
@@ -56,15 +56,15 @@ You can mount a local volume into the Docker container at /app/TestFiles to test
     - valid: null or > 0
   - exactMatch
     - Body exactly matches value
-    - valid: non-empty string
+    - valid: null or non-empty string
   - contains[string]
     - case sensitive string "contains"
     - string array
-      - valid: non-empty string array
+      - valid: null or non-empty string array
   - notContains[string]
     - case sensitive negated string "contains"
     - string array
-      - valid: non-empty string array
+      - valid: null or non-empty string array
   - jsonArray
     - valid: parses into json array
     - count

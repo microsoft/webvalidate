@@ -3,26 +3,35 @@
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 ![Docker Image Build](https://github.com/microsoft/webvalidate/workflows/Docker%20Image%20Build/badge.svg)
 
-Web Validate (WebV) is a web request validation tool that we use to run end-to-end tests and long-running smoke tests.
-
-## WebV Quick Start
-
-WebV is published as a dotnet package and can be installed as a dotnet global tool. WebV can also be run as a docker container. If you have dotnet core sdk installed, running as a dotnet global tool is the simplest and fastest way to run WebV.
+Web Validate (WebV) is a web request validation tool that we use to run end-to-end tests and long-running performance and availability tests.
 
 There are many web test tools available. The two main differences with WebV are:
 
 - Integrates into a `single pane of glass`
   - WebV publishes json logs to stdout and stderr
-  - WebV publishes the /metrics endpoint for Prometheus
-  - This allows you to build a single pane of glass that compares `server errors` with `client errors`
+  - WebV publishes the /metrics endpoint for Prometheus scraping
+    - This allows you to build a single pane of glass that compares `server errors` with `client errors`
+    - This also allows you to monitor applications on the edge with centralized logging which reduces edge network traffic significantly
 - Deep validation of arbitrary result graphs
   - WebV is primarily designed for json API testing and can perform `deep validation` on arbitrary json graphs
 
-## Running as a dotnet global tool
+- WebV is published as a nuget package and can be installed as a dotnet global tool
+- WebV can also be run as a docker container
+- If you have dotnet core sdk installed, running as a dotnet global tool is the simplest and fastest way to run WebV
+
+## Breaking changes in v2.3.0
+
+- The Docker repo moved to: `ghcr.io/cse-labs/webvalidate`
+- This release requires `dotnet 6.0`
+  - Use WebV 2.2 for dotnet 5 support
+
+## WebV Quickstart
+
+> The easiest way to try WebV is to fork this repo and `Open in Codespaces`
+>
+> WebV is already installed in this GitHub Codespace
 
 Install WebV as a dotnet global tool
-
-> WebV is already installed in GitHub Codespaces
 
 ```bash
 
@@ -72,7 +81,7 @@ popd
 
 ```
 
-## Running as a docker container
+## WebV Quickstart (docker)
 
 Run a sample validation test against `microsoft.com`
 
@@ -109,50 +118,57 @@ docker run -it --rm ghcr.io/cse-labs/webvalidate --help
 
 ```
 
+> In the above examples, the json files are included in the docker image
+
 Use your own test files
 
 ```bash
 
-# assuming you want to mount MyTestFiles to the containers /app/TestFiles
+# assuming you want to mount the current directory to the container's /app/TestFiles
 # this will start bash so you can verify the mount worked correctly
-docker run -it --rm -v MyTestFiles:/app/TestFiles --entrypoint bash ghcr.io/cse-labs/webvalidate
+docker run -it --rm -v $(pwd):/app/TestFiles --entrypoint bash ghcr.io/cse-labs/webvalidate
 
-# run a test against a local web server running on port 8080 using ~/webv/myTest.json
-docker run -it --rm -v MyTestFiles:/app/TestFiles --net=host  ghcr.io/cse-labs/webvalidate --server localhost:8080 --files myTest.json
+# run a test against a local web server running on port 8080 using ./myTest.json
+docker run -it --rm -v $(pwd):/app/TestFiles --net=host  ghcr.io/cse-labs/webvalidate --server localhost:8080 --files myTest.json
 
 ```
 
 ## Configuration
 
-Web Validate uses both environment variables as well as command line options for configuration. Command flags take precedence over environment variables.
+> See [Command Line Parameters](./docs/CommandLineParameters.md) for more details
 
-Web Validate works in two distinct modes. The default mode processes the input file(s) in sequential order one time and exits. The "run loop" mode runs in a continuous loop until stopped or for the specified duration. Some environment variables and command flags are only valid if run loop is specified and WebV will exit and display usage information. Some parameters have different default values depending on the mode of execution.
+- Web Validate uses both environment variables and command line options for configuration
+  - Command flags take precedence over environment variables
 
-See [Command Line Parameters](./docs/CommandLineParameters.md) for more details.
+- Web Validate works in two distinct modes
+  - The default mode processes the input file(s) in sequential order one time and exits
+  - The `--run-loop` mode runs in a continuous loop until stopped or for the specified duration
+- Some environment variables and command flags are only valid if `--run-loop` is specified and WebV will exit and display usage information
+- Some parameters have different default values depending on the mode of execution
 
 ## Validation Files
 
-WebV uses validation files to define what requests should be run as a part of the testing. Each line in the file details the request and the expected results to be validated by WebV. This can be as simple as validating the returned status code is 200 or as complex as checking each returned value in a nested json object or array.
-
 See [Validation Test Files](./docs/ValidationTestFiles.md) for more details.
+
+- WebV uses validation files to define what requests should be run as a part of the testing
+  - Each line in the file details the request and the expected results to be validated by WebV
+  - This can be as simple as validating the returned status code is 200 or as complex as checking each returned value in a nested json object or array
 
 ## Integration with Application Monitoring
 
-We use `WebV` and [Azure Container Instances](https://azure.microsoft.com/en-us/services/container-instances/) to run geo-distributed, tests against our Web APIs. These tests run 24 x 7 from multiple Azure regions and provide insight into network latency / health as well as service status.
+- We use `WebV` to run geo-distributed tests against our Web APIs
+  - These tests run 24 x 7 from multiple regions and provide insight into network latency / health as well as service status
+  - The results integrate with our `single pane of glass` via log forwarding (Fluent Bit) and metrics (Prometheus)
 
-By doing this, not only can we ensure against a [large cloud bill](https://hackernoon.com/how-we-spent-30k-usd-in-firebase-in-less-than-72-hours-307490bd24d), but we can track how cloud usage changes over time and ensure application functionality and performance through integration and load testing.
+By doing this, not only can we ensure against a [large cloud bill](https://hackernoon.com/how-we-spent-30k-usd-in-firebase-in-less-than-72-hours-307490bd24d), but we can track how usage and performance change over time, ensuring application functionality and performance through `testing in production`.
 
-`Azure Container Instances` integrate with [Azure Monitor](https://azure.microsoft.com/en-us/services/monitor/) to provide out-of-the-box monitoring, dashboards and alerts. Setup instructions, sample queries and sample dashboards are available [here](https://github.com/retaildevcrews/helium/blob/main/docs/AppService.md#smoke-test-setup).
-
-We use the `--log-format json` command line option to integrate Docker container logs with `Azure Log Analytics`. The integration is automatic using `Azure Container Instances`.
-
-### Example Arguments for Long Running Tests
+### Example Arguments for Testing in Production
 
 ```bash
 # continuously send a request every 15 seconds
-# user defined region, tag and zone to distinguish between WebV instances
+# user defined region, tag and zone to distinguish between application instances
 
---run-loop --sleep 15000 --log-format json --tag my_webv_instance_name --region Central --zone az-central-us
+--run-loop --verbose --sleep 15000 --log-format json --tag my_webv_instance_name --region Central --zone az-central-us
 
 ```
 
@@ -161,14 +177,34 @@ We use the `--log-format json` command line option to integrate Docker container
 ```bash
 
 # continuously run testing for 60 seconds
-# default sleep between each request is 1000ms
+# sleep between each request is 10ms (approx 100 RPS)
 # write all results to console as json
 
---run-loop --verbose --duration 60 --log-format Json
+--run-loop --verbose --sleep 10 --duration 60 --log-format Json
 
 # continuously run twice as many tests against microsoft.com
 # run testing for 60 seconds
 --run-loop --verbose --duration 60 --sleep 500
+
+```
+
+### Scaling Tests
+
+Because WebV integrates with your existing log forwarding and Prometheus infrastructure, you can deploy multiple WebV instances across geos and get all results in your single pane of glass.
+
+- The deeper the WebV validation, the more processing required
+- WebV will run up to as fast as configured within processor, memory and network limitations
+
+You can run the same test on multiple threads by specifying the server(s) multiple times
+
+```bash
+
+# run two WebV threads in one instance
+-- server microsoft.com microsoft.com
+
+# run six WebV threads in one instance
+# three threads on each server
+-- server microsoft.com microsoft.com microsoft.com bing.com bing.com bing.com
 
 ```
 
@@ -180,27 +216,12 @@ We use the `--log-format json` command line option to integrate Docker container
 
 WebV will return a non-zero exit code (fail) under the following conditions
 
-- Error parsing the test files
+- Error parsing the test file(s)
 - If an unhandled exception is thrown during a test
-- StatusCode validation fails
-- ContentType validation fails
+  - Please use `GitHub Issues` to report as a bug
 - --max-errors is exceeded
   - To cause the test to fail on any validation error, set --max-errors 1 (default is 10)
-- Any validation error on a test that has FailOnValidationError set to true
-- Request timeout
-
-## Deprecation Warnings
-
-> Breaking changes in v2.3.0
-
-- The Docker repo is `ghcr.io/cse-labs/webvalidate`
-- This release requires `dotnet 6.0`
-  - Use WebV 2.2 for dotnet 5 support
-
-> Breaking changes in v2.0
-
-- The Docker repo is `ghcr.io/cse-labs/webvalidate`
-- This release requires `dotnet 5.0`
+- Any validation error on a test that has `FailOnValidationError` set to true
 
 ## Contributing
 
