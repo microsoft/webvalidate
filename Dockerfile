@@ -31,6 +31,8 @@ COPY --from=build /app .
 RUN mkdir -p /app/TestFiles && \
     cp *.json TestFiles && \
     cp perfTargets.txt TestFiles && \
+    rm -f appsettings.json && \
+    rm -f stylecop.json && \
     chown -R webv:webv /app
 
 WORKDIR /app/TestFiles
