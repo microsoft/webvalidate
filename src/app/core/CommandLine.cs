@@ -306,6 +306,9 @@ namespace CSE.WebValidate
                 Console.WriteLine($"   Duration        {config.Duration}");
             }
 
+            Console.WriteLine($"   Log Format      {config.LogFormat}");
+            Console.WriteLine($"   Log Summary     {config.Summary}");
+
             if (!config.RunLoop)
             {
                 Console.WriteLine($"   Max Errors      {config.MaxErrors}");
@@ -337,7 +340,6 @@ namespace CSE.WebValidate
             Console.WriteLine($"   Verbose Errors  {config.VerboseErrors}");
             Console.WriteLine($"   WebV Prefix     {config.WebvPrefix}");
             Console.WriteLine($"   WebV Suffix     {config.WebvSuffix}");
-            Console.WriteLine($"   Log Summary     {config.Summary}");
 
             if (!string.IsNullOrEmpty(config.Zone))
             {
