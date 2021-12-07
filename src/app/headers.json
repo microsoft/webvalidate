@@ -1,0 +1,11 @@
+{
+  "requests": [
+    {
+      "path": "/",
+      "headers": {
+        "x-test": "testing x",
+        "y-test": "testing y"
+      }
+    }
+  ]
+}
