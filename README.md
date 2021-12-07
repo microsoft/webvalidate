@@ -148,7 +148,7 @@ docker run -it --rm -v $(pwd):/app/TestFiles --net=host  ghcr.io/cse-labs/webval
 
 ## Validation Files
 
-See [Validation Test Files](./docs/ValidationTestFiles.md) for more details.
+> See [Validation Test Files](./docs/ValidationTestFiles.md) for more details.
 
 - WebV uses validation files to define what requests should be run as a part of the testing
   - Each line in the file details the request and the expected results to be validated by WebV
@@ -156,61 +156,13 @@ See [Validation Test Files](./docs/ValidationTestFiles.md) for more details.
 
 ## Integration with Application Monitoring
 
+> See [Application Monitoring](./docs/ApplicationMonitoring.md) for more details.
+
 - We use `WebV` to run geo-distributed tests against our Web APIs
   - These tests run 24 x 7 from multiple regions and provide insight into network latency / health as well as service status
   - The results integrate with our `single pane of glass` via log forwarding (Fluent Bit) and metrics (Prometheus)
 
 By doing this, not only can we ensure against a [large cloud bill](https://hackernoon.com/how-we-spent-30k-usd-in-firebase-in-less-than-72-hours-307490bd24d), but we can track how usage and performance change over time, ensuring application functionality and performance through `testing in production`.
-
-### Example Arguments for Testing in Production
-
-```bash
-# continuously send a request every 15 seconds
-# user defined region, tag and zone to distinguish between application instances
-
---run-loop --verbose --sleep 15000 --log-format json --tag my_webv_instance_name --region Central --zone az-central-us
-
-```
-
-### Example Arguments for Load Testing
-
-```bash
-
-# continuously run testing for 60 seconds
-# sleep between each request is 10ms (approx 100 RPS)
-# write all results to console as json
-
---run-loop --verbose --sleep 10 --duration 60 --log-format Json
-
-# continuously run twice as many tests against microsoft.com
-# run testing for 60 seconds
---run-loop --verbose --duration 60 --sleep 500
-
-```
-
-### Scaling Tests
-
-Because WebV integrates with your existing log forwarding and Prometheus infrastructure, you can deploy multiple WebV instances across geos and get all results in your single pane of glass.
-
-- The deeper the WebV validation, the more processing required
-- WebV will run up to as fast as configured within processor, memory and network limitations
-
-You can run the same test on multiple threads by specifying the server(s) multiple times
-
-```bash
-
-# run two WebV threads in one instance
--- server microsoft.com microsoft.com
-
-# run six WebV threads in one instance
-# three threads on each server
--- server microsoft.com microsoft.com microsoft.com bing.com bing.com bing.com
-
-```
-
-### Example Dashboard
-
-![alt text](./images/dashboard.jpg "WebV Example Dashboard")
 
 ## Running as part of an CI-CD pipeline
 
