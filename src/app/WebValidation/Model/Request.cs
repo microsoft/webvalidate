@@ -42,9 +42,10 @@ namespace CSE.WebValidate.Model
         public string Body { get; set; }
 
         /// <summary>
-        /// Gets the request header dictionary
+        /// Gets or sets the request header dictionary
+        /// Set required for JSON serialization
         /// </summary>
-        public Dictionary<string, string> Headers { get; } = new Dictionary<string, string>();
+        public Dictionary<string, string> Headers { get; set; } = new Dictionary<string, string>();
 
         /// <summary>
         /// Gets or sets the request media type

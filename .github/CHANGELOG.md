@@ -1,5 +1,10 @@
 # Change Log
 
+## v2.3.0 - Dec 2021
+
+- upgraded to dotnet 6.0
+- upgraded packages
+
 ## v2.2.0 - Sept 2021
 
 - Docker image moved to `ghcr.io/cse-labs/webvalidate`

@@ -1,0 +1,138 @@
+# Command Line Parameters
+
+> Includes short flags and environment variable names where applicable.
+>
+> Command Line args take precedent over environment variables
+
+## Common Parameters
+
+- --version
+  - other parameters are ignored
+  - environment variables are ignored
+- --help
+  - -h
+    - other parameters are ignored
+    - environment variables are ignored
+- --dry-run bool
+  - -d
+    - validate and display parameter values but do not execute tests
+- --server string1 [string2 string3]
+  - -s
+  - SERVER
+    - server Url (i.e. `https://www.microsoft.com`)
+    - `required`
+- --files file1 [file2 file3 ...]
+  - -f
+  - FILES
+    - one or more json test files
+    - default location current directory
+    - `required`
+- --base-url string
+  - -u
+  - BASE_URL
+    - base URL and optional path to the test files (http or https)
+      - The files are read at startup only
+      - If the URL isn't available, WebV will exit with a non-zero exit code
+      - ex: `https://raw.githubusercontent.com/microsoft/webvalidate/main/TestFiles/`
+- --delay-start int
+  - DELAY_START
+    - delay starting the validation test for int seconds
+    - default `0`
+- --log-format enum
+  - LOG_FORMAT
+    - format of log items (TsvMin, Tsv, Json, JsonCamel, None)
+    - default `TsvMin`
+    - LogFormat.None conflicts with --verbose and will throw a parse error
+- --max-errors int
+  - MAX_ERRORS
+    - end test after max-errors
+    - if --max-errors is exceeded, WebV will exit with non-zero exit code
+    - default `10`
+- --region string
+  - REGION
+    - deployment Region for logging (user defined)
+    - default: `null`
+- --sleep int
+  - -l
+  - SLEEP
+    - number of milliseconds to sleep between requests
+    - default `0`
+- --strict-json bool
+  - -j
+  - STRICT_JSON
+    - use strict RFC rules when parsing json
+    - json property names are case sensitive
+    - exceptions will occur for
+      - trailing commas in json arrays
+      - comments in json
+    - default `false`
+- --summary
+  - SUMMARY
+    - Display test summary (None, Tsv, Json, JsonCamel, Xml)
+    - Xml output is in [JUnit](https://llg.cubic.org/docs/junit/) format
+    - default `None`
+- --tag string
+  - TAG
+    - user defined tag to include in logs and App Insights
+      - can be used to identify location, instance, etc.
+    - default `null`
+- --timeout int
+  - -t
+  - TIMEOUT
+    - HTTP request timeout in seconds
+    - default `30 sec`
+- --verbose bool
+  - VERBOSE
+    - log 200 and 300 results as well as errors
+    - default `false`
+- --verbose-errors bool
+  - VERBOSE_ERRORS
+    - display validation error messages
+    - default `false`
+- --webv-prefix string
+  - WEBV_PREFIX
+    - prefix to add to server values that don't begin with http
+    - default `https://`
+- --webv-suffix string
+  - WEBV_SUFFIX
+    - suffix to add to server values that don't begin with http
+    - default `.azurewebsites.net`
+- --zone string
+  - ZONE
+    - deployment Zone for logging (user defined)
+    - default: `null`
+
+## RunLoop Mode Parameters
+
+- Some parameters are only valid if `--run-loop` is specified
+- Some parameters have different defaults if `--run-loop` is specified
+
+- --run-loop bool
+  - -r
+  - RUN_LOOP
+    - runs the test in a continuous loop
+    - default: `false`
+- --duration int
+  - DURATION
+    - run test for duration seconds then exit
+    - default `0 (run until OS signal)`
+- --port int
+  - -p
+  - PORT
+    - Port to use for web endpoints
+    - valid: `0 < port < 64K`
+    - default: `8080`
+- --prometheus bool
+  - PROMETHEUS
+    - expose the /metrics end point for Prometheus
+    - default: `false`
+- --random bool
+  - RANDOM
+    - randomize requests
+    - default `false`
+- --sleep int
+  - -l
+  - SLEEP
+    - number of milliseconds to sleep between requests
+    - default `1000`
+      - note this is different with `--run-loop`

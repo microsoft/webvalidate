@@ -201,7 +201,10 @@ namespace CSE.WebValidate
             // --sleep is different based on --run-loop
             if (parseResult != null)
             {
-                if (parseResult.CommandResult.Children.FirstOrDefault(c => c.Symbol.Name == "sleep") is OptionResult sleepRes && sleepRes.IsImplicit)
+                // reset sleep if not in env var or < 1
+                if (parseResult.CommandResult.Children.FirstOrDefault(c => c.Symbol.Name == "sleep") is OptionResult sleepRes &&
+                    sleepRes.IsImplicit &&
+                    Sleep < 1)
                 {
                     Sleep = RunLoop ? 1000 : 0;
                 }

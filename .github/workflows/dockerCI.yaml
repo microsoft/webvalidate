@@ -10,11 +10,8 @@ on:
       - main
 
     paths-ignore:
-    - 'docs/**'
     - '.devcontainer/**'
     - '**.md'
-    - '**.json'
-    - '**.txt'
 
     tags:
       - v*
@@ -32,8 +29,8 @@ jobs:
 
     - name: Docker Pull
       run: |
-        docker pull mcr.microsoft.com/dotnet/sdk:5.0
-        docker pull mcr.microsoft.com/dotnet/aspnet:5.0-alpine
+        docker pull mcr.microsoft.com/dotnet/sdk:6.0
+        docker pull mcr.microsoft.com/dotnet/aspnet:6.0-alpine
 
     - name: Build Container
       run: |

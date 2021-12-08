@@ -21,8 +21,9 @@ namespace CSE.WebValidate
         /// Reads a file from local or --base-url
         /// </summary>
         /// <param name="file">file name</param>
+        /// <param name="displayError">display error message</param>
         /// <returns>file contents</returns>
-        public string ReadTestFile(string file)
+        public string ReadTestFile(string file, bool displayError = true)
         {
             string content = string.Empty;
 
@@ -46,7 +47,11 @@ namespace CSE.WebValidate
                 // check for empty file
                 if (string.IsNullOrEmpty(content))
                 {
-                    Console.WriteLine($"Unable to read file {file}");
+                    if (displayError)
+                    {
+                        Console.WriteLine($"Unable to read file {file}");
+                    }
+
                     return null;
                 }
             }
@@ -63,19 +68,26 @@ namespace CSE.WebValidate
                     // check for empty file
                     if (string.IsNullOrEmpty(content))
                     {
-                        Console.WriteLine($"Unable to read file {path}");
+                        if (displayError)
+                        {
+                            Console.WriteLine($"Unable to read file {file}");
+                        }
+
                         return null;
                     }
                 }
                 catch (Exception ex)
                 {
-                    // display helper message on request exception
-                    if (ex.InnerException is HttpRequestException hre)
+                    if (displayError)
                     {
-                        Console.WriteLine("Verify you have permission to read the URL as well as the correctness of the URL");
-                    }
+                        // display helper message on request exception
+                        if (ex.InnerException is HttpRequestException hre)
+                        {
+                            Console.WriteLine("Verify you have permission to read the URL as well as the correctness of the URL");
+                        }
 
-                    throw;
+                        throw;
+                    }
                 }
             }
 
@@ -160,9 +172,8 @@ namespace CSE.WebValidate
         /// <returns>Dictionary of PerfTarget</returns>
         private Dictionary<string, PerfTarget> LoadPerfTargets()
         {
-            const string perfFileName = "perfTargets.txt";
-
-            string content = ReadTestFile(perfFileName);
+            // ignore not found error
+            string content = ReadTestFile("perfTargets.txt", false);
 
             if (!string.IsNullOrWhiteSpace(content))
             {

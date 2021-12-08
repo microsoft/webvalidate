@@ -1,5 +1,5 @@
 ### build the app
-FROM mcr.microsoft.com/dotnet/sdk:5.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:6.0 AS build
 
 # Copy the source
 COPY src /src
@@ -17,7 +17,7 @@ RUN dotnet publish -c Release -o /app
 
 
 ### build the runtime container
-FROM mcr.microsoft.com/dotnet/aspnet:5.0-alpine AS runtime
+FROM mcr.microsoft.com/dotnet/aspnet:6.0-alpine AS runtime
 
 ### create a user
 ### dotnet needs a home directory
@@ -31,6 +31,8 @@ COPY --from=build /app .
 RUN mkdir -p /app/TestFiles && \
     cp *.json TestFiles && \
     cp perfTargets.txt TestFiles && \
+    rm -f appsettings.json && \
+    rm -f stylecop.json && \
     chown -R webv:webv /app
 
 WORKDIR /app/TestFiles

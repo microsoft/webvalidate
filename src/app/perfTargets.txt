@@ -1,10 +1,17 @@
 {
-  "default":{"category":"default","quartiles":[100,200,400]},
-  "DirectRead":{"category":"DirectRead","quartiles":[40,80,120]},
-  "Healthz":{"category":"Healthz","quartiles":[400,800,1600]},
-  "PagedRead":{"category":"PagedRead","quartiles":[40,80,160]},
-  "SearchActors":{"category":"SearchActors","quartiles":[100,200,400]},
-  "SearchMovies":{"category":"SearchMovies","quartiles":[100,200,400]},
-  "Static":{"category":"Static","quartiles":[40,80,160]}
+  "default":{"category":"default","quartiles":[20,40,80]},
+  "static":{"category":"Static","quartiles":[20,40,80]},
+  "Static":{"category":"Static","quartiles":[20,40,80]},
+
+  "DirectRead":{"category":"DirectRead","quartiles":[20,40,80]},
+  "Healthz":{"category":"Healthz","quartiles":[200,400,800]},
+  "PagedRead":{"category":"PagedRead","quartiles":[20,40,80]},
+  "SearchActors":{"category":"SearchActors","quartiles":[40,80,160]},
+  "SearchMovies":{"category":"SearchMovies","quartiles":[40,80,160]},
+
+  "small":{"category":"DirectRead","quartiles":[5,10,20]},
+  "medium":{"category":"Healthz","quartiles":[10,20,40]},
+  "large":{"category":"PagedRead","quartiles":[20,40,80]},
+  "xl":{"category":"SearchActors","quartiles":[40,80,160]}
 }
 
