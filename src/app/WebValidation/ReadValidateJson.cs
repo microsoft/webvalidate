@@ -37,7 +37,11 @@ namespace CSE.WebValidate
                 // check for file exists
                 if (string.IsNullOrEmpty(file) || !File.Exists(file))
                 {
-                    Console.WriteLine($"File Not Found: {file}");
+                    if (displayError)
+                    {
+                        Console.WriteLine($"File Not Found: {file}");
+                    }
+
                     return null;
                 }
 
