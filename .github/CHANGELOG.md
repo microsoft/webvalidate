@@ -1,5 +1,9 @@
 # Change Log
 
+## v2.3.1 - Dec 2021
+
+- minor bug fixes
+
 ## v2.3.0 - Dec 2021
 
 - upgraded to dotnet 6.0
