@@ -1,6 +1,6 @@
 #!/bin/bash
 
-echo "post-create start" >> ~/status
+echo "post-create start" >> $HOME/status
 
 # this runs in background after UI is available
 
@@ -12,4 +12,4 @@ echo "post-create start" >> ~/status
 
 # add your commands here
 
-echo "post-create complete" >> ~/status
+echo "post-create complete" >> $HOME/status
