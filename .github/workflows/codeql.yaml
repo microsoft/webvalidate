@@ -48,6 +48,10 @@ jobs:
     - name: Autobuild
     #  uses: github/codeql-action/autobuild@v1
       run: |
+        # install dotnet 6
+        wget  https://dot.net/v1/dotnet-install.sh
+        ./dotnet-install.sh -c Current
+        
         cd src
         dotnet build
 
