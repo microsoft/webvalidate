@@ -48,6 +48,9 @@ jobs:
     - name: Autobuild
     #  uses: github/codeql-action/autobuild@v1
       run: |
+        # install dotnet 6
+        sudo apt-get -y install --no-install-recommends dotnet-sdk-6.0
+        
         cd src
         dotnet build
 

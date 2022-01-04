@@ -1,6 +1,6 @@
 #!/bin/bash
 
-echo "post-start start" >> ~/status
+echo "post-start start" >> $HOME/status
 
 # this runs each time the container starts
 
@@ -11,4 +11,4 @@ dotnet restore src/webvalidate.sln
 docker pull mcr.microsoft.com/dotnet/aspnet:6.0-alpine
 docker pull mcr.microsoft.com/dotnet/sdk:6.0
 
-echo "post-start complete" >> ~/status
+echo "post-start complete" >> $HOME/status
