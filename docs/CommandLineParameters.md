@@ -47,6 +47,7 @@
   - MAX_ERRORS
     - end test after max-errors
     - if --max-errors is exceeded, WebV will exit with non-zero exit code
+      - ignored if --run-loop is specified
     - default `10`
 - --region string
   - REGION
@@ -116,6 +117,9 @@
   - DURATION
     - run test for duration seconds then exit
     - default `0 (run until OS signal)`
+- --max-errors int
+  - MAX_ERRORS
+    - ignored if --run-loop is specified
 - --port int
   - -p
   - PORT
