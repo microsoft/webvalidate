@@ -61,6 +61,9 @@ namespace CSE.WebValidate
             // healthz handler
             app.UseHealthz();
 
+            // readyz handler
+            app.UseReadyz();
+
             // use routing
             app.UseRouting();
 
