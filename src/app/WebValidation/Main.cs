@@ -79,13 +79,27 @@ namespace CSE.WebValidate
                     if (!string.IsNullOrWhiteSpace(config.Region) &&
                         !PrometheusLabels.Contains("region"))
                     {
-                        PrometheusLabels.Add("region");
+                        // avoid multi-thread updates
+                        lock (PrometheusLabels)
+                        {
+                            if (!PrometheusLabels.Contains("region"))
+                            {
+                                PrometheusLabels.Add("region");
+                            }
+                        }
                     }
 
                     if (!string.IsNullOrWhiteSpace(config.Zone) &&
                         !PrometheusLabels.Contains("zone"))
                     {
-                        PrometheusLabels.Add("zone");
+                        // avoid multi-thread updates
+                        lock (PrometheusLabels)
+                        {
+                            if (!PrometheusLabels.Contains("zone"))
+                            {
+                                PrometheusLabels.Add("zone");
+                            }
+                        }
                     }
 
                     requestDuration = Metrics.CreateHistogram(
@@ -114,13 +128,27 @@ namespace CSE.WebValidate
                     if (!string.IsNullOrWhiteSpace(config.Region) &&
                         !PrometheusLabels.Contains("region"))
                     {
-                        PrometheusLabels.Add("region");
+                        // avoid multi-thread updates
+                        lock (PrometheusLabels)
+                        {
+                            if (!PrometheusLabels.Contains("region"))
+                            {
+                                PrometheusLabels.Add("region");
+                            }
+                        }
                     }
 
                     if (!string.IsNullOrWhiteSpace(config.Zone) &&
                         !PrometheusLabels.Contains("zone"))
                     {
-                        PrometheusLabels.Add("zone");
+                        // avoid multi-thread updates
+                        lock (PrometheusLabels)
+                        {
+                            if (!PrometheusLabels.Contains("zone"))
+                            {
+                                PrometheusLabels.Add("zone");
+                            }
+                        }
                     }
 
                     requestSummary = Metrics.CreateSummary(
