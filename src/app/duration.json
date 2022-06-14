@@ -1,3 +1,7 @@
+// test command:
+// dotnet run -- --verbose-errors -s https://www.bing.com -f duration.json
+// validation error is expected
+
 {
   "requests":
   [
