@@ -1,8 +1,9 @@
 # Change Log
 
-## v2.5.0 - Apr 2022
+## v2.5.0 - June 2022
 
 - updated condition to run webhost without `--prometheus`
+- removed unit tests that referenced external sources
 
 ## v2.4.0 - March 2022
 
