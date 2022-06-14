@@ -4,6 +4,7 @@
 
 - updated condition to run webhost without `--prometheus`
 - removed unit tests that referenced external sources
+- fixed max duration bug
 
 ## v2.4.0 - March 2022
 
