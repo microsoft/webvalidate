@@ -166,27 +166,5 @@ namespace CSE.WebValidate.Tests.Unit
                 MaxErrors = 10,
             };
         }
-
-        [Fact]
-        public async Task MsftTest()
-        {
-            Config cfg = BuildConfig("https://www.microsoft.com");
-            cfg.Files.Add("msft.json");
-
-            // load and validate all of our test files
-            WebV wv = new (cfg);
-            Assert.Equal(0, await wv.RunOnce(cfg, new System.Threading.CancellationToken()).ConfigureAwait(false));
-        }
-
-        [Fact]
-        public async Task GithubTest()
-        {
-            Config cfg = BuildConfig("https://api.github.com");
-            cfg.Files.Add("github.json");
-
-            // load and validate all of our test files
-            WebV wv = new (cfg);
-            Assert.Equal(0, await wv.RunOnce(cfg, new System.Threading.CancellationToken()).ConfigureAwait(false));
-        }
     }
 }
