@@ -22,8 +22,9 @@ namespace CSE.WebValidate.Validators
         /// <param name="r">Request</param>
         /// <param name="response">HttpResponseMessage</param>
         /// <param name="body">response body</param>
+        /// <param name="duration">request duration</param>
         /// <returns>ValidationResult</returns>
-        public static ValidationResult Validate(Request r, HttpResponseMessage response, string body)
+        public static ValidationResult Validate(Request r, HttpResponseMessage response, string body, double duration)
         {
             ValidationResult result = new ();
 
@@ -46,6 +47,15 @@ namespace CSE.WebValidate.Validators
             if (result.Failed)
             {
                 return result;
+            }
+
+            // validate max duration
+            if (r.Validation.MaxMilliseconds > 0)
+            {
+                if (duration > r.Validation.MaxMilliseconds)
+                {
+                    result.ValidationErrors.Add($"duration: {duration} exceeded {r.Validation.MaxMilliseconds}");
+                }
             }
 
             // redirects don't have body or headers
