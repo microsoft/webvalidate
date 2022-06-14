@@ -44,7 +44,7 @@ namespace CSE.WebValidate.Model
         /// gets or sets the maximum ms for the request
         /// default: null (ignore)
         /// </summary>
-        public int? MaxMilliseconds { get; set; }
+        public int? MaxMilliSeconds { get; set; }
 
         /// <summary>
         /// gets or sets the list of strings that must be in the response

@@ -50,11 +50,11 @@ namespace CSE.WebValidate.Validators
             }
 
             // validate max duration
-            if (r.Validation.MaxMilliseconds > 0)
+            if (r.Validation.MaxMilliSeconds > 0)
             {
-                if (duration > r.Validation.MaxMilliseconds)
+                if (duration > r.Validation.MaxMilliSeconds)
                 {
-                    result.ValidationErrors.Add($"duration: {duration} exceeded {r.Validation.MaxMilliseconds}");
+                    result.ValidationErrors.Add($"duration: {duration}ms exceeded max value {r.Validation.MaxMilliSeconds}ms");
                 }
             }
 

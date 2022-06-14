@@ -53,7 +53,7 @@ namespace CSE.WebValidate.Tests.Unit
             v.StatusCode = 10;
 
             // > 0
-            v.MaxMilliseconds = 0;
+            v.MaxMilliSeconds = 0;
 
             // ! isnullorempty
             v.ExactMatch = string.Empty;
