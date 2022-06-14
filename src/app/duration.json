@@ -1,0 +1,6 @@
+{
+  "requests":
+  [
+    {"path":"/en-us","perfTarget":{"category":"Static"},"validation":{"maxMilliSeconds":1, "contentType":"text/html","contains":["<title>Microsoft – Cloud, Computers, Apps","<head data-info=\"{"]}}
+  ]
+}
