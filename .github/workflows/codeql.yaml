@@ -2,6 +2,9 @@ name: "CodeQL"
 
 on:
   push:
+    branches:
+    - main
+    - 2.5.0
 
   pull_request:
     branches: [main]
@@ -52,15 +55,8 @@ jobs:
         include-prerelease: True
 
     # Autobuild attempts to build any compiled languages  (C/C++, C#, or Java).
-    # Autobuild doesn't build correctly, so we run a manual build
     - name: Autobuild
       uses: github/codeql-action/autobuild@v2
-      # run: |
-      #   # install dotnet 6
-      #   sudo apt-get -y install --no-install-recommends dotnet-sdk-6.0
-        
-      #   cd src
-      #   dotnet build
 
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v2
