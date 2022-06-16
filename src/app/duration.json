@@ -1,10 +1,10 @@
 // test command:
-// dotnet run -- --verbose-errors -s https://www.linkedin.com -f duration.json
+// dotnet run -- --verbose-errors -s https://bing.com -f duration.json
 // validation errors are expected
 
 {
   "requests":
   [
-    {"path":"/","perfTarget":{"category":"Static"},"validation":{"maxMilliSeconds":1, "contentType":"application/json"}}
+    {"path":"/","perfTarget":{"category":"Static"},"validation":{"maxMilliSeconds":1, "statusCode":301}}
   ]
 }
