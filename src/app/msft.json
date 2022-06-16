@@ -1,8 +1,11 @@
+// test command
+// dotnet run -- --verbose-errors -s https://www.microsoft.com -f msft.json
+
 {
   "requests":
   [
     {"path":"/","testName": "mytest1", "perfTarget":{"category":"Static"},"validation":{"statusCode":302}},
-    {"path":"/en-us","perfTarget":{"category":"Static"},"validation":{"contentType":"text/html","contains":["<title>Microsoft - Official Home Page</title>","<head data-info=\"{"]}},
+    {"path":"/en-us","perfTarget":{"category":"Static"},"validation":{"contentType":"text/html","contains":["<title>Microsoft – Cloud, Computers, Apps","<head data-info=\"{"]}},
     {"path":"/robots.txt","perfTarget":{"category":"Static"},"validation":{"contentType":"text/plain","minLength":200,"contains":["User-agent: *","Disallow: /en-us/windows/si/matrix.html"]}},
     {"path":"/favicon.ico","perfTarget":{"category":"Static"},"validation":{"contentType":"image/x-icon"}}
   ]

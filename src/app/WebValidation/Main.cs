@@ -452,7 +452,7 @@ namespace CSE.WebValidate
                     double duration = Math.Round(DateTime.UtcNow.Subtract(dt).TotalMilliseconds, 0);
 
                     // validate the response
-                    valid = ResponseValidator.Validate(request, resp, body);
+                    valid = ResponseValidator.Validate(request, resp, body, duration);
 
                     // check the performance
                     perfLog = CreatePerfLog(server, request, valid, duration, (long)resp.Content.Headers.ContentLength, (int)resp.StatusCode, cv.Value);

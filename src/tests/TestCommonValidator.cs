@@ -53,7 +53,7 @@ namespace CSE.WebValidate.Tests.Unit
             v.StatusCode = 10;
 
             // > 0
-            v.MaxMilliseconds = 0;
+            v.MaxMilliSeconds = 0;
 
             // ! isnullorempty
             v.ExactMatch = string.Empty;
@@ -108,14 +108,14 @@ namespace CSE.WebValidate.Tests.Unit
         {
             Request r = new ();
 
-            Assert.False(ResponseValidator.Validate(r, null, string.Empty).Failed);
+            Assert.False(ResponseValidator.Validate(r, null, string.Empty, 0).Failed);
 
             r.Validation = new Validation();
 
-            Assert.True(ResponseValidator.Validate(r, null, "this is a test").Failed);
+            Assert.True(ResponseValidator.Validate(r, null, "this is a test", 0).Failed);
 
             using System.Net.Http.HttpResponseMessage resp = new (System.Net.HttpStatusCode.NotFound);
-            Assert.True(ResponseValidator.Validate(r, resp, "this is a test").Failed);
+            Assert.True(ResponseValidator.Validate(r, resp, "this is a test", 0).Failed);
 
             Assert.True(ResponseValidator.ValidateStatusCode(400, 200).Failed);
         }

@@ -81,7 +81,7 @@ namespace CSE.WebValidate.Validators
             res.Add(ValidateLength(v));
 
             // validate MaxMilliSeconds
-            if (v.MaxMilliseconds != null && v.MaxMilliseconds <= 0)
+            if (v.MaxMilliSeconds != null && v.MaxMilliSeconds <= 0)
             {
                 res.Failed = true;
                 res.ValidationErrors.Add("maxMilliseconds: maxMilliseconds cannot be less than zero");

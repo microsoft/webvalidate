@@ -1,5 +1,19 @@
 # Change Log
 
+## v2.5.0 - June 2022
+
+- updated condition to run webhost without `--prometheus`
+- removed unit tests that referenced external sources
+- fixed max duration bug
+
+## v2.4.0 - March 2022
+
+- fixed thread sync bug
+- added /readyz endpoint
+- updated packages
+- bumped version
+- Retail Edge customer feedback
+
 ## v2.3.1 - Dec 2021
 
 - minor bug fixes
