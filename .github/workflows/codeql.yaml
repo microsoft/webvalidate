@@ -43,16 +43,22 @@ jobs:
       with:
         languages: ${{ matrix.language }}
 
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: '6.0'
+        include-prerelease: True
+
     # Autobuild attempts to build any compiled languages  (C/C++, C#, or Java).
     # Autobuild doesn't build correctly, so we run a manual build
     - name: Autobuild
-    #  uses: github/codeql-action/autobuild@v1
-      run: |
-        # install dotnet 6
-        sudo apt-get -y install --no-install-recommends dotnet-sdk-6.0
+      uses: github/codeql-action/autobuild@v1
+      # run: |
+      #   # install dotnet 6
+      #   sudo apt-get -y install --no-install-recommends dotnet-sdk-6.0
         
-        cd src
-        dotnet build
+      #   cd src
+      #   dotnet build
 
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v1
