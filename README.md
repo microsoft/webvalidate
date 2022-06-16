@@ -1,7 +1,8 @@
 # Web Validate - A web request validation tool
 
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
-![Docker Image Build](https://github.com/microsoft/webvalidate/workflows/Docker%20Image%20Build/badge.svg)
+![CodeQL Build](https://github.com/microsoft/webvalidate/workflows/CodeQL/badge.svg)
+![Docker Build](https://github.com/microsoft/webvalidate/workflows/DockerBuild/badge.svg)
 
 Web Validate (WebV) is a web request validation tool that we use to run end-to-end tests and long-running performance and availability tests.
 
