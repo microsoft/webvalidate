@@ -39,7 +39,7 @@ namespace CSE.WebValidate
             root.AddOption(EnvVarOption<int>(new string[] { "--duration" }, "Test duration (seconds)  (requires --run-loop)", 0, 0));
             root.AddOption(EnvVarOption(new string[] { "--log-format", "-g" }, "Log format", LogFormat.TsvMin));
             root.AddOption(EnvVarOption<int>(new string[] { "--max-errors" }, "Max validation errors", 10, 0));
-            root.AddOption(EnvVarOption(new string[] { "--prometheus" }, "Send metrics to Prometheus (Not Implemented) (requires --run-loop)", false));
+            root.AddOption(EnvVarOption(new string[] { "--prometheus" }, "Send metrics to Prometheus (requires --run-loop)", false));
             root.AddOption(EnvVarOption(new string[] { "--random" }, "Run requests randomly (requires --run-loop)", false));
             root.AddOption(EnvVarOption(new string[] { "--region" }, "Region deployed to (user defined)", string.Empty));
             root.AddOption(EnvVarOption(new string[] { "--run-loop", "-r" }, "Run test in an infinite loop", false));
