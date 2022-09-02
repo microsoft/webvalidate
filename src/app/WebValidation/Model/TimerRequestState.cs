@@ -58,6 +58,11 @@ namespace CSE.WebValidate
         public Random Random { get; set; }
 
         /// <summary>
+        /// Gets or sets the URL prefix for the request
+        /// </summary>
+        public string UrlPrefix { get; set; }
+
+        /// <summary>
         /// gets the lock object
         /// </summary>
         public object Lock { get; } = new object();
@@ -134,7 +139,7 @@ namespace CSE.WebValidate
             try
             {
                 // Execute the request
-                PerfLog p = await Test.ExecuteRequest(Client, Server, req).ConfigureAwait(false);
+                PerfLog p = await Test.ExecuteRequest(Client, Server, req, UrlPrefix).ConfigureAwait(false);
 
                 lock (Lock)
                 {

@@ -34,7 +34,7 @@ namespace CSE.WebValidate
             root.AddOption(EnvVarOption<List<string>>(new string[] { "--files", "-f" }, "List of files to test (required)", null));
             root.AddOption(EnvVarOption<List<string>>(new string[] { "--server", "-s" }, "Server(s) to test (required)", null));
             root.AddOption(EnvVarOption<int>(new string[] { "--port", "-p" }, "Port for web listener  (requires --run-loop)", 8080));
-            root.AddOption(EnvVarOption(new string[] { "--base-url", "-u" }, "Base url for files", string.Empty));
+            root.AddOption(EnvVarOption(new string[] { "--base-url" }, "Base url for files", string.Empty));
             root.AddOption(EnvVarOption<int>(new string[] { "--delay-start" }, "Delay test start (seconds)", 0, 0));
             root.AddOption(EnvVarOption<int>(new string[] { "--duration" }, "Test duration (seconds)  (requires --run-loop)", 0, 0));
             root.AddOption(EnvVarOption(new string[] { "--log-format", "-g" }, "Log format", LogFormat.TsvMin));
@@ -53,6 +53,7 @@ namespace CSE.WebValidate
             root.AddOption(EnvVarOption(new string[] { "--webv-suffix" }, "Server address suffix", ".azurewebsites.net"));
             root.AddOption(EnvVarOption(new string[] { "--summary" }, "Display test summary (invalid with --run-loop)", SummaryFormat.None));
             root.AddOption(EnvVarOption(new string[] { "--zone" }, "Zone deployed to (user defined)", string.Empty));
+            root.AddOption(EnvVarOption(new string[] { "--url-prefix", "-u" }, "Url prefix for requests", string.Empty));
             root.AddOption(new Option<bool>(new string[] { "--dry-run", "-d" }, "Validates configuration"));
             root.AddOption(new Option<bool>(new string[] { "--version" }, "Displays version and exits"));
 
@@ -296,6 +297,12 @@ namespace CSE.WebValidate
             Console.WriteLine("dry run");
             Console.WriteLine($"   Server          {string.Join(' ', config.Server)}");
             Console.WriteLine($"   Files           {string.Join(' ', config.Files)}");
+
+            if (!string.IsNullOrWhiteSpace(config.UrlPrefix))
+            {
+                Console.WriteLine($"   URL Prefix      {config.UrlPrefix}");
+            }
+
             if (config.DelayStart > 0)
             {
                 Console.WriteLine($"   Delay Start     {config.DelayStart}");
