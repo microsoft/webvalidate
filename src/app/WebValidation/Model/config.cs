@@ -246,6 +246,9 @@ namespace CSE.WebValidate
                 UrlPrefix = "/" + UrlPrefix;
             }
 
+            // set --prometheus to --run-loop
+            Prometheus = RunLoop;
+
             // make it easier to pass server value
             if (Server != null && Server.Count > 0)
             {

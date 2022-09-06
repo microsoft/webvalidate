@@ -363,7 +363,6 @@ namespace CSE.WebValidate
             if (config.RunLoop)
             {
                 Console.WriteLine($"   Port            {config.Port}");
-                Console.WriteLine($"   Prometheus      {config.Prometheus}");
                 Console.WriteLine($"   Random          {config.Random}");
             }
 
@@ -374,7 +373,6 @@ namespace CSE.WebValidate
 
             Console.WriteLine($"   Run Loop        {config.RunLoop}");
             Console.WriteLine($"   Sleep           {config.Sleep}");
-            Console.WriteLine($"   Strict Json     {config.StrictJson}");
 
             if (!string.IsNullOrWhiteSpace(config.Tag))
             {
@@ -384,8 +382,6 @@ namespace CSE.WebValidate
             Console.WriteLine($"   Timeout         {config.Timeout}");
             Console.WriteLine($"   Verbose         {config.Verbose}");
             Console.WriteLine($"   Verbose Errors  {config.VerboseErrors}");
-            Console.WriteLine($"   WebV Prefix     {config.WebvPrefix}");
-            Console.WriteLine($"   WebV Suffix     {config.WebvSuffix}");
 
             if (!string.IsNullOrEmpty(config.Zone))
             {
