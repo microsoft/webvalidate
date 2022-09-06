@@ -39,14 +39,14 @@ namespace CSE.WebValidate
             root.AddOption(EnvVarOption<int>(new string[] { "--duration" }, "Test duration (seconds)  (requires --run-loop)", 0, 0));
             root.AddOption(EnvVarOption(new string[] { "--log-format", "-g" }, "Log format", LogFormat.TsvMin));
             root.AddOption(EnvVarOption<int>(new string[] { "--max-errors" }, "Max validation errors", 10, 0));
-            root.AddOption(EnvVarOption(new string[] { "--prometheus" }, "Send metrics to Prometheus (requires --run-loop)", false));
+            root.AddOption(EnvVarOption(new string[] { "--prometheus" }, "Expose /metrics for Prometheus (requires --run-loop)", false));
             root.AddOption(EnvVarOption(new string[] { "--random" }, "Run requests randomly (requires --run-loop)", false));
             root.AddOption(EnvVarOption(new string[] { "--region" }, "Region deployed to (user defined)", string.Empty));
             root.AddOption(EnvVarOption(new string[] { "--run-loop", "-r" }, "Run test in an infinite loop", false));
             root.AddOption(EnvVarOption<int>(new string[] { "--sleep", "-l" }, "Sleep (ms) between each request", 0, 0));
-            root.AddOption(EnvVarOption(new string[] { "--tag" }, "Tag for log and App Insights", string.Empty));
+            root.AddOption(EnvVarOption(new string[] { "--tag" }, "Tag for log (user defined)", string.Empty));
             root.AddOption(EnvVarOption<int>(new string[] { "--timeout", "-t" }, "Request timeout (seconds)", 30, 1));
-            root.AddOption(EnvVarOption(new string[] { "--verbose", "-v" }, "Display verbose results", false));
+            root.AddOption(EnvVarOption(new string[] { "--verbose", "-v" }, "Display all request results", false));
             root.AddOption(EnvVarOption(new string[] { "--verbose-errors" }, "Log verbose error messages", false));
             root.AddOption(EnvVarOption(new string[] { "--summary" }, "Display test summary (invalid with --run-loop)", SummaryFormat.None));
             root.AddOption(EnvVarOption(new string[] { "--zone" }, "Zone deployed to (user defined)", string.Empty));
