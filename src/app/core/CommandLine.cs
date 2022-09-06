@@ -39,7 +39,6 @@ namespace CSE.WebValidate
             root.AddOption(EnvVarOption<int>(new string[] { "--duration" }, "Test duration (seconds)  (requires --run-loop)", 0, 0));
             root.AddOption(EnvVarOption(new string[] { "--log-format", "-g" }, "Log format", LogFormat.TsvMin));
             root.AddOption(EnvVarOption<int>(new string[] { "--max-errors" }, "Max validation errors", 10, 0));
-            root.AddOption(EnvVarOption(new string[] { "--prometheus" }, "Expose /metrics for Prometheus (requires --run-loop)", false));
             root.AddOption(EnvVarOption(new string[] { "--random" }, "Run requests randomly (requires --run-loop)", false));
             root.AddOption(EnvVarOption(new string[] { "--region" }, "Region deployed to (user defined)", string.Empty));
             root.AddOption(EnvVarOption(new string[] { "--run-loop", "-r" }, "Run test in an infinite loop", false));
@@ -54,6 +53,7 @@ namespace CSE.WebValidate
 
             // to be deprecated options
             root.AddOption(EnvVarOption(new string[] { "--base-url" }, "Base url for files (deprecated)", string.Empty));
+            root.AddOption(EnvVarOption(new string[] { "--prometheus" }, "Expose /metrics for Prometheus (requires --run-loop)", false));
             root.AddOption(EnvVarOption(new string[] { "--strict-json", "-j" }, "Use strict json when parsing (deprecated)", false));
             root.AddOption(EnvVarOption(new string[] { "--webv-prefix" }, "Server address prefix (deprecated)", "https://"));
             root.AddOption(EnvVarOption(new string[] { "--webv-suffix" }, "Server address suffix (deprecated)", ".azurewebsites.net"));
@@ -86,6 +86,7 @@ namespace CSE.WebValidate
                 messageFlag = true;
 
                 string msg = CheckForDeprecation(result, "base-url");
+                msg += CheckForDeprecation(result, "prometheus");
                 msg += CheckForDeprecation(result, "strict-json");
                 msg += CheckForDeprecation(result, "webv-prefix");
                 msg += CheckForDeprecation(result, "webv-suffix");
