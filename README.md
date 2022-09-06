@@ -20,7 +20,7 @@ There are many web test tools available. The two main differences with WebV are:
 - WebV can also be run as a docker container
 - If you have dotnet core sdk installed, running as a dotnet global tool is the simplest and fastest way to run WebV
 
-## Planned Deprecation in v2.6
+## Planned Deprecations in v2.6
 
 > If any of these changes will break, please open an issue
 
