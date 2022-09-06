@@ -17,6 +17,7 @@ namespace CSE.WebValidate
     {
         // capture parse errors from env vars
         private static readonly List<string> EnvVarErrors = new ();
+        private static bool messageFlag = false;
 
         /// <summary>
         /// Build the RootCommand for parsing
@@ -34,7 +35,6 @@ namespace CSE.WebValidate
             root.AddOption(EnvVarOption<List<string>>(new string[] { "--files", "-f" }, "List of files to test (required)", null));
             root.AddOption(EnvVarOption<List<string>>(new string[] { "--server", "-s" }, "Server(s) to test (required)", null));
             root.AddOption(EnvVarOption<int>(new string[] { "--port", "-p" }, "Port for web listener  (requires --run-loop)", 8080));
-            root.AddOption(EnvVarOption(new string[] { "--base-url" }, "Base url for files", string.Empty));
             root.AddOption(EnvVarOption<int>(new string[] { "--delay-start" }, "Delay test start (seconds)", 0, 0));
             root.AddOption(EnvVarOption<int>(new string[] { "--duration" }, "Test duration (seconds)  (requires --run-loop)", 0, 0));
             root.AddOption(EnvVarOption(new string[] { "--log-format", "-g" }, "Log format", LogFormat.TsvMin));
@@ -44,16 +44,20 @@ namespace CSE.WebValidate
             root.AddOption(EnvVarOption(new string[] { "--region" }, "Region deployed to (user defined)", string.Empty));
             root.AddOption(EnvVarOption(new string[] { "--run-loop", "-r" }, "Run test in an infinite loop", false));
             root.AddOption(EnvVarOption<int>(new string[] { "--sleep", "-l" }, "Sleep (ms) between each request", 0, 0));
-            root.AddOption(EnvVarOption(new string[] { "--strict-json", "-j" }, "Use strict json when parsing", false));
             root.AddOption(EnvVarOption(new string[] { "--tag" }, "Tag for log and App Insights", string.Empty));
             root.AddOption(EnvVarOption<int>(new string[] { "--timeout", "-t" }, "Request timeout (seconds)", 30, 1));
             root.AddOption(EnvVarOption(new string[] { "--verbose", "-v" }, "Display verbose results", false));
             root.AddOption(EnvVarOption(new string[] { "--verbose-errors" }, "Log verbose error messages", false));
-            root.AddOption(EnvVarOption(new string[] { "--webv-prefix" }, "Server address prefix", "https://"));
-            root.AddOption(EnvVarOption(new string[] { "--webv-suffix" }, "Server address suffix", ".azurewebsites.net"));
             root.AddOption(EnvVarOption(new string[] { "--summary" }, "Display test summary (invalid with --run-loop)", SummaryFormat.None));
             root.AddOption(EnvVarOption(new string[] { "--zone" }, "Zone deployed to (user defined)", string.Empty));
             root.AddOption(EnvVarOption(new string[] { "--url-prefix", "-u" }, "Url prefix for requests", string.Empty));
+
+            // to be deprecated options
+            root.AddOption(EnvVarOption(new string[] { "--base-url" }, "Base url for files (deprecated)", string.Empty));
+            root.AddOption(EnvVarOption(new string[] { "--strict-json", "-j" }, "Use strict json when parsing (deprecated)", false));
+            root.AddOption(EnvVarOption(new string[] { "--webv-prefix" }, "Server address prefix (deprecated)", "https://"));
+            root.AddOption(EnvVarOption(new string[] { "--webv-suffix" }, "Server address suffix (deprecated)", ".azurewebsites.net"));
+
             root.AddOption(new Option<bool>(new string[] { "--dry-run", "-d" }, "Validates configuration"));
             root.AddOption(new Option<bool>(new string[] { "--version" }, "Displays version and exits"));
 
@@ -61,6 +65,38 @@ namespace CSE.WebValidate
             root.AddValidator(ValidateRunLoopDependencies);
 
             return root;
+        }
+
+        // check option for deprecation
+        private static string CheckForDeprecation(CommandResult result, string option)
+        {
+            if (!(result.Children.FirstOrDefault(c => c.Symbol.Name == option) as OptionResult).IsImplicit)
+            {
+                return $"--{option} will be deprecated in the 2.6 release\n\n";
+            }
+
+            return string.Empty;
+        }
+
+        // print deprecation warnings
+        private static void DisplayDeprecationWarnings(CommandResult result)
+        {
+            if (!messageFlag)
+            {
+                messageFlag = true;
+
+                string msg = CheckForDeprecation(result, "base-url");
+                msg += CheckForDeprecation(result, "strict-json");
+                msg += CheckForDeprecation(result, "webv-prefix");
+                msg += CheckForDeprecation(result, "webv-suffix");
+
+                if (!string.IsNullOrWhiteSpace(msg))
+                {
+                    Console.ForegroundColor = ConsoleColor.DarkYellow;
+                    Console.WriteLine(msg);
+                    Console.ResetColor();
+                }
+            }
         }
 
         // validate based on --run-loop
@@ -147,6 +183,8 @@ namespace CSE.WebValidate
             {
                 errors += "--run-loop must be true to use --prometheus\n";
             }
+
+            DisplayDeprecationWarnings(result);
 
             return errors;
         }
