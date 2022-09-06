@@ -659,6 +659,7 @@ namespace CSE.WebValidate
             string msg = $"{Now}\tStarting Web Validation Test";
             msg += $"\n\t\tVersion: {Version.AssemblyVersion}";
             msg += $"\n\t\tHost: {string.Join(' ', config.Server)}";
+            msg += $"\n\t\tURL Prefix: {config.UrlPrefix}";
 
             if (!string.IsNullOrWhiteSpace(config.Tag))
             {
