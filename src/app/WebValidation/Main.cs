@@ -544,7 +544,7 @@ namespace CSE.WebValidate
             {
                 Server = server,
                 Tag = string.IsNullOrWhiteSpace(request.Tag) ? config.Tag : request.Tag,
-                Path = path,
+                Path = path ?? string.Empty,
                 StatusCode = statusCode,
                 Category = request?.PerfTarget?.Category ?? string.Empty,
                 TestName = request.TestName,
