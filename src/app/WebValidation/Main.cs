@@ -464,7 +464,7 @@ namespace CSE.WebValidate
                     valid = ResponseValidator.Validate(request, resp, body, duration);
 
                     // check the performance
-                    perfLog = CreatePerfLog(server, request, valid, duration, (long)resp.Content.Headers.ContentLength, (int)resp.StatusCode, cv.Value);
+                    perfLog = CreatePerfLog(server, request, valid, path, duration, (long)resp.Content.Headers.ContentLength, (int)resp.StatusCode, cv.Value);
 
                     if (config.Summary == SummaryFormat.Xml)
                     {
@@ -478,7 +478,7 @@ namespace CSE.WebValidate
                     double duration = Math.Round(DateTime.UtcNow.Subtract(dt).TotalMilliseconds, 0);
                     valid = new ValidationResult { Failed = true };
                     valid.ValidationErrors.Add($"Exception: {ex.Message}");
-                    perfLog = CreatePerfLog(server, request, valid, duration, 0, 500, cv.Value);
+                    perfLog = CreatePerfLog(server, request, valid, path, duration, 0, 500, cv.Value);
 
                     if (config.Summary == SummaryFormat.Xml)
                     {
@@ -532,7 +532,7 @@ namespace CSE.WebValidate
         /// <param name="statusCode">status code</param>
         /// <param name="correlationVector">Correlation Vector</param>
         /// <returns>PerfLog</returns>
-        public PerfLog CreatePerfLog(string server, Request request, ValidationResult validationResult, double duration, long contentLength, int statusCode, string correlationVector = "")
+        public PerfLog CreatePerfLog(string server, Request request, ValidationResult validationResult, string path, double duration, long contentLength, int statusCode, string correlationVector = "")
         {
             if (validationResult == null)
             {
@@ -544,7 +544,7 @@ namespace CSE.WebValidate
             {
                 Server = server,
                 Tag = string.IsNullOrWhiteSpace(request.Tag) ? config.Tag : request.Tag,
-                Path = request?.Path ?? string.Empty,
+                Path = path,
                 StatusCode = statusCode,
                 Category = request?.PerfTarget?.Category ?? string.Empty,
                 TestName = request.TestName,
