@@ -193,6 +193,11 @@ namespace CSE.WebValidate
         public string Zone { get; set; }
 
         /// <summary>
+        /// Gets or sets the url prefix for requests
+        /// </summary>
+        public string UrlPrefix { get; set; }
+
+        /// <summary>
         /// Set the default config values
         /// </summary>
         /// <param name="parseResult">system.commandline parse result</param>
@@ -220,10 +225,29 @@ namespace CSE.WebValidate
             }
 
             // set to null so they don't serialize to json
-            BaseUrl = string.IsNullOrWhiteSpace(BaseUrl) ? null : BaseUrl;
-            Region = string.IsNullOrWhiteSpace(Region) ? null : Region;
-            Tag = string.IsNullOrWhiteSpace(Tag) ? null : Tag;
-            Zone = string.IsNullOrWhiteSpace(Zone) ? null : Zone;
+            BaseUrl = string.IsNullOrWhiteSpace(BaseUrl) ? null : BaseUrl.Trim();
+            Region = string.IsNullOrWhiteSpace(Region) ? null : Region.Trim();
+            Tag = string.IsNullOrWhiteSpace(Tag) ? null : Tag.Trim();
+            Zone = string.IsNullOrWhiteSpace(Zone) ? null : Zone.Trim();
+            UrlPrefix = string.IsNullOrWhiteSpace(UrlPrefix) ? null : UrlPrefix.Trim();
+
+            if (!string.IsNullOrEmpty(UrlPrefix))
+            {
+                while (UrlPrefix.StartsWith('/'))
+                {
+                    UrlPrefix = UrlPrefix[1..];
+                }
+
+                while (UrlPrefix.EndsWith('/'))
+                {
+                    UrlPrefix = UrlPrefix[0..^1];
+                }
+
+                UrlPrefix = "/" + UrlPrefix;
+            }
+
+            // set --prometheus to --run-loop
+            Prometheus = RunLoop;
 
             // make it easier to pass server value
             if (Server != null && Server.Count > 0)

@@ -227,7 +227,7 @@ namespace CSE.WebValidate
                     try
                     {
                         // execute the request
-                        pl = await ExecuteRequest(client, config.Server[ndx], r).ConfigureAwait(false);
+                        pl = await ExecuteRequest(client, config.Server[ndx], r, config.UrlPrefix).ConfigureAwait(false);
 
                         if (pl.Failed)
                         {
@@ -310,6 +310,7 @@ namespace CSE.WebValidate
                     Test = this,
                     RequestList = requestList,
                     Token = token,
+                    UrlPrefix = config.UrlPrefix,
                 };
 
                 if (config.Random)
@@ -386,8 +387,9 @@ namespace CSE.WebValidate
         /// <param name="client">http client</param>
         /// <param name="server">server URL</param>
         /// <param name="request">Request</param>
+        /// <param name="urlPrefix">URL prefix</param>
         /// <returns>PerfLog</returns>
-        public async Task<PerfLog> ExecuteRequest(HttpClient client, string server, Request request)
+        public async Task<PerfLog> ExecuteRequest(HttpClient client, string server, Request request, string urlPrefix)
         {
             if (request == null)
             {
@@ -412,8 +414,15 @@ namespace CSE.WebValidate
                 requestSummary = RequestSummary;
             }
 
+            string path = request.Path;
+
+            if (!string.IsNullOrWhiteSpace(urlPrefix))
+            {
+                path = urlPrefix + path;
+            }
+
             // send the request
-            using (HttpRequestMessage req = new(new HttpMethod(request.Verb), request.Path))
+            using (HttpRequestMessage req = new(new HttpMethod(request.Verb), path))
             {
                 DateTime dt = DateTime.UtcNow;
 
@@ -455,7 +464,7 @@ namespace CSE.WebValidate
                     valid = ResponseValidator.Validate(request, resp, body, duration);
 
                     // check the performance
-                    perfLog = CreatePerfLog(server, request, valid, duration, (long)resp.Content.Headers.ContentLength, (int)resp.StatusCode, cv.Value);
+                    perfLog = CreatePerfLog(server, request, valid, path, duration, (long)resp.Content.Headers.ContentLength, (int)resp.StatusCode, cv.Value);
 
                     if (config.Summary == SummaryFormat.Xml)
                     {
@@ -469,7 +478,7 @@ namespace CSE.WebValidate
                     double duration = Math.Round(DateTime.UtcNow.Subtract(dt).TotalMilliseconds, 0);
                     valid = new ValidationResult { Failed = true };
                     valid.ValidationErrors.Add($"Exception: {ex.Message}");
-                    perfLog = CreatePerfLog(server, request, valid, duration, 0, 500, cv.Value);
+                    perfLog = CreatePerfLog(server, request, valid, path, duration, 0, 500, cv.Value);
 
                     if (config.Summary == SummaryFormat.Xml)
                     {
@@ -523,7 +532,7 @@ namespace CSE.WebValidate
         /// <param name="statusCode">status code</param>
         /// <param name="correlationVector">Correlation Vector</param>
         /// <returns>PerfLog</returns>
-        public PerfLog CreatePerfLog(string server, Request request, ValidationResult validationResult, double duration, long contentLength, int statusCode, string correlationVector = "")
+        public PerfLog CreatePerfLog(string server, Request request, ValidationResult validationResult, string path, double duration, long contentLength, int statusCode, string correlationVector = "")
         {
             if (validationResult == null)
             {
@@ -535,7 +544,7 @@ namespace CSE.WebValidate
             {
                 Server = server,
                 Tag = string.IsNullOrWhiteSpace(request.Tag) ? config.Tag : request.Tag,
-                Path = request?.Path ?? string.Empty,
+                Path = path ?? string.Empty,
                 StatusCode = statusCode,
                 Category = request?.PerfTarget?.Category ?? string.Empty,
                 TestName = request.TestName,
@@ -650,6 +659,7 @@ namespace CSE.WebValidate
             string msg = $"{Now}\tStarting Web Validation Test";
             msg += $"\n\t\tVersion: {Version.AssemblyVersion}";
             msg += $"\n\t\tHost: {string.Join(' ', config.Server)}";
+            msg += $"\n\t\tURL Prefix: {config.UrlPrefix}";
 
             if (!string.IsNullOrWhiteSpace(config.Tag))
             {

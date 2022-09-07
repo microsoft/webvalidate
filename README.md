@@ -20,11 +20,14 @@ There are many web test tools available. The two main differences with WebV are:
 - WebV can also be run as a docker container
 - If you have dotnet core sdk installed, running as a dotnet global tool is the simplest and fastest way to run WebV
 
-## Breaking changes in v2.3.0
+## Planned Deprecations in v2.6
 
-- The Docker repo moved to: `ghcr.io/cse-labs/webvalidate`
-- This release requires `dotnet 6.0`
-  - Use WebV 2.2 for dotnet 5 support
+> If any of these changes will break, please open an issue
+
+- Remove --base-url
+- Remove --prometheus
+  - /metrics will be exposed if --run-loop is true
+- Remove --webv-prefix and --webv-suffix
 
 ## WebV Quickstart
 
