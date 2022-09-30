@@ -52,10 +52,7 @@ namespace CSE.WebValidate
                 if (context.Request.Path.Value.Equals("/version", StringComparison.OrdinalIgnoreCase))
                 {
                     // cache the version info for performance
-                    if (responseBytes == null)
-                    {
-                        responseBytes = System.Text.Encoding.UTF8.GetBytes(Version);
-                    }
+                    responseBytes ??= System.Text.Encoding.UTF8.GetBytes(Version);
 
                     // return the version info
                     context.Response.ContentType = "text/plain";

@@ -80,10 +80,7 @@ namespace CSE.WebValidate.Validators
             }
 
             // make sure the validators don't throw an exception but still fail
-            if (body == null)
-            {
-                body = string.Empty;
-            }
+            body ??= string.Empty;
 
             // run validation rules
             result.Add(ValidateLength((long)response.Content.Headers.ContentLength, r.Validation));
@@ -114,10 +111,7 @@ namespace CSE.WebValidate.Validators
             if (v != null)
             {
                 // make sure the validators don't throw an exception but still fail
-                if (body == null)
-                {
-                    body = string.Empty;
-                }
+                body ??= string.Empty;
 
                 result.Add(ValidateContains(v.Contains, body));
                 result.Add(ValidateNotContains(v.NotContains, body));
@@ -147,10 +141,7 @@ namespace CSE.WebValidate.Validators
             }
 
             // make sure the validators don't throw an exception but still fail
-            if (body == null)
-            {
-                body = string.Empty;
-            }
+            body ??= string.Empty;
 
             try
             {
@@ -158,10 +149,7 @@ namespace CSE.WebValidate.Validators
                 IDictionary<string, object> dict = JsonSerializer.Deserialize<ExpandoObject>(body, App.JsonOptions);
 
                 // set to new so validation fails
-                if (dict == null)
-                {
-                    dict = new Dictionary<string, object>();
-                }
+                dict ??= new Dictionary<string, object>();
 
                 foreach (JsonItem property in properties)
                 {
@@ -227,10 +215,7 @@ namespace CSE.WebValidate.Validators
             }
 
             // make sure the validators don't throw an exception but still fail
-            if (body == null)
-            {
-                body = string.Empty;
-            }
+            body ??= string.Empty;
 
             try
             {
@@ -359,10 +344,7 @@ namespace CSE.WebValidate.Validators
             }
 
             // make sure the validators don't throw an exception but still fail
-            if (body == null)
-            {
-                body = string.Empty;
-            }
+            body ??= string.Empty;
 
             // compare values
             if (body != exactMatch)
@@ -389,10 +371,7 @@ namespace CSE.WebValidate.Validators
             }
 
             // make sure the validators don't throw an exception but still fail
-            if (body == null)
-            {
-                body = string.Empty;
-            }
+            body ??= string.Empty;
 
             // validate each rule
             foreach (string c in containsList)

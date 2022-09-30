@@ -92,9 +92,9 @@ namespace CSE.WebValidate
                 JsonOptions = new JsonSerializerOptions
                 {
                     DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingDefault,
-                    PropertyNameCaseInsensitive = !config.StrictJson,
-                    AllowTrailingCommas = !config.StrictJson,
-                    ReadCommentHandling = config.StrictJson ? JsonCommentHandling.Disallow : JsonCommentHandling.Skip,
+                    PropertyNameCaseInsensitive = true,
+                    AllowTrailingCommas = true,
+                    ReadCommentHandling = JsonCommentHandling.Skip,
                 };
 
                 // set based on json or json pascal

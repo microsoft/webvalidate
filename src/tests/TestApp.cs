@@ -149,6 +149,7 @@ namespace CSE.WebValidate.Tests.Unit
             Assert.Equal(1, parse.Errors.Count);
         }
 
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("CodeQuality", "IDE0051:Remove unused private members", Justification = "future use")]
         private static Config BuildConfig(string server)
         {
             App.JsonOptions = new JsonSerializerOptions

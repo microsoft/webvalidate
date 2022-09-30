@@ -74,7 +74,7 @@ namespace CSE.WebValidate
         {
             get
             {
-                if (config.Prometheus && requestDuration == null)
+                if (config.RunLoop && requestDuration == null)
                 {
                     if (!string.IsNullOrWhiteSpace(config.Region) &&
                         !PrometheusLabels.Contains("region"))
@@ -123,7 +123,7 @@ namespace CSE.WebValidate
         {
             get
             {
-                if (config.Prometheus && requestSummary == null)
+                if (config.RunLoop && requestSummary == null)
                 {
                     if (!string.IsNullOrWhiteSpace(config.Region) &&
                         !PrometheusLabels.Contains("region"))
@@ -404,15 +404,9 @@ namespace CSE.WebValidate
             PerfLog perfLog;
             ValidationResult valid;
 
-            if (requestDuration == null)
-            {
-                requestDuration = RequestDuration;
-            }
+            requestDuration ??= RequestDuration;
 
-            if (requestSummary == null)
-            {
-                requestSummary = RequestSummary;
-            }
+            requestSummary ??= RequestSummary;
 
             string path = request.Path;
 
@@ -492,7 +486,7 @@ namespace CSE.WebValidate
             // log the test
             LogToConsole(request, valid, perfLog);
 
-            if (config.Prometheus)
+            if (config.RunLoop)
             {
                 // map status code to reduce histogram size
                 string status = GetPrometheusCode(perfLog.StatusCode);
@@ -527,6 +521,7 @@ namespace CSE.WebValidate
         /// <param name="server">server URL</param>
         /// <param name="request">Request</param>
         /// <param name="validationResult">validation errors</param>
+        /// <param name="path">request path</param>
         /// <param name="duration">duration</param>
         /// <param name="contentLength">content length</param>
         /// <param name="statusCode">status code</param>
@@ -631,11 +626,6 @@ namespace CSE.WebValidate
                     { "Verbose", config.Verbose },
                 };
 
-                if (!string.IsNullOrWhiteSpace(config.BaseUrl))
-                {
-                    startupDict.Add("Tag", config.BaseUrl);
-                }
-
                 if (!string.IsNullOrWhiteSpace(config.Tag))
                 {
                     startupDict.Add("Tag", config.Tag);
@@ -664,11 +654,6 @@ namespace CSE.WebValidate
             if (!string.IsNullOrWhiteSpace(config.Tag))
             {
                 msg += $"\n\t\tTag: {config.Tag}";
-            }
-
-            if (!string.IsNullOrWhiteSpace(config.BaseUrl))
-            {
-                msg += $"\n\t\tBaseUrl: {config.BaseUrl}";
             }
 
             msg += $"\n\t\tFiles: {string.Join(' ', config.Files)}";

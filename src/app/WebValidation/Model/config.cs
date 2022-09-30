@@ -136,11 +136,6 @@ namespace CSE.WebValidate
         public bool DryRun { get; set; }
 
         /// <summary>
-        /// gets or sets the base url for test files
-        /// </summary>
-        public string BaseUrl { get; set; }
-
-        /// <summary>
         /// Gets or sets a value indicating whether we should display verbose errors or just the count
         /// </summary>
         public bool VerboseErrors { get; set; }
@@ -151,23 +146,6 @@ namespace CSE.WebValidate
         public int DelayStart { get; set; }
 
         /// <summary>
-        /// gets or sets a value indicating whether we should use strict json parsing
-        /// </summary>
-        public bool StrictJson { get; set; }
-
-        /// <summary>
-        /// gets or sets the prefix for server(s)
-        /// default: https://
-        /// </summary>
-        public string WebvPrefix { get; set; }
-
-        /// <summary>
-        /// gets or sets the suffix for server(s)
-        /// default: .azurewebsites.net
-        /// </summary>
-        public string WebvSuffix { get; set; }
-
-        /// <summary>
         /// Gets or sets a value indicating whether the test summary should be written to the log
         /// </summary>
         public SummaryFormat Summary { get; set; }
@@ -176,11 +154,6 @@ namespace CSE.WebValidate
         /// Gets or sets Log Format
         /// </summary>
         public LogFormat LogFormat { get; set; }
-
-        /// <summary>
-        /// Gets or sets a value indicating whether to expose the :8080/metrics end point for Prometheus
-        /// </summary>
-        public bool Prometheus { get; set; }
 
         /// <summary>
         /// Gets or sets the Region deployed to (user defined)
@@ -218,14 +191,7 @@ namespace CSE.WebValidate
             // min sleep is 1ms in --run-loop
             Sleep = RunLoop && Sleep < 1 ? 1 : Sleep;
 
-            // add a trailing slash if necessary
-            if (!string.IsNullOrEmpty(BaseUrl) && !BaseUrl.EndsWith('/'))
-            {
-                BaseUrl += "/";
-            }
-
             // set to null so they don't serialize to json
-            BaseUrl = string.IsNullOrWhiteSpace(BaseUrl) ? null : BaseUrl.Trim();
             Region = string.IsNullOrWhiteSpace(Region) ? null : Region.Trim();
             Tag = string.IsNullOrWhiteSpace(Tag) ? null : Tag.Trim();
             Zone = string.IsNullOrWhiteSpace(Zone) ? null : Zone.Trim();
@@ -246,9 +212,6 @@ namespace CSE.WebValidate
                 UrlPrefix = "/" + UrlPrefix;
             }
 
-            // set --prometheus to --run-loop
-            Prometheus = RunLoop;
-
             // make it easier to pass server value
             if (Server != null && Server.Count > 0)
             {
@@ -267,7 +230,7 @@ namespace CSE.WebValidate
                         }
                         else
                         {
-                            Server[i] = $"{WebvPrefix}{s}{WebvSuffix}";
+                            Server[i] = $"https://{s}";
                         }
                     }
                 }
