@@ -17,6 +17,7 @@ namespace CSE.WebValidate
     {
         // capture parse errors from env vars
         private static readonly List<string> EnvVarErrors = new ();
+        private static bool messageFlag = false;
 
         /// <summary>
         /// Build the RootCommand for parsing
@@ -57,6 +58,37 @@ namespace CSE.WebValidate
             root.AddValidator(ValidateRunLoopDependencies);
 
             return root;
+        }
+
+         // check option for deprecation
+        private static string CheckForDeprecation(CommandResult result, string option)
+        {
+            if (!(result.Children.FirstOrDefault(c => c.Symbol.Name == option) as OptionResult).IsImplicit)
+            {
+                return $"--{option} will be deprecated in the 2.6 release\n\n";
+            }
+
+            return string.Empty;
+        }
+
+        // print deprecation warnings
+        private static void DisplayDeprecationWarnings(CommandResult result)
+        {
+            if (!messageFlag)
+            {
+                messageFlag = true;
+
+                // uncomment to add deprecated messages
+                // string msg = CheckForDeprecation(result, "deprecatedCommand1");
+                // msg += CheckForDeprecation(result, "deprecatedCommand2");
+
+                // if (!string.IsNullOrWhiteSpace(msg))
+                // {
+                //     Console.ForegroundColor = ConsoleColor.DarkYellow;
+                //     Console.WriteLine(msg);
+                //     Console.ResetColor();
+                // }
+            }
         }
 
         // validate based on --run-loop
@@ -137,6 +169,8 @@ namespace CSE.WebValidate
             {
                 errors += "--verbose conflicts with --log-format None\n";
             }
+
+            DisplayDeprecationWarnings(result);
 
             return errors;
         }
