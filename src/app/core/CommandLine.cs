@@ -17,7 +17,6 @@ namespace CSE.WebValidate
     {
         // capture parse errors from env vars
         private static readonly List<string> EnvVarErrors = new ();
-        private static bool messageFlag = false;
 
         /// <summary>
         /// Build the RootCommand for parsing
@@ -51,13 +50,6 @@ namespace CSE.WebValidate
             root.AddOption(EnvVarOption(new string[] { "--zone" }, "Zone deployed to (user defined)", string.Empty));
             root.AddOption(EnvVarOption(new string[] { "--url-prefix", "-u" }, "Url prefix for requests", string.Empty));
 
-            // to be deprecated options
-            root.AddOption(EnvVarOption(new string[] { "--base-url" }, "Base url for files (deprecated)", string.Empty));
-            root.AddOption(EnvVarOption(new string[] { "--prometheus" }, "Expose /metrics for Prometheus (requires --run-loop)", false));
-            root.AddOption(EnvVarOption(new string[] { "--strict-json", "-j" }, "Use strict json when parsing (deprecated)", false));
-            root.AddOption(EnvVarOption(new string[] { "--webv-prefix" }, "Server address prefix (deprecated)", "https://"));
-            root.AddOption(EnvVarOption(new string[] { "--webv-suffix" }, "Server address suffix (deprecated)", ".azurewebsites.net"));
-
             root.AddOption(new Option<bool>(new string[] { "--dry-run", "-d" }, "Validates configuration"));
             root.AddOption(new Option<bool>(new string[] { "--version" }, "Displays version and exits"));
 
@@ -65,39 +57,6 @@ namespace CSE.WebValidate
             root.AddValidator(ValidateRunLoopDependencies);
 
             return root;
-        }
-
-        // check option for deprecation
-        private static string CheckForDeprecation(CommandResult result, string option)
-        {
-            if (!(result.Children.FirstOrDefault(c => c.Symbol.Name == option) as OptionResult).IsImplicit)
-            {
-                return $"--{option} will be deprecated in the 2.6 release\n\n";
-            }
-
-            return string.Empty;
-        }
-
-        // print deprecation warnings
-        private static void DisplayDeprecationWarnings(CommandResult result)
-        {
-            if (!messageFlag)
-            {
-                messageFlag = true;
-
-                string msg = CheckForDeprecation(result, "base-url");
-                msg += CheckForDeprecation(result, "prometheus");
-                msg += CheckForDeprecation(result, "strict-json");
-                msg += CheckForDeprecation(result, "webv-prefix");
-                msg += CheckForDeprecation(result, "webv-suffix");
-
-                if (!string.IsNullOrWhiteSpace(msg))
-                {
-                    Console.ForegroundColor = ConsoleColor.DarkYellow;
-                    Console.WriteLine(msg);
-                    Console.ResetColor();
-                }
-            }
         }
 
         // validate based on --run-loop
@@ -113,7 +72,6 @@ namespace CSE.WebValidate
 
             bool runLoop = result.Children.FirstOrDefault(c => c.Symbol.Name == "run-loop") is OptionResult runLoopRes && runLoopRes.GetValueOrDefault<bool>();
             bool random = result.Children.FirstOrDefault(c => c.Symbol.Name == "random") is OptionResult randomRes && randomRes.GetValueOrDefault<bool>();
-            bool prom = result.Children.FirstOrDefault(c => c.Symbol.Name == "prometheus") is OptionResult promRes && promRes.GetValueOrDefault<bool>();
             bool verbose = result.Children.FirstOrDefault(c => c.Symbol.Name == "verbose") is OptionResult verboseRes && verboseRes.GetValueOrDefault<bool>();
             bool xml = result.Children.FirstOrDefault(c => c.Symbol.Name == "xml-summary") is OptionResult xmlRes && xmlRes.GetValueOrDefault<bool>();
 
@@ -179,13 +137,6 @@ namespace CSE.WebValidate
             {
                 errors += "--verbose conflicts with --log-format None\n";
             }
-
-            if (prom && !runLoop)
-            {
-                errors += "--run-loop must be true to use --prometheus\n";
-            }
-
-            DisplayDeprecationWarnings(result);
 
             return errors;
         }
