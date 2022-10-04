@@ -4,7 +4,6 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Net.Http;
 using System.Text.Json;
 using CSE.WebValidate.Model;
 using CSE.WebValidate.Validators;
@@ -25,74 +24,34 @@ namespace CSE.WebValidate
         /// <returns>file contents</returns>
         public string ReadTestFile(string file, bool displayError = true)
         {
-            string content = string.Empty;
-
             if (string.IsNullOrWhiteSpace(file))
             {
                 throw new ArgumentNullException(nameof(file));
             }
 
-            if (string.IsNullOrEmpty(config.BaseUrl))
+            // check for file exists
+            if (string.IsNullOrEmpty(file) || !File.Exists(file))
             {
-                // check for file exists
-                if (string.IsNullOrEmpty(file) || !File.Exists(file))
+                if (displayError)
                 {
-                    if (displayError)
-                    {
-                        Console.WriteLine($"File Not Found: {file}");
-                    }
-
-                    return null;
+                    Console.WriteLine($"File Not Found: {file}");
                 }
 
-                // read the file
-                content = File.ReadAllText(file);
-
-                // check for empty file
-                if (string.IsNullOrEmpty(content))
-                {
-                    if (displayError)
-                    {
-                        Console.WriteLine($"Unable to read file {file}");
-                    }
-
-                    return null;
-                }
+                return null;
             }
-            else
+
+            // read the file
+            string content = File.ReadAllText(file);
+
+            // check for empty file
+            if (string.IsNullOrEmpty(content))
             {
-                string path = config.BaseUrl + file;
-
-                using HttpClient client = new ();
-
-                try
+                if (displayError)
                 {
-                    content = client.GetStringAsync(new Uri(path)).Result;
-
-                    // check for empty file
-                    if (string.IsNullOrEmpty(content))
-                    {
-                        if (displayError)
-                        {
-                            Console.WriteLine($"Unable to read file {file}");
-                        }
-
-                        return null;
-                    }
+                    Console.WriteLine($"Unable to read file {file}");
                 }
-                catch (Exception ex)
-                {
-                    if (displayError)
-                    {
-                        // display helper message on request exception
-                        if (ex.InnerException is HttpRequestException hre)
-                        {
-                            Console.WriteLine("Verify you have permission to read the URL as well as the correctness of the URL");
-                        }
 
-                        throw;
-                    }
-                }
+                return null;
             }
 
             return content;

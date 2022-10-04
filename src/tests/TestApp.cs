@@ -71,12 +71,12 @@ namespace CSE.WebValidate.Tests.Unit
             // test env vars
             parse = App.BuildRootCommand().Parse(string.Empty);
             Assert.Equal(0, parse.Errors.Count);
-            Assert.Equal(23, parse.CommandResult.Children.Count);
+            Assert.Equal(18, parse.CommandResult.Children.Count);
 
             // override the files env var
             parse = App.BuildRootCommand().Parse("-f file1 file2");
             Assert.Equal(0, parse.Errors.Count);
-            Assert.Equal(23, parse.CommandResult.Children.Count);
+            Assert.Equal(18, parse.CommandResult.Children.Count);
             Assert.Equal(2, parse.CommandResult.Children.First(c => c.Symbol.Name == "files").Tokens.Count);
 
             // test run-loop
@@ -149,6 +149,7 @@ namespace CSE.WebValidate.Tests.Unit
             Assert.Equal(1, parse.Errors.Count);
         }
 
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("CodeQuality", "IDE0051:Remove unused private members", Justification = "future use")]
         private static Config BuildConfig(string server)
         {
             App.JsonOptions = new JsonSerializerOptions

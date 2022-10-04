@@ -27,13 +27,6 @@
     - one or more json test files
     - default location current directory
     - `required`
-- --base-url string
-  - -u
-  - BASE_URL
-    - base URL and optional path to the test files (http or https)
-      - The files are read at startup only
-      - If the URL isn't available, WebV will exit with a non-zero exit code
-      - ex: `https://raw.githubusercontent.com/microsoft/webvalidate/main/TestFiles/`
 - --delay-start int
   - DELAY_START
     - delay starting the validation test for int seconds
@@ -90,14 +83,6 @@
   - VERBOSE_ERRORS
     - display validation error messages
     - default `false`
-- --webv-prefix string
-  - WEBV_PREFIX
-    - prefix to add to server values that don't begin with http
-    - default `https://`
-- --webv-suffix string
-  - WEBV_SUFFIX
-    - suffix to add to server values that don't begin with http
-    - default `.azurewebsites.net`
 - --zone string
   - ZONE
     - deployment Zone for logging (user defined)
@@ -107,6 +92,7 @@
 
 - Some parameters are only valid if `--run-loop` is specified
 - Some parameters have different defaults if `--run-loop` is specified
+- /metrics will be exposed if --run-loop is true
 
 - --run-loop bool
   - -r
@@ -126,10 +112,6 @@
     - Port to use for web endpoints
     - valid: `0 < port < 64K`
     - default: `8080`
-- --prometheus bool
-  - PROMETHEUS
-    - expose the /metrics end point for Prometheus
-    - default: `false`
 - --random bool
   - RANDOM
     - randomize requests
