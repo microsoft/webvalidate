@@ -49,10 +49,7 @@ namespace CSE.WebValidate
             // signal run loop
             life.ApplicationStopping.Register(() =>
             {
-                if (App.TokenSource != null)
-                {
-                    App.TokenSource.Cancel(false);
-                }
+                App.TokenSource?.Cancel(false);
             });
 
             // version handler

@@ -554,11 +554,8 @@ namespace CSE.WebValidate
             };
 
             // determine the Performance Level based on category
-            if (targets.ContainsKey(log.Category))
+            if (targets.TryGetValue(log.Category, out PerfTarget target))
             {
-                // lookup the target
-                PerfTarget target = targets[log.Category];
-
                 if (target != null &&
                     !string.IsNullOrWhiteSpace(target.Category) &&
                     target.Quartiles != null &&

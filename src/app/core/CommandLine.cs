@@ -63,7 +63,7 @@ namespace CSE.WebValidate
          // check option for deprecation
         private static string CheckForDeprecation(CommandResult result, string option)
         {
-            if (!(result.Children.FirstOrDefault(c => c.Symbol.Name == option) as OptionResult).IsImplicit)
+            if (result.Children.FirstOrDefault(c => c.Symbol.Name == option) is OptionResult optRes && !optRes.IsImplicit)
             {
                 return $"--{option} will be deprecated in the 2.6 release\n\n";
             }
@@ -78,16 +78,16 @@ namespace CSE.WebValidate
             {
                 messageFlag = true;
 
-                // uncomment to add deprecated messages
-                // string msg = CheckForDeprecation(result, "deprecatedCommand1");
-                // msg += CheckForDeprecation(result, "deprecatedCommand2");
+                // add deprecated messages
+                string msg = CheckForDeprecation(result, "deprecatedCommand1");
+                msg += CheckForDeprecation(result, "deprecatedCommand2");
 
-                // if (!string.IsNullOrWhiteSpace(msg))
-                // {
-                //     Console.ForegroundColor = ConsoleColor.DarkYellow;
-                //     Console.WriteLine(msg);
-                //     Console.ResetColor();
-                // }
+                if (!string.IsNullOrWhiteSpace(msg))
+                {
+                    Console.ForegroundColor = ConsoleColor.DarkYellow;
+                    Console.WriteLine(msg);
+                    Console.ResetColor();
+                }
             }
         }
 
