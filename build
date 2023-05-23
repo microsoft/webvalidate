@@ -1,0 +1,16 @@
+#!/bin/bash
+
+dotnet build src/app -o "$HOME/bin"
+
+docker pull mcr.microsoft.com/dotnet/sdk:7.0
+docker pull mcr.microsoft.com/dotnet/aspnet:7.0
+
+docker build . -t ghcr.io/cse-labs/webvalidate:beta
+#docker build . -t ghcr.io/cse-labs/webvalidate:latest
+#docker build . -t ghcr.io/cse-labs/webvalidate:7.0.0
+#docker build . -t ghcr.io/cse-labs/webvalidate:7.0
+
+docker build . -t retaildevcrew/webvalidate:beta
+#docker build . -t retaildevcrew/webvalidate:latest
+#docker build . -t retaildevcrew/webvalidate:7.0.0
+#docker build . -t retaildevcrew/webvalidate:7.0
