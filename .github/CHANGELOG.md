@@ -1,5 +1,10 @@
 # Change Log
 
+## v7.0.0 - May 2023
+
+- updated to dotnet 7
+- removed correlation vector (deprecated)
+
 ## v2.5.0 - June 2022
 
 - updated condition to run webhost without `--prometheus`
