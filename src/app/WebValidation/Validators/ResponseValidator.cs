@@ -153,7 +153,7 @@ namespace CSE.WebValidate.Validators
 
                 foreach (JsonItem property in properties)
                 {
-                    if (!string.IsNullOrEmpty(property.Field) && dict.ContainsKey(property.Field))
+                    if (!string.IsNullOrEmpty(property.Field) && dict.TryGetValue(property.Field, out object value))
                     {
                         if (property.Validation != null)
                         {
@@ -167,7 +167,7 @@ namespace CSE.WebValidate.Validators
                             }
                         }
 
-                        object element = dict[property.Field];
+                        object element = value;
 
                         // compare the values as strings
                         if (property.Value != null && element.ToString() != property.Value.ToString())

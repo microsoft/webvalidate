@@ -1,0 +1,13 @@
+#!/bin/bash
+
+./build
+
+docker push ghcr.io/cse-labs/webvalidate:beta
+#docker push ghcr.io/cse-labs/webvalidate:latest
+#docker push ghcr.io/cse-labs/webvalidate:7.0.0
+#docker push ghcr.io/cse-labs/webvalidate:7.0
+
+docker push retaildevcrew/webvalidate:beta
+#docker push retaildevcrew/webvalidate:latest
+#docker push retaildevcrew/webvalidate:7.0.0
+#docker push retaildevcrew/webvalidate:7.0

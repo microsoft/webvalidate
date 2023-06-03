@@ -13,7 +13,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using CSE.WebValidate.Model;
 using CSE.WebValidate.Validators;
-using Microsoft.CorrelationVector;
 using Prometheus;
 
 namespace CSE.WebValidate
@@ -429,10 +428,6 @@ namespace CSE.WebValidate
                     }
                 }
 
-                // create correlation vector and add to headers
-                CorrelationVector cv = new (CorrelationVectorVersion.V2);
-                req.Headers.Add(CorrelationVector.HeaderName, cv.Value);
-
                 // add the body to the http request
                 if (!string.IsNullOrWhiteSpace(request.Body))
                 {
@@ -458,7 +453,7 @@ namespace CSE.WebValidate
                     valid = ResponseValidator.Validate(request, resp, body, duration);
 
                     // check the performance
-                    perfLog = CreatePerfLog(server, request, valid, path, duration, (long)resp.Content.Headers.ContentLength, (int)resp.StatusCode, cv.Value);
+                    perfLog = CreatePerfLog(server, request, valid, path, duration, (long)resp.Content.Headers.ContentLength, (int)resp.StatusCode);
 
                     if (config.Summary == SummaryFormat.Xml)
                     {
@@ -472,7 +467,7 @@ namespace CSE.WebValidate
                     double duration = Math.Round(DateTime.UtcNow.Subtract(dt).TotalMilliseconds, 0);
                     valid = new ValidationResult { Failed = true };
                     valid.ValidationErrors.Add($"Exception: {ex.Message}");
-                    perfLog = CreatePerfLog(server, request, valid, path, duration, 0, 500, cv.Value);
+                    perfLog = CreatePerfLog(server, request, valid, path, duration, 0, 500);
 
                     if (config.Summary == SummaryFormat.Xml)
                     {
@@ -525,9 +520,8 @@ namespace CSE.WebValidate
         /// <param name="duration">duration</param>
         /// <param name="contentLength">content length</param>
         /// <param name="statusCode">status code</param>
-        /// <param name="correlationVector">Correlation Vector</param>
         /// <returns>PerfLog</returns>
-        public PerfLog CreatePerfLog(string server, Request request, ValidationResult validationResult, string path, double duration, long contentLength, int statusCode, string correlationVector = "")
+        public PerfLog CreatePerfLog(string server, Request request, ValidationResult validationResult, string path, double duration, long contentLength, int statusCode)
         {
             if (validationResult == null)
             {
@@ -548,17 +542,13 @@ namespace CSE.WebValidate
                 ContentLength = contentLength,
                 Failed = validationResult.Failed,
                 Verb = request.Verb,
-                CorrelationVector = correlationVector,
                 Region = config.Region,
                 Zone = config.Zone,
             };
 
             // determine the Performance Level based on category
-            if (targets.ContainsKey(log.Category))
+            if (targets.TryGetValue(log.Category, out PerfTarget target))
             {
-                // lookup the target
-                PerfTarget target = targets[log.Category];
-
                 if (target != null &&
                     !string.IsNullOrWhiteSpace(target.Category) &&
                     target.Quartiles != null &&
@@ -788,8 +778,8 @@ namespace CSE.WebValidate
                 throw new ArgumentNullException(nameof(perfLog));
             }
 
-            // always log on error
-            if (config.Verbose || perfLog.StatusCode >= 400 || perfLog.Failed || perfLog.ErrorCount > 0)
+            // always log on error and --verbose
+            if (config.Verbose || perfLog.Failed || perfLog.ErrorCount > 0 || !perfLog.Validated)
             {
                 switch (config.LogFormat)
                 {

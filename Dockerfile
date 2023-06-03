@@ -1,5 +1,5 @@
 ### build the app
-FROM mcr.microsoft.com/dotnet/sdk:6.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:7.0 AS build
 
 # Copy the source
 COPY src /src
@@ -12,12 +12,12 @@ RUN dotnet test
 WORKDIR /src/app
 RUN dotnet publish -c Release -o /app
 
-    
+
 ###########################################################
 
 
 ### build the runtime container
-FROM mcr.microsoft.com/dotnet/aspnet:6.0-alpine AS runtime
+FROM mcr.microsoft.com/dotnet/aspnet:7.0-alpine AS runtime
 
 ### create a user
 ### dotnet needs a home directory

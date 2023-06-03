@@ -69,11 +69,6 @@ namespace CSE.WebValidate.Model
         public bool Validated { get; set; } = true;
 
         /// <summary>
-        /// Gets or sets a the correlation vector for distributed tracing
-        /// </summary>
-        public string CorrelationVector { get; set; }
-
-        /// <summary>
         /// Gets the error count
         /// </summary>
         public int ErrorCount => Errors == null ? 0 : Errors.Count;
@@ -157,7 +152,7 @@ namespace CSE.WebValidate.Model
             Zone = string.IsNullOrWhiteSpace(Zone) ? "-" : Zone;
 
             // log tab delimited
-            string log = $"{Date:o}\t{TestName}\t{Server}\t{StatusCode}\t{ErrorCount}\t{Duration}\t{ContentLength}\t{Region}\t{Zone}\t{CorrelationVector}\t{Tag}\t{quartile}\t{Category}\t{Verb}\t{Path}";
+            string log = $"{Date:o}\t{TestName}\t{Server}\t{StatusCode}\t{ErrorCount}\t{Duration}\t{ContentLength}\t{Region}\t{Zone}\t{Tag}\t{quartile}\t{Category}\t{Verb}\t{Path}";
 
             // log error details
             if (verboseErrors && ErrorCount > 0)

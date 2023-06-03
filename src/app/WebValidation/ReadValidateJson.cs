@@ -219,9 +219,9 @@ namespace CSE.WebValidate
                         // Add the default perf targets if exists
                         if (r.PerfTarget != null && r.PerfTarget.Quartiles == null)
                         {
-                            if (targets.ContainsKey(r.PerfTarget.Category))
+                            if (targets.TryGetValue(r.PerfTarget.Category, out PerfTarget target))
                             {
-                                r.PerfTarget.Quartiles = targets[r.PerfTarget.Category].Quartiles;
+                                r.PerfTarget.Quartiles = target.Quartiles;
                             }
                         }
 

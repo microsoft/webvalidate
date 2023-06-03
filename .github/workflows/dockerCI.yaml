@@ -2,7 +2,7 @@ name: DockerBuild
 
 on:
   workflow_dispatch:
-  
+
   push:
     branches:
       - main
@@ -27,8 +27,8 @@ jobs:
 
     - name: Docker Pull
       run: |
-        docker pull mcr.microsoft.com/dotnet/sdk:6.0
-        docker pull mcr.microsoft.com/dotnet/aspnet:6.0-alpine
+        docker pull mcr.microsoft.com/dotnet/sdk:7.0
+        docker pull mcr.microsoft.com/dotnet/aspnet:7.0-alpine
 
     - name: Build Container
       run: |
